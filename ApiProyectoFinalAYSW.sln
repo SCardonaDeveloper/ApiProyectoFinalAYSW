@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiBack", "ApiBack\ApiBack.csproj", "{087F6597-11A9-F7BB-4BDA-FFF36359C7DB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FrontendBlazorApi", "FrontendBlazorApi\FrontendBlazorApi.csproj", "{7BE8F9FE-A53E-BC0D-2610-21CE8FF270CB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{087F6597-11A9-F7BB-4BDA-FFF36359C7DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{087F6597-11A9-F7BB-4BDA-FFF36359C7DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{087F6597-11A9-F7BB-4BDA-FFF36359C7DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{087F6597-11A9-F7BB-4BDA-FFF36359C7DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7BE8F9FE-A53E-BC0D-2610-21CE8FF270CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7BE8F9FE-A53E-BC0D-2610-21CE8FF270CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7BE8F9FE-A53E-BC0D-2610-21CE8FF270CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7BE8F9FE-A53E-BC0D-2610-21CE8FF270CB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {563DCD25-4E26-4C62-9706-EA28B8B89C46}
+	EndGlobalSection
+EndGlobal
