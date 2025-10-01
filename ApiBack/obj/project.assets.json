@@ -3368,11 +3368,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Daniel\\Downloads\\webapicsharp\\webapicsharp.csproj",
-      "projectName": "webapicsharp",
-      "projectPath": "C:\\Users\\Daniel\\Downloads\\webapicsharp\\webapicsharp.csproj",
+      "projectUniqueName": "C:\\Users\\Daniel\\Desktop\\ApiProyectoFinalAYSW\\ApiProyectoFinalAYSW\\ApiBack\\ApiBack.csproj",
+      "projectName": "ApiBack",
+      "projectPath": "C:\\Users\\Daniel\\Desktop\\ApiProyectoFinalAYSW\\ApiProyectoFinalAYSW\\ApiBack\\ApiBack.csproj",
       "packagesPath": "C:\\Users\\Daniel\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Daniel\\Downloads\\webapicsharp\\obj\\",
+      "outputPath": "C:\\Users\\Daniel\\Desktop\\ApiProyectoFinalAYSW\\ApiProyectoFinalAYSW\\ApiBack\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Daniel\\AppData\\Roaming\\NuGet\\NuGet.Config"
