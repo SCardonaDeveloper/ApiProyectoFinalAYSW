@@ -121,5 +121,5 @@ namespace ApiBack.Servicios.Abstracciones
 //
 // 5. RELACIÓN CON PROGRAM.CS:
 //    Después de crear esta interface y su implementación, se podrá descomentar:
-//    builder.Services.AddSingleton<webapicsharp.Servicios.Abstracciones.IProveedorConexion,
-//                                  webapicsharp.Servicios.Conexion.ProveedorConexion>();
+//    builder.Services.AddSingleton<ApiBack.Servicios.Abstracciones.IProveedorConexion,
+//                                  ApiBack.Servicios.Conexion.ProveedorConexion>();

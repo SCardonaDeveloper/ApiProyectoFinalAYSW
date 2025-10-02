@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 // Archivo   : RepositorioConsultasMysqlMariaDB.cs
-// Ruta      : webapicsharp/Repositorios/RepositorioConsultasMysqlMariaDB.cs
+// Ruta      : ApiBack/Repositorios/RepositorioConsultasMysqlMariaDB.cs
 // Propósito : Implementar IRepositorioConsultas para MySQL/MariaDB.
 //             Expone consultas parametrizadas, validación de consulta, ejecución
 //             de procedimientos/funciones y obtención de metadatos (esquemas y
