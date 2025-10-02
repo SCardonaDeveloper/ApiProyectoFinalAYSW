@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "e9UZz/qpxao=",
+  "dgSpecHash": "2yMZmF4VmOA=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Hogar\\Documents\\Juan\\ESTUDIO\\ITM\\Semestre6\\Aplicación y Servicios Web\\EntregaProyecto 1\\ApiProyectoFinalAYSW\\ApiBack\\ApiBack.csproj",
+  "projectFilePath": "C:\\Users\\Hogar\\Documents\\Juan\\ESTUDIO\\ITM\\Semestre6\\Aplicación y Servicios Web\\EntregaProyecto 1\\ApiProyectoFinalAYSW\\Apiback\\ApiBack.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Hogar\\.nuget\\packages\\azure.core\\1.47.1\\azure.core.1.47.1.nupkg.sha512",
     "C:\\Users\\Hogar\\.nuget\\packages\\azure.identity\\1.14.2\\azure.identity.1.14.2.nupkg.sha512",
