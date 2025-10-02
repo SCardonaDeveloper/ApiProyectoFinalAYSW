@@ -949,8 +949,8 @@ namespace ApiBack.Repositorios
 //    case "sqlserverexpress": 
 //    case "localdb":
 //    default:
-//        builder.Services.AddScoped<webapicsharp.Repositorios.Abstracciones.IRepositorioLecturaTabla,
-//                                   webapicsharp.Repositorios.RepositorioLecturaSqlServer>();
+//        builder.Services.AddScoped<ApiBack.Repositorios.Abstracciones.IRepositorioLecturaTabla,
+//                                   ApiBack.Repositorios.RepositorioLecturaSqlServer>();
 //        break;
 //
 // 7. ¿POR QUÉ ADDSCOPED Y NO SINGLETON?
