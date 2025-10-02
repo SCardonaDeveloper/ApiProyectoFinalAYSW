@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 // Archivo   : RepositorioLecturaMysqlMariaDB.cs
-// Ruta      : webapicsharp/Repositorios/RepositorioLecturaMysqlMariaDB.cs
+// Ruta      : ApiBack/Repositorios/RepositorioLecturaMysqlMariaDB.cs
 // Propósito : Implementar IRepositorioLecturaTabla para MySQL/MariaDB,
 //             con soporte de operaciones CRUD y encriptación de contraseñas.
 // Dependencias:

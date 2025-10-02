@@ -1,8 +1,8 @@
 {
   "Version": 1,
   "Hash": "3OBgLcLl/677grOH5fTUjyaJzjXwP0Bk06W4oZDk164=",
-  "Source": "webapicsharp",
-  "BasePath": "_content/webapicsharp",
+  "Source": "ApiBack",
+  "BasePath": "_content/ApiBack",
   "Mode": "Default",
   "ManifestType": "Build",
   "ReferencedProjectsConfiguration": [],

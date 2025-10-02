@@ -1,6 +1,6 @@
 // --------------------------------------------------------------
 // Archivo : RepositorioLecturaPostgreSQL.cs (VERSIÓN CORREGIDA)
-// Ruta    : webapicsharp/Repositorios/RepositorioLecturaPostgreSQL.cs
+// Ruta    : ApiBack/Repositorios/RepositorioLecturaPostgreSQL.cs
 // Propósito: Implementar IRepositorioLecturaTabla para PostgreSQL con detección automática de tipos
 // Problema resuelto: Error "42883: el operador no existe: integer = text"
 // Dependencias: Npgsql, NpgsqlTypes, IProveedorConexion, EncriptacionBCrypt
