@@ -20,63 +20,18 @@ using ApiBack.Servicios.Abstracciones;
 
 namespace ApiBack.Controllers
 {
-    /// <summary>
-    /// Controlador específico para ejecutar procedimientos almacenados de forma segura.
-    /// 
-    /// Este controlador se especializa en permitir la ejecución de procedimientos almacenados
-    /// con parámetros seguros y capacidades de encriptación para campos sensibles.
-    /// 
-    /// Diferencias con ConsultasController:
-    /// - ConsultasController: Consultas SQL SELECT arbitrarias con validaciones estrictas
-    /// - ProcedimientosController: Procedimientos almacenados que pueden hacer INSERT/UPDATE/DELETE
-    /// 
-    /// Responsabilidades específicas:
-    /// - Recibir nombre del SP y parámetros desde peticiones HTTP POST
-    /// - Procesar parámetros JSON complejos para procedimientos almacenados
-    /// - Convertir DataTable a formato JSON amigable para respuestas HTTP
-    /// - Manejar errores específicos de procedimientos almacenados
-    /// </summary>
     [Route("api/procedimientos")]
     [ApiController]
     public class ProcedimientosController : ControllerBase
     {
         private readonly IServicioConsultas _servicioConsultas;
-        private readonly ILogger<ProcedimientosController> _logger;
-
-        /// <summary>
-        /// Constructor que recibe dependencias mediante inyección de dependencias.
-        /// </summary>
-        /// <param name="servicioConsultas">Servicio para ejecutar procedimientos almacenados</param>
-        /// <param name="logger">Logger específico para este controlador</param>
-        public ProcedimientosController(
+        private readonly ILogger<ProcedimientosController> _logger;        public ProcedimientosController(
             IServicioConsultas servicioConsultas,
             ILogger<ProcedimientosController> logger)
         {
             _servicioConsultas = servicioConsultas ?? throw new ArgumentNullException(nameof(servicioConsultas));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
-
-        /// <summary>
-        /// Endpoint para ejecutar procedimientos almacenados con parámetros opcionales.
-        /// 
-        /// Ruta completa: POST /api/procedimientos/ejecutarsp
-        /// 
-        /// Formato de entrada JSON esperado:
-        /// {
-        ///   "nombreSP": "select_json_entity",
-        ///   "p_table_name": "usuario",
-        ///   "mensaje": "",
-        ///   "where_condition": null,
-        ///   "order_by": null,
-        ///   "limit_clause": null,
-        ///   "json_params": "{}",
-        ///   "select_columns": "*"
-        /// }
-        /// </summary>
-        /// <param name="parametrosSP">Diccionario con nombreSP y parámetros del procedimiento</param>
-        /// <param name="camposEncriptar">Campos que deben ser encriptados, separados por coma (IGNORADO por ahora)</param>
-        /// <returns>Resultados de la ejecución del procedimiento almacenado</returns>
-        [AllowAnonymous]
         [HttpPost("ejecutarsp")]
         public async Task<IActionResult> EjecutarProcedimientoAlmacenadoAsync(
             [FromBody] Dictionary<string, object?> parametrosSP,
