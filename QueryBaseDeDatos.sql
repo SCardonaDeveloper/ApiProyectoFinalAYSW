@@ -1,6 +1,4 @@
--- ===========================================
--- Tabla: Usuario
--- ===========================================
+
 CREATE DATABASE bdProyectos
 USE bdProyectos
 go
@@ -11,10 +9,6 @@ CREATE TABLE Usuario (
     RutaAvatar NVARCHAR(MAX) NULL,
     Activo BIT NOT NULL DEFAULT 1
 );
-
--- ===========================================
--- Tabla: TipoResponsable
--- ===========================================
 go
 CREATE TABLE TipoResponsable (
     Id INT IDENTITY(1,1) PRIMARY KEY,
@@ -23,9 +17,6 @@ CREATE TABLE TipoResponsable (
     CONSTRAINT UQ_TipoResponsable_Titulo UNIQUE (Titulo)
 );
 go
--- ===========================================
--- Tabla: Responsable
--- ===========================================
 CREATE TABLE Responsable (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     IdTipoResponsable INT NOT NULL,
@@ -35,9 +26,6 @@ CREATE TABLE Responsable (
     CONSTRAINT FK_Responsable_Usuario FOREIGN KEY (IdUsuario) REFERENCES Usuario(Id) ON DELETE CASCADE
 );
 go
--- ===========================================
--- Tabla: TipoProyecto
--- ===========================================
 CREATE TABLE TipoProyecto (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     Nombre NVARCHAR(150) NOT NULL,
@@ -45,9 +33,6 @@ CREATE TABLE TipoProyecto (
     CONSTRAINT UQ_TipoProyecto_Nombre UNIQUE (Nombre)
 );
 go
--- ===========================================
--- Tabla: Estado
--- ===========================================
 CREATE TABLE Estado (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     Nombre NVARCHAR(50) NOT NULL,
@@ -55,9 +40,6 @@ CREATE TABLE Estado (
     CONSTRAINT UQ_Estado_Nombre UNIQUE (Nombre)
 );
 go
--- ===========================================
--- Tabla: Proyecto
--- ===========================================
 CREATE TABLE Proyecto (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     IdProyectoPadre INT NULL,
@@ -76,9 +58,6 @@ CREATE TABLE Proyecto (
     CONSTRAINT FK_Proyecto_TipoProyecto FOREIGN KEY (IdTipoProyecto) REFERENCES TipoProyecto(Id)
 );
 go
--- ===========================================
--- Tabla: Estado_Proyecto
--- ===========================================
 CREATE TABLE Estado_Proyecto (
     IdProyecto INT PRIMARY KEY,
     IdEstado INT NOT NULL,
@@ -86,9 +65,6 @@ CREATE TABLE Estado_Proyecto (
     CONSTRAINT FK_EstadoProyecto_Estado FOREIGN KEY (IdEstado) REFERENCES Estado(Id)
 );
 go
--- ===========================================
--- Tabla: TipoProducto
--- ===========================================
 CREATE TABLE TipoProducto (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     Nombre NVARCHAR(150) NOT NULL,
@@ -96,9 +72,6 @@ CREATE TABLE TipoProducto (
     CONSTRAINT UQ_TipoProducto_Nombre UNIQUE (Nombre)
 );
 go
--- ===========================================
--- Tabla: Producto
--- ===========================================
 CREATE TABLE Producto (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     IdTipoProducto INT NOT NULL,
@@ -113,9 +86,6 @@ CREATE TABLE Producto (
     CONSTRAINT FK_Producto_TipoProducto FOREIGN KEY (IdTipoProducto) REFERENCES TipoProducto(Id)
 );
 go
--- ===========================================
--- Tabla: Proyecto_Producto (relación N:M)
--- ===========================================
 CREATE TABLE Proyecto_Producto (
     IdProyecto INT NOT NULL,
     IdProducto INT NOT NULL,
@@ -125,9 +95,6 @@ CREATE TABLE Proyecto_Producto (
     CONSTRAINT FK_ProyectoProducto_Producto FOREIGN KEY (IdProducto) REFERENCES Producto(Id) ON DELETE CASCADE
 );
 go
--- ===========================================
--- Tabla: Entregable
--- ===========================================
 CREATE TABLE Entregable (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     Codigo NVARCHAR(50) NULL,
@@ -139,9 +106,6 @@ CREATE TABLE Entregable (
     FechaFinalizacion DATE NULL
 );
 go
--- ===========================================
--- Tabla: Producto_Entregable (relación N:M)
--- ===========================================
 CREATE TABLE Producto_Entregable (
     IdProducto INT NOT NULL,
     IdEntregable INT NOT NULL,
@@ -151,9 +115,6 @@ CREATE TABLE Producto_Entregable (
     CONSTRAINT FK_ProductoEntregable_Entregable FOREIGN KEY (IdEntregable) REFERENCES Entregable(Id) ON DELETE CASCADE
 );
 go
--- ===========================================
--- Tabla: Responsable_Entregable (relación N:M)
--- ===========================================
 CREATE TABLE Responsable_Entregable (
     IdResponsable INT NOT NULL,
     IdEntregable INT NOT NULL,
@@ -163,9 +124,6 @@ CREATE TABLE Responsable_Entregable (
     CONSTRAINT FK_ResponsableEntregable_Entregable FOREIGN KEY (IdEntregable) REFERENCES Entregable(Id) ON DELETE CASCADE
 );
 go
--- ===========================================
--- Tabla: Archivo
--- ===========================================
 CREATE TABLE Archivo (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     IdUsuario INT NOT NULL,
@@ -176,9 +134,6 @@ CREATE TABLE Archivo (
     CONSTRAINT FK_Archivo_Usuario FOREIGN KEY (IdUsuario) REFERENCES Usuario(Id) ON DELETE CASCADE
 );
 go
--- ===========================================
--- Tabla: Archivo_Entregable (relación N:M)
--- ===========================================
 CREATE TABLE Archivo_Entregable (
     IdArchivo INT NOT NULL,
     IdEntregable INT NOT NULL,
@@ -187,9 +142,6 @@ CREATE TABLE Archivo_Entregable (
     CONSTRAINT FK_ArchivoEntregable_Entregable FOREIGN KEY (IdEntregable) REFERENCES Entregable(Id) ON DELETE CASCADE
 );
 go
--- ===========================================
--- Tabla: Actividad
--- ===========================================
 CREATE TABLE Actividad (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     IdEntregable INT NOT NULL,
@@ -204,9 +156,6 @@ CREATE TABLE Actividad (
     CONSTRAINT FK_Actividad_Entregable FOREIGN KEY (IdEntregable) REFERENCES Entregable(Id) ON DELETE CASCADE
 );
 go
--- ===========================================
--- Tabla: Presupuesto
--- ===========================================
 CREATE TABLE Presupuesto (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     IdProyecto INT NOT NULL,
@@ -220,9 +169,6 @@ CREATE TABLE Presupuesto (
     CONSTRAINT FK_Presupuesto_Proyecto FOREIGN KEY (IdProyecto) REFERENCES Proyecto(Id) ON DELETE CASCADE
 );
 go
--- ===========================================
--- Tabla: DistribucionPresupuesto
--- ===========================================
 CREATE TABLE DistribucionPresupuesto (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     IdPresupuestoPadre INT NOT NULL,
@@ -232,9 +178,6 @@ CREATE TABLE DistribucionPresupuesto (
     CONSTRAINT FK_Distribucion_Proyecto FOREIGN KEY (IdProyectoHijo) REFERENCES Proyecto(Id) ON DELETE NO ACTION
 );
 go
--- ===========================================
--- Tabla: EjecucionPresupuesto
--- ===========================================
 CREATE TABLE EjecucionPresupuesto (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     IdPresupuesto INT NOT NULL,
@@ -245,18 +188,12 @@ CREATE TABLE EjecucionPresupuesto (
     CONSTRAINT FK_Ejecucion_Presupuesto FOREIGN KEY (IdPresupuesto) REFERENCES Presupuesto(Id) ON DELETE CASCADE
 );
 go
--- ===========================================
--- Tabla: VariableEstrategica
--- ===========================================
 CREATE TABLE VariableEstrategica (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     Titulo NVARCHAR(255) NOT NULL,
     Descripcion NVARCHAR(MAX) NULL
 );
 go
--- ===========================================
--- Tabla: ObjetivoEstrategico
--- ===========================================
 CREATE TABLE ObjetivoEstrategico (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     IdVariable INT NOT NULL,
@@ -265,9 +202,6 @@ CREATE TABLE ObjetivoEstrategico (
     CONSTRAINT FK_ObjetivoEstrategico_Variable FOREIGN KEY (IdVariable) REFERENCES VariableEstrategica(Id) ON DELETE CASCADE
 );
 go
--- ===========================================
--- Tabla: MetaEstrategica
--- ===========================================
 CREATE TABLE MetaEstrategica (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     IdObjetivo INT NOT NULL,
@@ -276,9 +210,6 @@ CREATE TABLE MetaEstrategica (
     CONSTRAINT FK_MetaEstrategica_Objetivo FOREIGN KEY (IdObjetivo) REFERENCES ObjetivoEstrategico(Id) ON DELETE CASCADE
 );
 go
--- ===========================================
--- Tabla: Meta_Proyecto (relación N:M)
--- ===========================================
 CREATE TABLE Meta_Proyecto (
     IdMeta INT NOT NULL,
     IdProyecto INT NOT NULL,

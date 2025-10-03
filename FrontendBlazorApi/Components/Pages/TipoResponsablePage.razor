@@ -54,7 +54,6 @@
     <div class="mt-3 d-flex flex-wrap gap-2">
         <button type="submit" class="btn btn-primary">@textoBotonGuardar</button>
         <button type="button" class="btn btn-secondary" @onclick="BuscarPorId">Buscar</button>
-        <button type="button" class="btn btn-warning" @onclick="ActualizarTipo" disabled="@(!existeTipo)">Actualizar</button>
         <button type="button" class="btn btn-danger" @onclick="EliminarTipo" disabled="@(!existeTipo)">Eliminar</button>
     </div>
 </EditForm>
@@ -123,7 +122,7 @@ else
         try
         {
             cargando = true;
-            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var cliente = fabricaHttp.CreateClient("ApiSGP");
 
             var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<TipoResponsable>>>(urlBaseApi);
             listaTipos = respuesta?.Datos ?? new();
@@ -155,7 +154,7 @@ else
 
         try
         {
-            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var cliente = fabricaHttp.CreateClient("ApiSGP");
             var ruta = $"{urlBaseApi}/{tipoActual.Id}";
             var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<TipoResponsable>>(ruta);
 
@@ -196,7 +195,7 @@ else
 
         try
         {
-            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var cliente = fabricaHttp.CreateClient("ApiSGP");
             var respuesta = await cliente.PostAsJsonAsync(urlBaseApi, tipoActual);
 
             if (respuesta.IsSuccessStatusCode)
@@ -235,7 +234,7 @@ else
 
         try
         {
-            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var cliente = fabricaHttp.CreateClient("ApiSGP");
             var ruta = $"{urlBaseApi}/{tipoActual.Id}";
             var respuesta = await cliente.PutAsJsonAsync(ruta, tipoActual);
 
@@ -274,7 +273,7 @@ else
 
         try
         {
-            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var cliente = fabricaHttp.CreateClient("ApiSGP");
             var ruta = $"{urlBaseApi}/{tipoActual.Id}";
             var respuesta = await cliente.DeleteAsync(ruta);
 
@@ -305,7 +304,7 @@ else
 
         try
         {
-            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var cliente = fabricaHttp.CreateClient("ApiSGP");
             var respuesta = await cliente.GetAsync(urlBaseApi);
             if (respuesta.IsSuccessStatusCode)
             {
