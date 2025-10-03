@@ -14,7 +14,7 @@
 {
     <div class="@claseAviso" role="alert">@mensaje</div>
 }
-<h4>Formulario de Producto</h4>
+<h4>Formulario de tipos de productos</h4>
 <EditForm Model="tipoProductoActual" OnValidSubmit="GuardarSegunEstado" FormName="TipoProductoForm">
 <DataAnnotationsValidator />
 <ValidationSummary />    
@@ -35,8 +35,8 @@
 <div class="mt-3 d-flex flex-wrap gap-2">
 <button type="submit" class="btn btn-primary">@textoBotonGuardar</button>
 <button type="button" class="btn btn-secondary" @onclick="BuscarPorCodigo">Buscar</button>
-<button type="button" class="btn btn-warning" @onclick="ActualizarTipoProducto" disabled="@(!existeProducto)">Actualizar</button>
-<button type="button" class="btn btn-warning" @onclick="EliminarTipoProducto" disabled="@(!existeProducto)">Eliminar</button>
+<button type="button" class="btn btn-warning" @onclick="ActualizarTipoProducto" disabled="@(!existeTipoProducto)">Actualizar</button>
+<button type="button" class="btn btn-warning" @onclick="EliminarTipoProducto" disabled="@(!existeTipoProducto)">Eliminar</button>
 </div>
 </EditForm>
 
@@ -78,21 +78,32 @@ else
        private List<TipoProducto>? tipoProductos;
        [SupplyParameterFromForm]
        private TipoProducto tipoProductoActual {get;set;} = new();
-       private bool existeProducto = false;
+       private bool existeTipoProducto = false;
        private string textoBotonGuardar = "Crear";
        private string mensaje = "";
        private string claseAviso = "alert alert-info";
        private bool cargando = false;
        private const string urlBaseApi = "api/TipoProducto";
        protected override async Task OnInitializedAsync(){
+             try
+        {
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Models.TipoProducto>>>("api/TipoProducto");
+                tipoProductos = respuesta?.Datos ?? new List<Models.TipoProducto>();
+}
+ catch (Exception error)
+        {
+            Console.WriteLine($"Error al cargar productos: {error.Message}");
+                tipoProductos = new List<Models.TipoProducto>();
+        }
         await CargarTipoProductos();
        }
-       private async Task CargarProductos(){
+       private async Task CargarTipoProductos(){
         try{
             cargando = true;
             var cliente = FabricaHttp.CreateClient("ApiBack");
-            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<TipoProducto>>>(urlBaseApi);
-            tipoProductos = respuesta?.Datos ?? new List<TipoProducto>();
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Models.TipoProducto>>>(urlBaseApi);
+                tipoProductos = respuesta?.Datos ?? new List<Models.TipoProducto>();
             mensaje = $"Se cargaron {tipoProductos.Count} tipo de producto(s)";
             claseAviso = "alert alert-success";
 
@@ -107,29 +118,173 @@ else
        }
        private async Task BuscarPorCodigo(){
         LimpiarMensajes();
-        if(string.IsNullOrWhiteSpace(tipoProductoActual.Id)){
-            mensaje = "Debe indicar el codigo para buscar.";
-            claseAviso = "alert alert-warning"
+        if(tipoProductoActual.Id == 0){
+            mensaje = "Debe indicar el ID para buscar.";
+            claseAviso = "alert alert-warning";
             return;
         }
         try{
-            var cliente = FabricaHttp.CreateClient("ApiBack")
-        }
-       }
-
-        protected override async Task OnInitializedAsync()
-    {
-        try
-        {
             var cliente = FabricaHttp.CreateClient("ApiBack");
-            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<TipoProducto>>>("api/TipoProducto");
-            tipoProductos = respuesta?.Datos ?? new List<TipoProducto>();
-}
- catch (Exception error)
-        {
-            Console.WriteLine($"Error al cargar productos: {error.Message}");
-            tipoProductos = new List<TipoProducto>();
+            var ruta = $"{urlBaseApi}/Id/{tipoProductoActual.Id}";
+            var respuesta =  await cliente.GetFromJsonAsync<RespuestaApi<List<Models.TipoProducto>>>(ruta);
+            var encontrado = respuesta?.Datos?.FirstOrDefault();
+            if(encontrado is not null){
+                    tipoProductoActual = new Models.TipoProducto{
+                    Id = encontrado.Id,
+                    Nombre = encontrado.Nombre,
+                    Descripcion = encontrado.Descripcion
+                };
+                existeTipoProducto = true;
+                textoBotonGuardar = "Actualizar";
+                mensaje = "Tipo de producto cargado en el formulario. ";
+                claseAviso = "alert alert-success";
+            }
+            else{
+                existeTipoProducto = false;
+                textoBotonGuardar = "Crear";
+                mensaje = "Tipo de producto no encontrado";
+                claseAviso = "alert alert-warning";
+            }
         }
+        catch(Exception ex){
+            existeTipoProducto = false;
+            textoBotonGuardar = "Crear";
+            mensaje = $"Error buscando el tipo de producto: {ex.Message}";
+            claseAviso = "alert alert-danger";
         }
+    }
+    private async Task GuardarSegunEstado(){
+        if(existeTipoProducto)
+        await ActualizarTipoProducto();
+        else
+        await CrearTipoProducto();
+    }
+    private async Task CrearTipoProducto(){
+        LimpiarMensajes();
+        try{
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var respuesta = await cliente.PostAsJsonAsync(urlBaseApi, tipoProductoActual);
+            if(respuesta.IsSuccessStatusCode){
+                mensaje = "tipo de producto creado correctamente";
+                claseAviso = "alert alert-success";
+                await CargarTipoProductos();
+                    tipoProductoActual = new Models.TipoProducto();
+                existeTipoProducto = false;
+                textoBotonGuardar = "Crear";
+            }
+            else{
+                var detalle = await respuesta.Content.ReadAsStringAsync();
+                mensaje = $"No se pudo crear el tipo de producto. Detalle: {detalle}";
+                claseAviso = "alert alert-danger";
+
+            }
+        }
+        catch(Exception ex){
+            mensaje = $"Error al crear el tipo de producto: {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
+
+    }
+    private async Task ActualizarTipoProducto(){
+        LimpiarMensajes();
+        if(tipoProductoActual.Id == 0){
+            mensaje = "Debe indicar el ID para actualizar";
+            claseAviso = "alert alert-warning";
+            return;
+
+        }
+        try{
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var ruta = $"{urlBaseApi}/Id/{tipoProductoActual.Id}";
+            var respuesta = await cliente.PutAsJsonAsync(ruta, tipoProductoActual);
+            if(respuesta.IsSuccessStatusCode){
+                mensaje = "tipo de producto actualizado correctamente";
+                claseAviso = "alert alert-success";
+                await CargarTipoProductos();
+                existeTipoProducto = true;
+                textoBotonGuardar = "Actualizar";
+
+            }else{
+                var detalle = await respuesta.Content.ReadAsStringAsync();
+                mensaje = $"No se pudo actualizar el tipo de producto. Detalle: {detalle}";
+                claseAviso = "alert alert-danger";
+            }
+        }
+        catch(Exception ex){
+            mensaje = $"Error al actualizar el tipo de producto: {ex.Message}";
+            claseAviso = "alert alert-danger";
+
+        }
+    }
+    private async Task EliminarTipoProducto(){
+        LimpiarMensajes();
+        if(tipoProductoActual.Id == 0){
+            mensaje = "Debe indicar el ID para eliminar";
+            claseAviso = "alert alert-warning";
+            return;
+        }
+        try{
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var ruta = $"{urlBaseApi}/Id/{tipoProductoActual.Id}";
+            var respuesta = await cliente.DeleteAsync(ruta);
+            if(respuesta.IsSuccessStatusCode){
+                mensaje = "Tipo de producto eliminar correctamente!";
+                claseAviso = "alert alert-success";
+                LimpiarFormulario();
+            }
+            else{
+                var detalle = await respuesta.Content.ReadAsStringAsync();
+                mensaje = $"No se pudo eliminar el tipo de producto. Detalle: {detalle}";
+                claseAviso = "alert alert-danger";
+            }
+        }
+        catch(Exception ex){
+            mensaje = $"Error al eliminar el tipo del producto: {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+    private async Task ProbarConexion(){
+        LimpiarMensajes();
+        try{
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var respuesta = await cliente.GetAsync(urlBaseApi);
+            if(respuesta.IsSuccessStatusCode){
+                mensaje = "Conexión con la API verificada!!!!1111";
+                claseAviso = "alert alert-success";
+            }
+            else{
+                mensaje = $"La api respondió con estado {(int)respuesta.StatusCode}";
+                claseAviso = "alert alert-warning";
+            }
+        }
+        catch(Exception ex){
+            mensaje = $"Error en la conexión a la API: {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+    private void CargarEnFormulario(Models.TipoProducto tp){
+            tipoProductoActual = new Models.TipoProducto{
+            Id = tp.Id,
+            Nombre = tp.Nombre,
+            Descripcion = tp.Descripcion
+        };
+        existeTipoProducto = true;
+        textoBotonGuardar = "Actualizar";
+        mensaje = "Producto seleccionado desde el listado";
+        claseAviso = "alert alert-info";
+    }
+    private void LimpiarMensajes(){
+        mensaje = "";
+        claseAviso = "alert alert-info";
+    }
+    private void LimpiarFormulario(){
+            tipoProductoActual = new Models.TipoProducto();
+        existeTipoProducto = false;
+        textoBotonGuardar = "Crear";
+        LimpiarMensajes();
+    }
+
+
+  
         }
 

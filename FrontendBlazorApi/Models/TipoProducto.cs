@@ -8,8 +8,5 @@ namespace FrontendBlazorApi.Models
         public string Descripcion { get; set; } = string.Empty;
         
     }
-    public class RespuestaApi<T>
-    {
-        public T? Datos { get; set; }
-    }
+    
 }
