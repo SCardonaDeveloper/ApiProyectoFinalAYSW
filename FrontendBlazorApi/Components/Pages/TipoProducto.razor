@@ -1,3 +1,5 @@
+@page "/TipoProducto"
+
 @using System.Net.Http.Json;
 @using FrontendBlazorApi.Models;
 @inject IHttpClientFactory FabricaHttp;
@@ -21,9 +23,9 @@
     <tbody>
     @foreach(var p in tipoProductos){
         <tr>
-        <td>@p.Id</td>
+        @* <td>@p.Id</td>
         <td>@p.Nombre</td>
-        <td>@p.Descripcion</td>
+        <td>@p.Descripcion</td> *@
         </tr>
     }
     </tbody>

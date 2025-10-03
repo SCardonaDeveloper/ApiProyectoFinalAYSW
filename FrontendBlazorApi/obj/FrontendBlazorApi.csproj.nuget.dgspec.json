@@ -1,24 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Hogar\\Documents\\Juan\\ESTUDIO\\ITM\\Semestre6\\Aplicación y Servicios Web\\EntregaProyecto 1\\ApiProyectoFinalAYSW\\FrontendBlazorApi\\FrontendBlazorApi.csproj": {}
+    "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\FrontendBlazorApi\\FrontendBlazorApi.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Hogar\\Documents\\Juan\\ESTUDIO\\ITM\\Semestre6\\Aplicación y Servicios Web\\EntregaProyecto 1\\ApiProyectoFinalAYSW\\FrontendBlazorApi\\FrontendBlazorApi.csproj": {
+    "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\FrontendBlazorApi\\FrontendBlazorApi.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Hogar\\Documents\\Juan\\ESTUDIO\\ITM\\Semestre6\\Aplicación y Servicios Web\\EntregaProyecto 1\\ApiProyectoFinalAYSW\\FrontendBlazorApi\\FrontendBlazorApi.csproj",
+        "projectUniqueName": "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\FrontendBlazorApi\\FrontendBlazorApi.csproj",
         "projectName": "FrontendBlazorApi",
-        "projectPath": "C:\\Users\\Hogar\\Documents\\Juan\\ESTUDIO\\ITM\\Semestre6\\Aplicación y Servicios Web\\EntregaProyecto 1\\ApiProyectoFinalAYSW\\FrontendBlazorApi\\FrontendBlazorApi.csproj",
-        "packagesPath": "C:\\Users\\Hogar\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Hogar\\Documents\\Juan\\ESTUDIO\\ITM\\Semestre6\\Aplicación y Servicios Web\\EntregaProyecto 1\\ApiProyectoFinalAYSW\\FrontendBlazorApi\\obj\\",
+        "projectPath": "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\FrontendBlazorApi\\FrontendBlazorApi.csproj",
+        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+        "outputPath": "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\FrontendBlazorApi\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\Hogar\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -69,7 +65,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.301/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

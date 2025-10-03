@@ -1,6 +1,6 @@
 ﻿<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">FrontendBlazorApi</a>
+        <a class="navbar-brand" href="">Gestión de proyectos</a>
         <button title="Toggle navigation" class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -11,30 +11,91 @@
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="nav flex-column">
+
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            <NavLink class="nav-link" href="">
+                <div class="d-flex align-items-center">
+                    <i class="bi-house-door-fill"></i>
+                    <span class="etiqueta">Inicio</span>
+                </div>
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+            <NavLink class="nav-link" href="Usuarios">
+                <div class="d-flex align-items-center">
+                    <i class="bi-person-circle"></i>
+                    <span class="etiqueta">Usuarios</span>
+                </div>
             </NavLink>
         </div>
- <NavLink class="nav-link" href="productos">
-        <span class="oi oi-list-rich" aria-hidden="true"></span> Tipos de Productos
-    </NavLink>
 
         <div class="nav-item px-3">
-            
+            <NavLink class="nav-link" href="TipoResponsables">
+                <div class="d-flex align-items-center">
+                    <i class="bi-people-fill"></i>
+                    <span class="etiqueta" style="white-space: nowrap;">Tipos de responsables</span>
+                </div>
+            </NavLink>
         </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="TipoProyectos">
+                <div class="d-flex align-items-center">
+                    <i class="bi-kanban"></i>
+                    <span class="etiqueta" style="white-space: nowrap;">Tipos de proyectos</span>
+                </div>
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Estados">
+                <div class="d-flex align-items-center">
+                    <i class="bi-list-nested"></i>
+                    <span class="etiqueta">Estados</span>
+                </div>
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="TipoProductos">
+                <div class="d-flex align-items-center">
+                    <i class="bi-list-nested"></i>
+                    <span class="etiqueta" style="white-space: nowrap;">Tipos de Productos</span>
+                </div>
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Entregables">
+                <div class="d-flex align-items-center">
+                    <i class="bi-list-nested"></i>
+                    <span class="etiqueta">Entregables</span>
+                </div>
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="VariablesEstrategicas">
+                <div class="d-flex align-items-center">
+                    <i class="bi-list-nested"></i>
+                    <span class="etiqueta" style="white-space: nowrap;">Variable Estrategica</span>
+                </div>
+            </NavLink>
+        </div>
+
+
+        @* 
+        <div class="nav-item px-3">
+
+        </div> *@
     </nav>
 </div>
-@code{
+@code {
     private bool colapsado = true;
     private string? NavMenuCssClass => colapsado ? "collapse" : null;
-    private void ToggleNavMenu(){
+    private void ToggleNavMenu()
+    {
         colapsado = !colapsado;
     }
 }
