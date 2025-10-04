@@ -1,0 +1,363 @@
+@page "/usuariosPage"
+
+@* 
+    Página de gestión de usuarios con CRUDL completo contra la API real.
+    - Listar:      GET    /api/usuario
+    - Buscar:      GET    /api/usuario/{id}
+    - Crear:       POST   /api/usuario
+    - Actualizar:  PUT    /api/usuario/{id}
+    - Eliminar:    DELETE /api/usuario/{id}
+*@
+
+@using System.Net.Http.Json
+@using FrontendBlazorApi.Models
+@inject IHttpClientFactory fabricaHttp
+
+<PageTitle>Usuarios</PageTitle>
+
+<h3>Gestión de Usuarios</h3>
+
+@* ------------- Barra de acciones generales ------------- *@
+<div class="mb-3 d-flex gap-2">
+    <button class="btn btn-outline-secondary" @onclick="ProbarConexion">Probar conexión</button>
+    <button class="btn btn-outline-primary" @onclick="CargarUsuarios">Mostrar todos</button>
+    <button class="btn btn-outline-dark" @onclick="LimpiarFormulario">Limpiar</button>
+</div>
+
+@* ------------- Mensajes de estado ------------- *@
+@if (!string.IsNullOrWhiteSpace(mensaje))
+{
+    <div class="@claseAviso" role="alert">@mensaje</div>
+}
+
+@* ------------- Formulario CRUD ------------- *@
+<h4>Formulario de Usuario</h4>
+
+<EditForm Model="usuarioActual" OnValidSubmit="GuardarSegunEstado">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="row g-3">
+        <div class="col-md-2">
+            <label class="form-label">Id</label>
+            <InputNumber class="form-control" @bind-Value="usuarioActual.Id" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Email</label>
+            <InputText class="form-control" @bind-Value="usuarioActual.Email" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Contraseña</label>
+            <InputText class="form-control" type="password" @bind-Value="usuarioActual.Contrasena" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Activo</label>
+            <InputCheckbox class="form-check-input" @bind-Value="usuarioActual.Activo" />
+        </div>
+    </div>
+
+    <div class="mt-3 d-flex flex-wrap gap-2">
+        <button type="submit" class="btn btn-primary">@textoBotonGuardar</button>
+        <button type="button" class="btn btn-secondary" @onclick="BuscarPorId">Buscar</button>
+        <button type="button" class="btn btn-danger" @onclick="EliminarUsuario" disabled="@(!existeUsuario)">Eliminar</button>
+    </div>
+</EditForm>
+
+<hr />
+
+@* ------------- Listado (Read/List) ------------- *@
+@if (cargando)
+{
+    <p><em>Cargando usuarios...</em></p>
+}
+else if (listaUsuarios.Count == 0)
+{
+    <p>No hay usuarios disponibles.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Email</th>
+                <th>Activo</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in listaUsuarios)
+            {
+                <tr @onclick="@(() => CargarEnFormulario(u))" style="cursor:pointer">
+                    <td>@u.Id</td>
+                    <td>@u.Email</td>
+                    <td>@(u.Activo ? "Sí" : "No")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    // ---------------------------
+    // Estado de la pantalla
+    // ---------------------------
+    private List<Usuario> listaUsuarios = new();
+    private Usuario usuarioActual = new();
+    private bool existeUsuario = false;
+    private string textoBotonGuardar = "Crear";
+    private string mensaje = "";
+    private string claseAviso = "alert alert-info";
+    private bool cargando = false;
+    private const string urlBaseApi = "api/usuario";
+
+    // ---------------------------
+    // Ciclo de vida
+    // ---------------------------
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarUsuarios();
+    }
+
+    // ---------------------------
+    // Acciones CRUDL
+    // ---------------------------
+
+    private async Task CargarUsuarios()
+    {
+        try
+        {
+            cargando = true;
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Usuario>>>(urlBaseApi);
+            listaUsuarios = respuesta?.Datos ?? new List<Usuario>();
+
+            mensaje = $"Se cargaron {listaUsuarios.Count} usuario(s).";
+            claseAviso = "alert alert-success";
+        }
+        catch (Exception error)
+        {
+            mensaje = $"Error al listar usuarios: {error.Message}";
+            claseAviso = "alert alert-danger";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task BuscarPorId()
+    {
+        LimpiarMensajes();
+
+        if (usuarioActual.Id <= 0)
+        {
+            mensaje = "Debe indicar un Id válido para buscar.";
+            claseAviso = "alert alert-warning";
+            return;
+        }
+
+        try
+        {
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var ruta = $"{urlBaseApi}/{usuarioActual.Id}";
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<Usuario>>(ruta);
+
+            if (respuesta?.Datos is not null)
+            {
+                usuarioActual = respuesta.Datos;
+                existeUsuario = true;
+                textoBotonGuardar = "Actualizar";
+                mensaje = "Usuario cargado en el formulario.";
+                claseAviso = "alert alert-success";
+            }
+            else
+            {
+                existeUsuario = false;
+                textoBotonGuardar = "Crear";
+                mensaje = "Usuario no encontrado.";
+                claseAviso = "alert alert-warning";
+            }
+        }
+        catch (Exception error)
+        {
+            mensaje = $"Error al buscar usuario: {error.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    private async Task GuardarSegunEstado()
+    {
+        if (existeUsuario)
+            await ActualizarUsuario();
+        else
+            await CrearUsuario();
+    }
+
+    private async Task CrearUsuario()
+    {
+        LimpiarMensajes();
+
+        try
+        {
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var respuesta = await cliente.PostAsJsonAsync(urlBaseApi, usuarioActual);
+
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensaje = "Usuario creado correctamente.";
+                claseAviso = "alert alert-success";
+                await CargarUsuarios();
+                usuarioActual = new Usuario();
+                existeUsuario = false;
+                textoBotonGuardar = "Crear";
+            }
+            else
+            {
+                var detalle = await respuesta.Content.ReadAsStringAsync();
+                mensaje = $"No se pudo crear el usuario. Detalle: {detalle}";
+                claseAviso = "alert alert-danger";
+            }
+        }
+        catch (Exception error)
+        {
+            mensaje = $"Error al crear usuario: {error.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    private async Task ActualizarUsuario()
+    {
+        LimpiarMensajes();
+
+        if (usuarioActual.Id <= 0)
+        {
+            mensaje = "Debe indicar un Id válido para actualizar.";
+            claseAviso = "alert alert-warning";
+            return;
+        }
+
+        try
+        {
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var ruta = $"{urlBaseApi}/{usuarioActual.Id}";
+            var respuesta = await cliente.PutAsJsonAsync(ruta, usuarioActual);
+
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensaje = "Usuario actualizado correctamente.";
+                claseAviso = "alert alert-success";
+                await CargarUsuarios();
+                existeUsuario = true;
+                textoBotonGuardar = "Actualizar";
+            }
+            else
+            {
+                var detalle = await respuesta.Content.ReadAsStringAsync();
+                mensaje = $"No se pudo actualizar el usuario. Detalle: {detalle}";
+                claseAviso = "alert alert-danger";
+            }
+        }
+        catch (Exception error)
+        {
+            mensaje = $"Error al actualizar usuario: {error.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    private async Task EliminarUsuario()
+    {
+        LimpiarMensajes();
+
+        if (usuarioActual.Id <= 0)
+        {
+            mensaje = "Debe indicar un Id válido para eliminar.";
+            claseAviso = "alert alert-warning";
+            return;
+        }
+
+        try
+        {
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var ruta = $"{urlBaseApi}/{usuarioActual.Id}";
+            var respuesta = await cliente.DeleteAsync(ruta);
+
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensaje = "Usuario eliminado correctamente.";
+                claseAviso = "alert alert-success";
+                await CargarUsuarios();
+                LimpiarFormulario();
+            }
+            else
+            {
+                var detalle = await respuesta.Content.ReadAsStringAsync();
+                mensaje = $"No se pudo eliminar el usuario. Detalle: {detalle}";
+                claseAviso = "alert alert-danger";
+            }
+        }
+        catch (Exception error)
+        {
+            mensaje = $"Error al eliminar usuario: {error.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    private async Task ProbarConexion()
+    {
+        LimpiarMensajes();
+
+        try
+        {
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var respuesta = await cliente.GetAsync(urlBaseApi);
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensaje = "Conexión con la API verificada.";
+                claseAviso = "alert alert-success";
+            }
+            else
+            {
+                mensaje = $"La API respondió con estado {(int)respuesta.StatusCode}.";
+                claseAviso = "alert alert-warning";
+            }
+        }
+        catch (Exception error)
+        {
+            mensaje = $"Error de conexión a la API: {error.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    // ---------------------------
+    // Utilitarios de la vista
+    // ---------------------------
+
+    private void CargarEnFormulario(Usuario u)
+    {
+        usuarioActual = new Usuario
+        {
+            Id = u.Id,
+            Email = u.Email,
+            Contrasena = u.Contrasena,
+            Activo = u.Activo
+        };
+        existeUsuario = true;
+        textoBotonGuardar = "Actualizar";
+        mensaje = "Usuario seleccionado desde el listado.";
+        claseAviso = "alert alert-info";
+    }
+
+    private void LimpiarMensajes()
+    {
+        mensaje = "";
+        claseAviso = "alert alert-info";
+    }
+
+    private void LimpiarFormulario()
+    {
+        usuarioActual = new Usuario();
+        existeUsuario = false;
+        textoBotonGuardar = "Crear";
+    }
+}

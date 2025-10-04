@@ -84,9 +84,6 @@ D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiP
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.csproj.CoreCompileInputs.cache
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.MvcApplicationPartsAssemblyInfo.cache
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.sourcelink.json
-D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.dll
-D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\refint\FrontendBlazorApi.dll
-D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.pdb
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\bin\Debug\net9.0\appsettings.Development.json
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\bin\Debug\net9.0\appsettings.json
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\bin\Debug\net9.0\FrontendBlazorApi.staticwebassets.runtime.json
@@ -148,11 +145,14 @@ D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiP
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\compressed\ka5cs7fc2z-h1s4sie4z3.gz
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\compressed\7co9tixpj8-4d85u1mtcx.gz
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\compressed\jf07jwasvu-0j3bgjxly4.gz
+D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\compressed\p9qfri4flf-ygyunp45wr.gz
+D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\compressed\oj55z46223-ygyunp45wr.gz
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\staticwebassets.build.json
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\staticwebassets.build.json.cache
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\staticwebassets.development.json
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\staticwebassets.build.endpoints.json
+D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.dll
+D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\refint\FrontendBlazorApi.dll
+D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.pdb
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.genruntimeconfig.cache
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\ref\FrontendBlazorApi.dll
-D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\compressed\p9qfri4flf-ygyunp45wr.gz
-D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\compressed\oj55z46223-ygyunp45wr.gz

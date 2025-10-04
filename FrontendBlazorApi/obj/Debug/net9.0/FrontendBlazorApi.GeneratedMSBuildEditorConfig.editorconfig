@@ -40,8 +40,16 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xIb21lLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[D:/Universidad Jhorman/Aplicaciones y servicios Web/Proyectos/Proyecto Aula/ApiProyectoFinalAYSW/FrontendBlazorApi/Components/Pages/TipoProducto.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xUaXBvUHJvZHVjdG8ucmF6b3I=
+[D:/Universidad Jhorman/Aplicaciones y servicios Web/Proyectos/Proyecto Aula/ApiProyectoFinalAYSW/FrontendBlazorApi/Components/Pages/TipoProductoPage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xUaXBvUHJvZHVjdG9QYWdlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universidad Jhorman/Aplicaciones y servicios Web/Proyectos/Proyecto Aula/ApiProyectoFinalAYSW/FrontendBlazorApi/Components/Pages/TipoResponsablePage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xUaXBvUmVzcG9uc2FibGVQYWdlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[D:/Universidad Jhorman/Aplicaciones y servicios Web/Proyectos/Proyecto Aula/ApiProyectoFinalAYSW/FrontendBlazorApi/Components/Pages/UsuarioPage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xVc3VhcmlvUGFnZS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [D:/Universidad Jhorman/Aplicaciones y servicios Web/Proyectos/Proyecto Aula/ApiProyectoFinalAYSW/FrontendBlazorApi/Components/Pages/Usuarios.razor]
