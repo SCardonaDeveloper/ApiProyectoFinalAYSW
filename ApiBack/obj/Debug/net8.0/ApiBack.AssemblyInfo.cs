@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ApiBack")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5e0ed43e216fc62fb03187bc178d1de91199f653")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+471767d6a54b78fa77d1b95eb739d2e24afcd4a2")]
 [assembly: System.Reflection.AssemblyProductAttribute("ApiBack")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ApiBack")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
