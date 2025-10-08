@@ -28,6 +28,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDb3VudGVyLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/Daniel/Desktop/ApiProyectoFinalAYSW/ApiProyectoFinalAYSW/FrontendBlazorApi/Components/Pages/Entregables.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xFbnRyZWdhYmxlcy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/Daniel/Desktop/ApiProyectoFinalAYSW/ApiProyectoFinalAYSW/FrontendBlazorApi/Components/Pages/Error.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xFcnJvci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
@@ -42,6 +46,18 @@ build_metadata.AdditionalFiles.CssScope =
 
 [C:/Users/Daniel/Desktop/ApiProyectoFinalAYSW/ApiProyectoFinalAYSW/FrontendBlazorApi/Components/Pages/TipoResponsablePage.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xUaXBvUmVzcG9uc2FibGVQYWdlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Daniel/Desktop/ApiProyectoFinalAYSW/ApiProyectoFinalAYSW/FrontendBlazorApi/Components/Pages/UsuarioPage.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xVc3VhcmlvUGFnZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Daniel/Desktop/ApiProyectoFinalAYSW/ApiProyectoFinalAYSW/FrontendBlazorApi/Components/Pages/Usuarios.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xVc3Vhcmlvcy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Daniel/Desktop/ApiProyectoFinalAYSW/ApiProyectoFinalAYSW/FrontendBlazorApi/Components/Pages/VariablesEstrategicas.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xWYXJpYWJsZXNFc3RyYXRlZ2ljYXMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/Daniel/Desktop/ApiProyectoFinalAYSW/ApiProyectoFinalAYSW/FrontendBlazorApi/Components/Routes.razor]

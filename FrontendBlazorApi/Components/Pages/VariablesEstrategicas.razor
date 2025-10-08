@@ -1,0 +1,588 @@
+@page "/VariablesEstrategicas"
+
+@* 
+    DIRECTIVAS DE BLAZOR:
+    - @page: Define la ruta URL para acceder a este componente
+    - @using: Importa namespaces para usar clases sin escribir el namespace completo
+    - @inject: Inyecta servicios registrados en el contenedor de dependencias
+    - @rendermode: CRÍTICO - Hace que el componente sea interactivo desde el inicio,
+                   sin esto, los botones no funcionan debido al prerendering
+*@
+
+@using System.Net.Http.Json
+@using FrontendBlazorApi.Models
+@using System.Text.Json.Serialization
+@inject IHttpClientFactory fabricaHttp
+@rendermode InteractiveServer
+
+<PageTitle>Variables Estrategica</PageTitle>
+
+<h3>Gestión de Variables Estrategicas</h3>
+
+@* ------------- BARRA DE ACCIONES GENERALES ------------- 
+    Botones que no están relacionados con el formulario específico
+*@
+<div class="mb-3 d-flex gap-2">
+    @* type="button" evita que estos botones hagan submit del formulario *@
+    @* <button type="button" class="btn btn-outline-secondary" @onclick="ProbarConexion">Probar conexión</button> *@
+    <button type="button" class="btn btn-outline-primary" @onclick="Cargar_Variable_Estrategica">Cargar
+        variables</button>
+    <button type="button" class="btn btn-outline-dark" @onclick="LimpiarFormulario">Limpiar formulario</button>
+</div>
+
+@* ------------- MENSAJES DE ESTADO ------------- 
+    Muestra mensajes de éxito, error o información al variables estrategica
+    Se usa renderizado condicional (@if) para mostrar solo cuando hay mensaje
+*@
+@if (!string.IsNullOrWhiteSpace(mensaje))
+{
+    @* La clase CSS viene de la variable claseAviso que cambia según el tipo de mensaje *@
+    <div class="@claseAviso" role="alert">@mensaje</div>
+}
+
+@* ------------- FORMULARIO CRUD ------------- 
+    EditForm: Componente de Blazor para formularios con validación
+    - Model: El objeto que se vincula al formulario
+    - OnValidSubmit: Método que se ejecuta cuando el formulario es válido y se envía
+    - FormName: CRÍTICO - Requerido en Blazor Server para identificar formularios únicos
+*@
+<h4>Formulario de Variables Estrategicas</h4>
+
+<EditForm Model="variable_estrategica_actual" OnValidSubmit="GuardarSegunEstado" FormName="Variable_Estrategica_Form">
+    @* Componentes de validación automática *@
+    <DataAnnotationsValidator /> @* Habilita validación basada en atributos *@
+    <ValidationSummary /> @* Muestra resumen de errores de validación *@
+
+    @* Grid responsivo de Bootstrap para organizar los campos *@
+    <div class="row g-5">
+        <div class="col-md-1">
+            <label class="form-label">Id</label>
+            @* 
+                InputText: Componente de Blazor para campos de texto
+                @bind-Value: Vinculación bidireccional (two-way binding)
+                - Cuando el variable_estrategica_ escribe, actualiza variable_estrategica_actual.Codigo
+                - Cuando el código cambia por programa, actualiza el campo visual
+            *@
+            @if (existe_variable_estrategica)
+            {
+                <InputNumber class="form-control" @bind-Value="variable_estrategica_actual.Id" readonly />
+            }
+            else
+            {
+                <InputNumber class="form-control" @bind-Value="variable_estrategica_actual.Id" />
+            }
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Titulo</label>
+            <InputText class="form-control" @bind-Value="variable_estrategica_actual.Titulo" />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Descripcion</label>
+            <InputText class="form-control" @bind-Value="variable_estrategica_actual.Descripcion" />
+        </div>
+
+    </div>
+
+    <div class="mt-3 d-flex flex-wrap gap-2">
+        @* 
+            type="submit": Este botón envía el formulario y ejecuta OnValidSubmit
+            El texto cambia dinámicamente entre "Crear" y "Actualizar"
+        *@
+        <button type="button" class="btn btn-primary" @onclick="GuardarSegunEstado">@textoBotonGuardar</button>
+
+        @* 
+            type="button": Botones que NO envían el formulario
+            @onclick: Especifica el método C# que se ejecuta al hacer clic
+            disabled: Atributo dinámico que habilita/deshabilita según condiciones
+        *@
+        <button type="button" class="btn btn-secondary" @onclick="BuscarPorId">Buscar</button>
+        @* <button type="button" class="btn btn-warning" @onclick="ActualizarVariable_Estrategica_"
+            disabled="@(!existe_variable_estrategica)">Actualizar</button> *@
+        <button type="button" class="btn btn-danger" @onclick="Eliminar_Variable_Estrategica"
+            disabled="@(!existe_variable_estrategica)">Eliminar</button>
+    </div>
+</EditForm>
+
+<hr />
+
+@* ------------- LISTADO (READ/LIST) ------------- 
+    Muestra los variable_estrategica_s en una tabla con renderizado condicional
+*@
+
+@* Renderizado condicional: muestra diferentes contenidos según el estado *@
+@if (cargando)
+{
+    <p><em>Cargando Variable Estrategica...</em></p>
+}
+else if (lista_variable_estrategica.Count == 0)
+{
+    <p>No hay Variables disponibles.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Titulo</th>
+                <th>Descripcion</th>
+            </tr>
+        </thead>
+        <tbody>
+            @* 
+                @foreach: Itera sobre la lista y genera HTML para cada elemento
+                Cada variable_estrategica_ (u) se renderiza como una fila
+            *@
+            @foreach (var e in lista_variable_estrategica)
+            {
+                <tr>
+                    @* @ permite usar variables C# dentro de HTML *@
+                    <td>@e.Id</td>
+                    <td>@e.Titulo</td>
+                    <td>@e.Descripcion</td>
+                    <td>
+                        @* 
+                            @(() => método(parámetro)): Lambda expression para pasar parámetros
+                            Cada botón "sabe" qué variable_estrategica_ cargar en el formulario
+                        *@
+                        <button type="button" class="btn btn-sm btn-outline-primary" @onclick="@(() => CargarEnFormulario(e))">
+                            Cargar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    // =============================================================================
+    // VARIABLES DE ESTADO DEL COMPONENTE
+    // =============================================================================
+
+    // Lista que contiene todos los variable_estrategica_s para mostrar en la tabla
+    private List<VariableEstrategica> lista_variable_estrategica = new();
+
+    // CRÍTICO: [SupplyParameterFromForm]
+    // Este atributo le dice a Blazor que esta propiedad se llena desde el formulario
+    // Sin esto, el formulario no funciona correctamente en Blazor Server
+    [SupplyParameterFromForm]
+    private VariableEstrategica variable_estrategica_actual { get; set; } = new();
+
+    // Bandera que indica si el variable_estrategica_ en el formulario ya existe en la base de datos
+    // Determina si el botón principal dice "Crear" o "Actualizar"
+    private bool existe_variable_estrategica = false;
+
+    // Texto dinámico del botón principal
+    private string textoBotonGuardar = "Crear";
+
+    // Variables para mostrar mensajes al variable_estrategica_
+    private string mensaje = "";
+    private string claseAviso = "alert alert-info"; // Clase CSS Bootstrap para el tipo de mensaje
+
+    // Indicador visual de carga para mejorar UX
+    private bool cargando = false;
+
+    // URL base de la API - se complementa con la BaseAddress configurada en Program.cs
+    private const string urlBaseApi = "api/VariableEstrategica";
+
+    // =============================================================================
+    // MÉTODOS DEL CICLO DE VIDA DEL COMPONENTE
+    // =============================================================================
+
+    /// <summary>
+    /// Se ejecuta automáticamente cuando el componente se inicializa
+    /// Es async porque necesita esperar la carga de datos de la API
+    /// </summary>
+    protected override async Task OnInitializedAsync()
+    {
+        await Cargar_Variable_Estrategica();
+    }
+
+    // =============================================================================
+    // OPERACIONES CRUDL (CREATE, READ, UPDATE, DELETE, LIST)
+    // =============================================================================
+
+    /// <summary>
+    /// LISTAR: Obtiene todos los variable_estrategica_s de la API
+    /// HTTP GET /api/variable_estrategica_
+    /// </summary>
+    private async Task Cargar_Variable_Estrategica()
+    {
+        try
+        {
+            // Indica que está cargando para mostrar mensaje al variable_estrategica_
+            cargando = true;
+
+            // Crea un cliente HTTP configurado (ver Program.cs)
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+
+            // GetFromJsonAsync: Hace GET y deserializa automáticamente el JSON
+            // RespuestaApi<List<variable_estrategica_>>: Tipo genérico que mapea la estructura de respuesta
+            var respuesta = await
+            cliente.GetFromJsonAsync<RespuestaApiVariable<List<VariableEstrategica>>>(urlBaseApi);
+
+            // Operador null-coalescing (??) para manejar respuestas nulas
+            lista_variable_estrategica = respuesta?.Datos ?? new List<VariableEstrategica>();
+
+            // Mensaje de éxito
+            mensaje = $"Se cargaron {lista_variable_estrategica.Count} variable(s).";
+            claseAviso = "alert alert-success";
+
+        }
+        catch (Exception error)
+        {
+            // Manejo de errores con mensaje para el variable_estrategica_
+            mensaje = $"Error al listar variables: {error.Message}";
+            claseAviso = "alert alert-danger";
+        }
+        finally
+        {
+            // Finally garantiza que siempre se ejecute, incluso si hay error
+            cargando = false;
+        }
+    }
+
+    /// <summary>
+    /// BUSCAR: Busca un variable_estrategica_ específico por código
+    /// HTTP GET /api/variable_estrategica_/codigo/{codigo}
+    /// </summary>
+    private async Task BuscarPorId()
+    {
+        LimpiarMensajes();
+
+        // Validación de entrada
+        if (string.IsNullOrWhiteSpace(variable_estrategica_actual.Id.ToString()))
+        {
+            mensaje = "Debe indicar el id para buscar.";
+            claseAviso = "alert alert-warning";
+            return; // Sale del método sin hacer la consulta
+        }
+
+        try
+        {
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+
+            // Construcción dinámica de la URL con el código
+            var ruta = $"{urlBaseApi}/id/{variable_estrategica_actual.Id}";
+            var respuestaHttp = await cliente.GetAsync(ruta);
+
+            RespuestaApiVariable<List<VariableEstrategica>>? respuesta = null;
+            // Si la respuesta es nula, inicializa una instancia vacía para evitar errores de referencia nula
+            if (respuestaHttp == null)
+            {
+                respuesta = new RespuestaApiVariable<List<VariableEstrategica>>
+                {
+                    Datos = new
+                List<VariableEstrategica>()
+                };
+            }
+            if (respuestaHttp != null && respuestaHttp.IsSuccessStatusCode)
+            {
+                respuesta = await
+                respuestaHttp.Content.ReadFromJsonAsync<RespuestaApiVariable<List<VariableEstrategica>>>();
+            }
+            else if (respuestaHttp != null && respuestaHttp.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                // Si es 404, simula respuesta vacía para que el flujo continúe normalmente
+                respuesta = new RespuestaApiVariable<List<VariableEstrategica>>
+                {
+                    Datos = new
+                List<VariableEstrategica>()
+                };
+            }
+            else
+            {
+                // Otros errores HTTP
+                respuesta = null;
+            }
+
+            // FirstOrDefault: Toma el primer elemento o null si no hay elementos
+            var encontrado = respuesta?.Datos?.FirstOrDefault();
+
+            if (encontrado is not null)
+            {
+                // ENCONTRADO: Carga los datos en el formulario
+                variable_estrategica_actual = new VariableEstrategica
+                {
+                    Id = encontrado.Id,
+                    Titulo = encontrado.Titulo,
+                    Descripcion = encontrado.Descripcion
+
+                };
+                existe_variable_estrategica = true;
+                textoBotonGuardar = "Actualizar";
+                mensaje = "Variable Estrategica cargada en el formulario.";
+                claseAviso = "alert alert-success";
+            }
+            else
+            {
+                // NO ENCONTRADO: Resetea el estado a "crear"
+                existe_variable_estrategica = false;
+                textoBotonGuardar = "Crear";
+                mensaje = "Variable Estrategica no encontrada.";
+                claseAviso = "alert alert-warning";
+            }
+        }
+        catch (Exception error)
+        {
+            // Error: Resetea a estado seguro
+            existe_variable_estrategica = false;
+            textoBotonGuardar = "Crear";
+            mensaje = $"Error al buscar variable: {error.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    /// <summary>
+    /// /// LÓGICA INTELIGENTE: Decide si crear o actualizar según el estado
+    /// Se ejecuta cuando se envía el formulario (OnValidSubmit)
+    /// </summary>
+    private async Task GuardarSegunEstado()
+    {
+        if (existe_variable_estrategica)
+            await Actualizar_Variable_Estrategica();
+        else
+            await Crear_Variable_Estrategica();
+    }
+
+    /// <summary>
+    /// CREAR: Crea un nuevo variable_estrategica_
+    /// HTTP POST /api/variable_estrategica_
+    /// </summary>
+    private async Task Crear_Variable_Estrategica()
+    {
+        LimpiarMensajes();
+
+        try
+        {
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+
+            VariableEstrategicaTratar variable_estrategica = new()
+            {
+                // Id no se envía porque es autogenerado por la base de datos
+
+            };
+
+            // PostAsJsonAsync: Serializa el objeto a JSON y hace POST
+            var respuesta = await cliente.PostAsJsonAsync(urlBaseApi, variable_estrategica);
+
+            // IsSuccessStatusCode: Verifica códigos HTTP 200-299
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensaje = "Variable Estrategica creada correctamente.";
+                claseAviso = "alert alert-success";
+
+                // Refresca la lista para mostrar el nuevo variable_estrategica_
+                await Cargar_Variable_Estrategica();
+
+                // Limpia el formulario para una nueva creación
+                variable_estrategica_actual = new VariableEstrategica();
+                existe_variable_estrategica = false;
+                textoBotonGuardar = "Crear";
+            }
+            else
+            {
+                // Error HTTP: Lee el detalle del error
+                var detalle = await respuesta.Content.ReadAsStringAsync();
+                mensaje = $"No se pudo crear la variable. Detalle: {detalle}";
+                claseAviso = "alert alert-danger";
+            }
+        }
+        catch (Exception error)
+        {
+            mensaje = $"Error al crear variable: {error.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    /// <summary>
+    /// ACTUALIZAR: Actualiza un variable_estrategica_ existente
+    /// HTTP PUT /api/variable_estrategica_/codigo/{codigo}
+    /// </summary>
+    private async Task Actualizar_Variable_Estrategica()
+    {
+        LimpiarMensajes();
+
+        if (string.IsNullOrWhiteSpace(variable_estrategica_actual.Id.ToString()))
+        {
+            mensaje = "Debe indicar el id para actualizar.";
+            claseAviso = "alert alert-warning";
+            return;
+        }
+
+        try
+        {
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+
+            VariableEstrategicaTratar variable_estrategica = new()
+            {
+                // Id no se envía porque es autogenerado por la base de datos
+                Titulo = variable_estrategica_actual.Titulo,
+                Descripcion = variable_estrategica_actual.Descripcion
+
+            };
+
+            // PUT requiere el código en la URL y el objeto completo en el body
+            var ruta = $"{urlBaseApi}/id/{variable_estrategica_actual.Id}";
+            var respuesta = await cliente.PutAsJsonAsync(ruta, variable_estrategica);
+
+            if (respuesta.IsSuccessStatusCode)
+            {
+
+                // Refresca la lista para mostrar los cambios
+                await Cargar_Variable_Estrategica();
+
+                mensaje = "Variable Estrategica actualizada correctamente.";
+                claseAviso = "alert alert-success";
+
+                // Mantiene el variable_estrategica_ en el formulario (no limpia)
+                existe_variable_estrategica = true;
+                textoBotonGuardar = "Actualizar";
+            }
+            else
+            {
+                var detalle = await respuesta.Content.ReadAsStringAsync();
+                mensaje = $"No se pudo actualizar la variable. Detalle: {detalle}";
+                claseAviso = "alert alert-danger";
+            }
+        }
+        catch (Exception error)
+        {
+            mensaje = $"Error al actualizar la variable: {error.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    /// <summary>
+    /// ELIMINAR: Elimina un variable_estrategica_ existente
+    /// HTTP DELETE /api/variable_estrategica_/codigo/{codigo}
+    /// </summary>
+    private async Task Eliminar_Variable_Estrategica()
+    {
+        LimpiarMensajes();
+
+        if (string.IsNullOrWhiteSpace(variable_estrategica_actual.Id.ToString()))
+        {
+            mensaje = "Debe indicar el id para eliminar.";
+            claseAviso = "alert alert-warning";
+            return;
+        }
+
+        try
+        {
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+
+            // DELETE solo necesita el código en la URL
+            var ruta = $"{urlBaseApi}/id/{variable_estrategica_actual.Id}";
+            var respuesta = await cliente.DeleteAsync(ruta);
+
+            if (respuesta.IsSuccessStatusCode)
+            {
+
+                // Refresca la lista (ya no aparecerá el variable_estrategica_ eliminado)
+                await Cargar_Variable_Estrategica();
+
+                // Limpia completamente el formulario
+                LimpiarFormulario();
+
+                mensaje = "Variable Estrategica eliminada correctamente.";
+                claseAviso = "alert alert-success";
+            }
+            else
+            {
+                var detalle = await respuesta.Content.ReadAsStringAsync();
+                mensaje = $"No se pudo eliminar la variable. Detalle: {detalle}";
+                claseAviso = "alert alert-danger";
+            }
+        }
+        catch (Exception error)
+        {
+            mensaje = $"Error al eliminar variable: {error.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    // =============================================================================
+    // MÉTODOS AUXILIARES Y DE UTILIDAD
+    // =============================================================================
+
+    /// <summary>
+    /// Prueba la conectividad con la API sin procesar datos
+    /// Útil para diagnóstico de problemas de red
+    /// </summary>
+    private async Task ProbarConexion()
+    {
+        LimpiarMensajes();
+
+        try
+        {
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+
+            // Solo hace GET sin deserializar, para probar conectividad
+            var respuesta = await cliente.GetAsync(urlBaseApi);
+
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensaje = "Conexión con la API verificada.";
+                claseAviso = "alert alert-success";
+            }
+            else
+            {
+                mensaje = $"La API respondió con estado {(int)respuesta.StatusCode}.";
+                claseAviso = "alert alert-warning";
+            }
+        }
+        catch (Exception error)
+        {
+            mensaje = $"Error de conexión a la API: {error.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    /// <summary>
+    /// Carga un variable_estrategica_ de la tabla en el formulario para edición
+    /// Se ejecuta cuando el variable_estrategica_ hace clic en "Cargar" en la tabla
+    /// </summary>
+    /// <param name="p">El variable_estrategica_ seleccionado de la tabla</param>
+    private void CargarEnFormulario(VariableEstrategica v)
+    {
+        // Crea una NUEVA instancia para evitar referencias compartidas
+        // Si asignaras directamente (variable_estrategica_actual = p), cualquier cambio
+        // en el formulario modificaría también el objeto en la lista
+        variable_estrategica_actual = new VariableEstrategica
+        {
+            Id = v.Id,
+            Titulo = v.Titulo,
+            Descripcion = v.Descripcion
+        };
+
+        // Cambia el estado a "variable_estrategica_ existente"
+        existe_variable_estrategica = true;
+        textoBotonGuardar = "Actualizar";
+        mensaje = "Variable seleccionada desde el listado.";
+        claseAviso = "alert alert-info";
+    }
+
+    /// <summary>
+    /// Limpia solo los mensajes de estado, mantiene los datos
+    /// </summary>
+    private void LimpiarMensajes()
+    {
+        mensaje = "";
+        claseAviso = "alert alert-info";
+    }
+
+    /// <summary>
+    /// Resetea completamente el formulario a estado inicial
+    /// </summary>
+    private void LimpiarFormulario()
+    {
+        variable_estrategica_actual = new VariableEstrategica();
+        existe_variable_estrategica = false;
+        textoBotonGuardar = "Crear";
+        LimpiarMensajes();
+    }
+}
