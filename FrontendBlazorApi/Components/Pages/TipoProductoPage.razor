@@ -98,7 +98,7 @@ else
         }
         await CargarTipoProductos();
        }
-       private async Task CargarTipoProductos(){
+    private async Task CargarTipoProductos(){
         try{
             cargando = true;
             var cliente = FabricaHttp.CreateClient("ApiBack");
@@ -115,7 +115,7 @@ else
         finally{
             cargando = false;
         } 
-       }
+    }
        private async Task BuscarPorCodigo(){
         LimpiarMensajes();
         if(tipoProductoActual.Id == 0){
@@ -284,7 +284,5 @@ else
         LimpiarMensajes();
     }
 
-
-  
-        }
+}
 
