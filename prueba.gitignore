@@ -9,3 +9,5 @@ obj/
 *.exe
 *.cache
 *.log
+appsettings.Development.json
+ApiBack.csproj
