@@ -1,26 +1,17 @@
-@page "/tiporesponsables"
-
-@* 
-    Página de gestión de TipoResponsable con CRUDL completo contra la API real.
-    - Listar:      GET    /api/tiporesponsable
-    - Buscar:      GET    /api/tiporesponsable/{id}
-    - Crear:       POST   /api/tiporesponsable
-    - Actualizar:  PUT    /api/tiporesponsable/{id}
-    - Eliminar:    DELETE /api/tiporesponsable/{id}
-*@
-
+@page "/TipoResponsablePage"
 @using System.Net.Http.Json
 @using FrontendBlazorApi.Models
-@inject IHttpClientFactory fabricaHttp
+@inject IHttpClientFactory FabricaHttp
+@rendermode InteractiveServer
 
-<PageTitle>Tipo de Responsable</PageTitle>
+<PageTitle>TipoResponsable</PageTitle>
 
 <h3>Gestión de Tipos de Responsable</h3>
 
 <div class="mb-3 d-flex gap-2">
-    <button class="btn btn-outline-secondary" @onclick="ProbarConexion">Probar conexión</button>
-    <button class="btn btn-outline-primary" @onclick="CargarTipos">Mostrar todos</button>
-    <button class="btn btn-outline-dark" @onclick="LimpiarFormulario">Limpiar</button>
+    <button type="button" class="btn btn-outline-secondary" @onclick="ProbarConexion">Probar conexión</button>
+    <button type="button" class="btn btn-outline-primary" @onclick="CargarTipoResponsables">Mostrar todos</button>
+    <button type="button" class="btn btn-outline-dark" @onclick="LimpiarFormulario">Limpiar</button>
 </div>
 
 @if (!string.IsNullOrWhiteSpace(mensaje))
@@ -28,63 +19,62 @@
     <div class="@claseAviso" role="alert">@mensaje</div>
 }
 
-<h4>Formulario TipoResponsable</h4>
-
-<EditForm Model="tipoActual" OnValidSubmit="GuardarSegunEstado">
+<h4>Formulario de Tipos de Responsable</h4>
+<EditForm Model="tipoResponsableActual" OnValidSubmit="GuardarSegunEstado">
     <DataAnnotationsValidator />
-    <ValidationSummary />
+    <ValidationSummary />    
 
     <div class="row g-3">
-        <div class="col-md-2">
-            <label class="form-label">Id</label>
-            <InputNumber class="form-control" @bind-Value="tipoActual.Id" />
+        <div class="col-md-3">
+            <label class="form-label">ID</label>
+            <InputNumber class="form-control" @bind-Value="tipoResponsableActual.Id" />
         </div>
-
-        <div class="col-md-4">
+        <div class="col-md-5">
             <label class="form-label">Título</label>
-            <InputText class="form-control" @bind-Value="tipoActual.Titulo" />
+            <InputText class="form-control" @bind-Value="tipoResponsableActual.Titulo" />
         </div>
-
-        <div class="col-md-6">
+        <div class="col-md-4">
             <label class="form-label">Descripción</label>
-            <InputText class="form-control" @bind-Value="tipoActual.Descripcion" />
+            <InputText class="form-control" @bind-Value="tipoResponsableActual.Descripcion" />
         </div>
     </div>
 
     <div class="mt-3 d-flex flex-wrap gap-2">
         <button type="submit" class="btn btn-primary">@textoBotonGuardar</button>
-        <button type="button" class="btn btn-secondary" @onclick="BuscarPorId">Buscar</button>
-        <button type="button" class="btn btn-danger" @onclick="EliminarTipo" disabled="@(!existeTipo)">Eliminar</button>
+        <button type="button" class="btn btn-secondary" @onclick="BuscarPorCodigo">Buscar</button>
+        <button type="button" class="btn btn-danger" @onclick="EliminarTipoResponsable" disabled="@(!existeTipoResponsable)">Eliminar</button>
     </div>
 </EditForm>
 
-<hr />
-
-@if (cargando)
+@if (tipoResponsables is null)
 {
-    <p><em>Cargando tipos...</em></p>
+    <p><em>Cargando tipos de responsables...</em></p>
 }
-else if (listaTipos.Count == 0)
+else if (!tipoResponsables.Any())
 {
-    <p>No hay tipos de responsable disponibles.</p>
+    <p>No se encontraron tipos de responsables.</p>
 }
 else
 {
-    <table class="table table-striped">
+    <table class="table">
         <thead>
             <tr>
-                <th>Id</th>
+                <th>Código</th>
                 <th>Título</th>
                 <th>Descripción</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var t in listaTipos)
+            @foreach (var r in tipoResponsables)
             {
-                <tr @onclick="@(() => CargarEnFormulario(t))" style="cursor:pointer">
-                    <td>@t.Id</td>
-                    <td>@t.Titulo</td>
-                    <td>@t.Descripcion</td>
+                <tr>
+                    <td>@r.Id</td>
+                    <td>@r.Titulo</td>
+                    <td>@r.Descripcion</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-outline-primary" @onclick="@(() => CargarEnFormulario(r))">Cargar</button>
+                    </td>
                 </tr>
             }
         </tbody>
@@ -92,47 +82,34 @@ else
 }
 
 @code {
-    // ---------------------------
-    // Estado de la pantalla
-    // ---------------------------
-
-    private List<TipoResponsable> listaTipos = new();
-    private TipoResponsable tipoActual = new();
-    private bool existeTipo = false;
+    private List<TipoResponsable>? tipoResponsables;
+    private TipoResponsable tipoResponsableActual { get; set; } = new();
+    private bool existeTipoResponsable = false;
     private string textoBotonGuardar = "Crear";
     private string mensaje = "";
     private string claseAviso = "alert alert-info";
     private bool cargando = false;
-    private const string urlBaseApi = "api/tiporesponsable";
+    private const string urlBaseApi = "api/TipoResponsable";
 
-    // ---------------------------
-    // Ciclo de vida
-    // ---------------------------
     protected override async Task OnInitializedAsync()
     {
-        await CargarTipos();
+        await CargarTipoResponsables();
     }
 
-    // ---------------------------
-    // Acciones CRUDL
-    // ---------------------------
-
-    private async Task CargarTipos()
+    private async Task CargarTipoResponsables()
     {
         try
         {
             cargando = true;
-            var cliente = fabricaHttp.CreateClient("ApiSGP");
-
-            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<TipoResponsable>>>(urlBaseApi);
-            listaTipos = respuesta?.Datos ?? new();
-
-            mensaje = $"Se cargaron {listaTipos.Count} tipo(s).";
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Models.TipoResponsable>>>(urlBaseApi);
+            tipoResponsables = respuesta?.Datos ?? new List<Models.TipoResponsable>();
+            mensaje = $"Se cargaron {tipoResponsables.Count} tipo(s) de responsable.";
             claseAviso = "alert alert-success";
         }
-        catch (Exception error)
+        catch (Exception ex)
         {
-            mensaje = $"Error al listar tipos: {error.Message}";
+            mensaje = $"Error al listar tipos de responsable: {ex.Message}";
             claseAviso = "alert alert-danger";
         }
         finally
@@ -141,159 +118,153 @@ else
         }
     }
 
-    private async Task BuscarPorId()
+    private async Task BuscarPorCodigo()
     {
         LimpiarMensajes();
-
-        if (tipoActual.Id == 0)
+        if (tipoResponsableActual.Id == 0)
         {
-            mensaje = "Debe indicar el Id para buscar.";
+            mensaje = "Debe indicar el ID para buscar.";
             claseAviso = "alert alert-warning";
             return;
         }
 
         try
         {
-            var cliente = fabricaHttp.CreateClient("ApiSGP");
-            var ruta = $"{urlBaseApi}/{tipoActual.Id}";
-            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<TipoResponsable>>(ruta);
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var ruta = $"{urlBaseApi}/Id/{tipoResponsableActual.Id}";
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Models.TipoResponsable>>>(ruta);
+            var encontrado = respuesta?.Datos?.FirstOrDefault();
 
-            if (respuesta?.Datos is not null)
+            if (encontrado is not null)
             {
-                tipoActual = respuesta.Datos;
-                existeTipo = true;
+                tipoResponsableActual = new Models.TipoResponsable
+                {
+                    Id = encontrado.Id,
+                    Titulo = encontrado.Titulo,
+                    Descripcion = encontrado.Descripcion
+                };
+                existeTipoResponsable = true;
                 textoBotonGuardar = "Actualizar";
-                mensaje = "TipoResponsable cargado en el formulario.";
+                mensaje = "Tipo de responsable cargado en el formulario.";
                 claseAviso = "alert alert-success";
             }
             else
             {
-                existeTipo = false;
+                existeTipoResponsable = false;
                 textoBotonGuardar = "Crear";
-                mensaje = "No se encontró el tipo.";
+                mensaje = "Tipo de responsable no encontrado.";
                 claseAviso = "alert alert-warning";
             }
         }
-        catch (Exception error)
+        catch (Exception ex)
         {
-            mensaje = $"Error al buscar tipo: {error.Message}";
+            mensaje = $"Error al buscar: {ex.Message}";
             claseAviso = "alert alert-danger";
         }
     }
 
     private async Task GuardarSegunEstado()
     {
-        if (existeTipo)
-            await ActualizarTipo();
+        if (existeTipoResponsable)
+            await ActualizarTipoResponsable();
         else
-            await CrearTipo();
+            await CrearTipoResponsable();
     }
 
-    private async Task CrearTipo()
+    private async Task CrearTipoResponsable()
     {
         LimpiarMensajes();
-
         try
         {
-            var cliente = fabricaHttp.CreateClient("ApiSGP");
-            var respuesta = await cliente.PostAsJsonAsync(urlBaseApi, tipoActual);
-
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var respuesta = await cliente.PostAsJsonAsync(urlBaseApi, tipoResponsableActual);
             if (respuesta.IsSuccessStatusCode)
             {
-                mensaje = "TipoResponsable creado correctamente.";
+                mensaje = "Tipo de responsable creado correctamente.";
                 claseAviso = "alert alert-success";
-                await CargarTipos();
-                tipoActual = new();
-                existeTipo = false;
-                textoBotonGuardar = "Crear";
-            }
-            else
-            {
-                var detalle = await respuesta.Content.ReadAsStringAsync();
-                mensaje = $"No se pudo crear. Detalle: {detalle}";
-                claseAviso = "alert alert-danger";
-            }
-        }
-        catch (Exception error)
-        {
-            mensaje = $"Error al crear tipo: {error.Message}";
-            claseAviso = "alert alert-danger";
-        }
-    }
-
-    private async Task ActualizarTipo()
-    {
-        LimpiarMensajes();
-
-        if (tipoActual.Id == 0)
-        {
-            mensaje = "Debe indicar el Id para actualizar.";
-            claseAviso = "alert alert-warning";
-            return;
-        }
-
-        try
-        {
-            var cliente = fabricaHttp.CreateClient("ApiSGP");
-            var ruta = $"{urlBaseApi}/{tipoActual.Id}";
-            var respuesta = await cliente.PutAsJsonAsync(ruta, tipoActual);
-
-            if (respuesta.IsSuccessStatusCode)
-            {
-                mensaje = "TipoResponsable actualizado correctamente.";
-                claseAviso = "alert alert-success";
-                await CargarTipos();
-                existeTipo = true;
-                textoBotonGuardar = "Actualizar";
-            }
-            else
-            {
-                var detalle = await respuesta.Content.ReadAsStringAsync();
-                mensaje = $"No se pudo actualizar. Detalle: {detalle}";
-                claseAviso = "alert alert-danger";
-            }
-        }
-        catch (Exception error)
-        {
-            mensaje = $"Error al actualizar tipo: {error.Message}";
-            claseAviso = "alert alert-danger";
-        }
-    }
-
-    private async Task EliminarTipo()
-    {
-        LimpiarMensajes();
-
-        if (tipoActual.Id == 0)
-        {
-            mensaje = "Debe indicar el Id para eliminar.";
-            claseAviso = "alert alert-warning";
-            return;
-        }
-
-        try
-        {
-            var cliente = fabricaHttp.CreateClient("ApiSGP");
-            var ruta = $"{urlBaseApi}/{tipoActual.Id}";
-            var respuesta = await cliente.DeleteAsync(ruta);
-
-            if (respuesta.IsSuccessStatusCode)
-            {
-                mensaje = "TipoResponsable eliminado correctamente.";
-                claseAviso = "alert alert-success";
-                await CargarTipos();
+                await CargarTipoResponsables();
                 LimpiarFormulario();
             }
             else
             {
                 var detalle = await respuesta.Content.ReadAsStringAsync();
-                mensaje = $"No se pudo eliminar. Detalle: {detalle}";
+                mensaje = $"Error al crear: {detalle}";
                 claseAviso = "alert alert-danger";
             }
         }
-        catch (Exception error)
+        catch (Exception ex)
         {
-            mensaje = $"Error al eliminar tipo: {error.Message}";
+            mensaje = $"Error: {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    private async Task ActualizarTipoResponsable()
+    {
+        LimpiarMensajes();
+        if (tipoResponsableActual.Id == 0)
+        {
+            mensaje = "Debe indicar el ID para actualizar.";
+            claseAviso = "alert alert-warning";
+            return;
+        }
+
+        try
+        {
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var ruta = $"{urlBaseApi}/Id/{tipoResponsableActual.Id}";
+            var respuesta = await cliente.PutAsJsonAsync(ruta, tipoResponsableActual);
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensaje = "Tipo de responsable actualizado correctamente.";
+                claseAviso = "alert alert-success";
+                await CargarTipoResponsables();
+            }
+            else
+            {
+                var detalle = await respuesta.Content.ReadAsStringAsync();
+                mensaje = $"No se pudo actualizar: {detalle}";
+                claseAviso = "alert alert-danger";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error al actualizar: {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    private async Task EliminarTipoResponsable()
+    {
+        LimpiarMensajes();
+        if (tipoResponsableActual.Id == 0)
+        {
+            mensaje = "Debe indicar el ID para eliminar.";
+            claseAviso = "alert alert-warning";
+            return;
+        }
+
+        try
+        {
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var ruta = $"{urlBaseApi}/Id/{tipoResponsableActual.Id}";
+            var respuesta = await cliente.DeleteAsync(ruta);
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensaje = "Tipo de responsable eliminado correctamente.";
+                claseAviso = "alert alert-success";
+                LimpiarFormulario();
+                await CargarTipoResponsables();
+            }
+            else
+            {
+                mensaje = "No se pudo eliminar.";
+                claseAviso = "alert alert-danger";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error al eliminar: {ex.Message}";
             claseAviso = "alert alert-danger";
         }
     }
@@ -301,40 +272,33 @@ else
     private async Task ProbarConexion()
     {
         LimpiarMensajes();
-
         try
         {
-            var cliente = fabricaHttp.CreateClient("ApiSGP");
+            var cliente = FabricaHttp.CreateClient("ApiBack");
             var respuesta = await cliente.GetAsync(urlBaseApi);
-            if (respuesta.IsSuccessStatusCode)
-            {
-                mensaje = "Conexión con la API verificada.";
-                claseAviso = "alert alert-success";
-            }
-            else
-            {
-                mensaje = $"La API respondió con estado {(int)respuesta.StatusCode}.";
-                claseAviso = "alert alert-warning";
-            }
+            mensaje = respuesta.IsSuccessStatusCode
+                ? "Conexión con la API verificada correctamente."
+                : $"La API respondió con estado {(int)respuesta.StatusCode}.";
+            claseAviso = respuesta.IsSuccessStatusCode ? "alert alert-success" : "alert alert-warning";
         }
-        catch (Exception error)
+        catch (Exception ex)
         {
-            mensaje = $"Error de conexión a la API: {error.Message}";
+            mensaje = $"Error en la conexión a la API: {ex.Message}";
             claseAviso = "alert alert-danger";
         }
     }
 
-    private void CargarEnFormulario(TipoResponsable t)
+    private void CargarEnFormulario(Models.TipoResponsable r)
     {
-        tipoActual = new TipoResponsable
+        tipoResponsableActual = new Models.TipoResponsable
         {
-            Id = t.Id,
-            Titulo = t.Titulo,
-            Descripcion = t.Descripcion
+            Id = r.Id,
+            Titulo = r.Titulo,
+            Descripcion = r.Descripcion
         };
-        existeTipo = true;
+        existeTipoResponsable = true;
         textoBotonGuardar = "Actualizar";
-        mensaje = "TipoResponsable seleccionado desde el listado.";
+        mensaje = "Tipo de responsable seleccionado desde el listado.";
         claseAviso = "alert alert-info";
     }
 
@@ -346,8 +310,9 @@ else
 
     private void LimpiarFormulario()
     {
-        tipoActual = new TipoResponsable();
-        existeTipo = false;
+        tipoResponsableActual = new Models.TipoResponsable();
+        existeTipoResponsable = false;
         textoBotonGuardar = "Crear";
+        LimpiarMensajes();
     }
 }
