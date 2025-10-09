@@ -32,7 +32,7 @@ builder.Services.AddScoped<ApiBack.Servicios.Abstracciones.IServicioCrud,
                            ApiBack.Servicios.ServicioCrud>();
 builder.Services.AddSingleton<ApiBack.Servicios.Abstracciones.IProveedorConexion,
                               ApiBack.Servicios.Conexion.ProveedorConexion>();
-var proveedorBD = builder.Configuration.GetValue<string>("DatabaseProvider") ?? "SqlServer";
+var proveedorBD = builder.Configuration.GetValue<string>("DatabaseProvider") ?? "SqlServerEXPRESS";
 
 builder.Services.AddScoped<ApiBack.Servicios.Abstracciones.IServicioConsultas,
     ApiBack.Servicios.ServicioConsultas>();
@@ -60,7 +60,7 @@ switch (proveedorBD.ToLower())
         break;
 
     case "sqlserver":
-    case "sqlserverexpress":
+    case "sqlserverEXPRESS":
     case "localdb":
     default:
         builder.Services.AddScoped<ApiBack.Repositorios.Abstracciones.IRepositorioLecturaTabla,
