@@ -8,24 +8,27 @@
     "net9.0": []
   },
   "packageFolders": {
-    "C:\\Users\\Daniel\\.nuget\\packages\\": {}
+    "C:\\Users\\user\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Daniel\\Desktop\\ApiProyectoFinalAYSW\\ApiProyectoFinalAYSW\\FrontendBlazorApi\\FrontendBlazorApi.csproj",
+      "projectUniqueName": "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\FrontendBlazorApi\\FrontendBlazorApi.csproj",
       "projectName": "FrontendBlazorApi",
-      "projectPath": "C:\\Users\\Daniel\\Desktop\\ApiProyectoFinalAYSW\\ApiProyectoFinalAYSW\\FrontendBlazorApi\\FrontendBlazorApi.csproj",
-      "packagesPath": "C:\\Users\\Daniel\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Daniel\\Desktop\\ApiProyectoFinalAYSW\\ApiProyectoFinalAYSW\\FrontendBlazorApi\\obj\\",
+      "projectPath": "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\FrontendBlazorApi\\FrontendBlazorApi.csproj",
+      "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+      "outputPath": "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\FrontendBlazorApi\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Daniel\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {

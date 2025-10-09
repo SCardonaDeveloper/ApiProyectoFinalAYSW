@@ -1,30 +1,33 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Daniel\\Desktop\\ApiProyectoFinalAYSW\\ApiProyectoFinalAYSW\\ApiBack\\ApiBack.csproj": {}
+    "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\ApiBack\\ApiBack.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Daniel\\Desktop\\ApiProyectoFinalAYSW\\ApiProyectoFinalAYSW\\ApiBack\\ApiBack.csproj": {
+    "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\ApiBack\\ApiBack.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Daniel\\Desktop\\ApiProyectoFinalAYSW\\ApiProyectoFinalAYSW\\ApiBack\\ApiBack.csproj",
+        "projectUniqueName": "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\ApiBack\\ApiBack.csproj",
         "projectName": "ApiBack",
-        "projectPath": "C:\\Users\\Daniel\\Desktop\\ApiProyectoFinalAYSW\\ApiProyectoFinalAYSW\\ApiBack\\ApiBack.csproj",
-        "packagesPath": "C:\\Users\\Daniel\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Daniel\\Desktop\\ApiProyectoFinalAYSW\\ApiProyectoFinalAYSW\\ApiBack\\obj\\",
+        "projectPath": "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\ApiBack\\ApiBack.csproj",
+        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+        "outputPath": "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\ApiBack\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Daniel\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
-          "net8.0"
+          "net9.0"
         ],
         "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net8.0": {
-            "targetAlias": "net8.0",
+          "net9.0": {
+            "targetAlias": "net9.0",
             "projectReferences": {}
           }
         },
@@ -41,8 +44,8 @@
         "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
-        "net8.0": {
-          "targetAlias": "net8.0",
+        "net9.0": {
+          "targetAlias": "net9.0",
           "dependencies": {
             "BCrypt.Net-Next": {
               "target": "Package",
@@ -84,24 +87,6 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.20, 8.0.20]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Host.win-x64",
-              "version": "[8.0.20, 8.0.20]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.20, 8.0.20]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.20, 8.0.20]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"

@@ -77,13 +77,6 @@ C:\Users\Daniel\Desktop\ApiProyectoFinalAYSW\ApiProyectoFinalAYSW\FrontendBlazor
 C:\Users\Daniel\Desktop\ApiProyectoFinalAYSW\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.pdb
 C:\Users\Daniel\Desktop\ApiProyectoFinalAYSW\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.genruntimeconfig.cache
 C:\Users\Daniel\Desktop\ApiProyectoFinalAYSW\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\ref\FrontendBlazorApi.dll
-D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\rpswa.dswa.cache.json
-D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.GeneratedMSBuildEditorConfig.editorconfig
-D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.AssemblyInfoInputs.cache
-D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.AssemblyInfo.cs
-D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.csproj.CoreCompileInputs.cache
-D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.MvcApplicationPartsAssemblyInfo.cache
-D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.sourcelink.json
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\bin\Debug\net9.0\appsettings.Development.json
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\bin\Debug\net9.0\appsettings.json
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\bin\Debug\net9.0\FrontendBlazorApi.staticwebassets.runtime.json
@@ -93,6 +86,13 @@ D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiP
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\bin\Debug\net9.0\FrontendBlazorApi.runtimeconfig.json
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\bin\Debug\net9.0\FrontendBlazorApi.dll
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\bin\Debug\net9.0\FrontendBlazorApi.pdb
+D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\rpswa.dswa.cache.json
+D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.GeneratedMSBuildEditorConfig.editorconfig
+D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.AssemblyInfoInputs.cache
+D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.AssemblyInfo.cs
+D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.csproj.CoreCompileInputs.cache
+D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.MvcApplicationPartsAssemblyInfo.cache
+D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\FrontendBlazorApi.sourcelink.json
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\rjimswa.dswa.cache.json
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\rjsmrazor.dswa.cache.json
 D:\Universidad Jhorman\Aplicaciones y servicios Web\Proyectos\Proyecto Aula\ApiProyectoFinalAYSW\FrontendBlazorApi\obj\Debug\net9.0\rjsmcshtml.dswa.cache.json
