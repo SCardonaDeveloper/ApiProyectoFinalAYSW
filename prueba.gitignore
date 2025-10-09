@@ -1,0 +1,11 @@
+bin/
+obj/
+*.user
+*.vspscc
+*.vssscc
+*.suo
+*.pdb
+*.dll
+*.exe
+*.cache
+*.log
