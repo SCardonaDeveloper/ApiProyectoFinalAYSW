@@ -28,5 +28,7 @@ namespace FrontendBlazorApi.Models
         public T? Datos { get; set; }
 
     }
+
+    // prueba 
  
 }
