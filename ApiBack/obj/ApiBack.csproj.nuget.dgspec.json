@@ -1,6 +1,23 @@
 {
   "format": 1,
   "restore": {
+<<<<<<< HEAD
+    "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\ApiBack\\ApiBack.csproj": {}
+  },
+  "projects": {
+    "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\ApiBack\\ApiBack.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\ApiBack\\ApiBack.csproj",
+        "projectName": "ApiBack",
+        "projectPath": "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\ApiBack\\ApiBack.csproj",
+        "packagesPath": "C:\\Users\\user\\.nuget\\packages\\",
+        "outputPath": "D:\\Universidad Jhorman\\Aplicaciones y servicios Web\\Proyectos\\Proyecto Aula\\ApiProyectoFinalAYSW\\ApiBack\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\user\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+=======
     "C:\\Users\\Daniel\\Desktop\\ApiProyectoFinalAYSW\\ApiProyectoFinalAYSW\\ApiBack\\ApiBack.csproj": {}
   },
   "projects": {
@@ -15,11 +32,17 @@
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Daniel\\AppData\\Roaming\\NuGet\\NuGet.Config"
+>>>>>>> 571122b6488dad0355233f9e9b44a3240aed40c3
         ],
         "originalTargetFrameworks": [
           "net9.0"
         ],
         "sources": {
+<<<<<<< HEAD
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
+=======
+>>>>>>> 571122b6488dad0355233f9e9b44a3240aed40c3
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
