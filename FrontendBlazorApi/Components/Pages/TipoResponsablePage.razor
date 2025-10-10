@@ -104,12 +104,12 @@ else
             var cliente = FabricaHttp.CreateClient("ApiBack");
             var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Models.TipoResponsable>>>(urlBaseApi);
             tipoResponsables = respuesta?.Datos ?? new List<Models.TipoResponsable>();
-            mensaje = $"Se cargaron {tipoResponsables.Count} tipo(s) de responsable.";
+            mensaje = $"Se cargaron {tipoResponsables.Count} tipo(s) de responsable(s).";
             claseAviso = "alert alert-success";
         }
         catch (Exception ex)
         {
-            mensaje = $"Error al listar tipos de responsable: {ex.Message}";
+            mensaje = $"Error al listar tipo(s) de responsable(s): {ex.Message}";
             claseAviso = "alert alert-danger";
         }
         finally

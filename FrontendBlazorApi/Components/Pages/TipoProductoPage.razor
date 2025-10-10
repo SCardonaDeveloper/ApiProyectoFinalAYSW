@@ -105,7 +105,7 @@ else
             var cliente = FabricaHttp.CreateClient("ApiBack");
             var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Models.TipoProducto>>>(urlBaseApi);
                 tipoProductos = respuesta?.Datos ?? new List<Models.TipoProducto>();
-            mensaje = $"Se cargaron {tipoProductos.Count} tipo de producto(s)";
+            mensaje = $"Se cargaron {tipoProductos.Count} tipo(s) de producto(s)";
             claseAviso = "alert alert-success";
 
         }
