@@ -1,72 +1,72 @@
-@page "/TipoProductoPage"
+@page "/EstadoPage"
 @using System.Net.Http.Json
 @using FrontendBlazorApi.Models
 @using System.Runtime.CompilerServices
 @inject IHttpClientFactory FabricaHttp
 @rendermode InteractiveServer
-<PageTitle>TipoProducto</PageTitle>
-<h3>Gestion de tipos de productos</h3>
+<PageTitle>Estado</PageTitle>
+<h3>Gestion de Estados</h3>
 <div class="mb-3 d-flex gap-2">
     <button type="button" class="btn btn-outline-secondary" @onclick="ProbarConexion">Probar conexión</button>
-    <button type="button" class="btn btn-outline-primary" @onclick="CargarTipoProductos">Mostrar todos</button>
+    <button type="button" class="btn btn-outline-primary" @onclick="CargarEstado">Mostrar todos</button>
     <button type="button" class="btn btn-outline-dark" @onclick="LimpiarFormulario">Limpiar</button>
 </div>
 @if (!string.IsNullOrWhiteSpace(mensaje))
 {
     <div class="@claseAviso" role="alert">@mensaje</div>
 }
-<h4>Formulario de tipos de productos</h4>
-<EditForm Model="tipoProductoActual" OnValidSubmit="GuardarSegunEstado" FormName="TipoProductoForm">
+<h4>Formulario de estados</h4>
+<EditForm Model="estadoActual" OnValidSubmit="GuardarSegunEstado" FormName="EstadoForm">
 <DataAnnotationsValidator />
 <ValidationSummary />    
 <div class="row g-3">
 <div class="col-md-3">
 <label class="form-label">ID</label>
-<InputNumber class="form-control" @bind-Value="tipoProductoActual.Id"/>
+<InputNumber class="form-control" @bind-Value="estadoActual.Id"/>
 </div>
 <div class="col-md-5">
 <label class="form-label">Nombre</label>
-<InputText class="form-control" @bind-Value="tipoProductoActual.Nombre"/>
+<InputText class="form-control" @bind-Value="estadoActual.Nombre"/>
 </div>
 <div class="col-md-2">
 <label class="form-label">Descripcion</label>
-<InputText class="form-control" @bind-Value="tipoProductoActual.Descripcion"/>
+<InputText class="form-control" @bind-Value="estadoActual.Descripcion"/>
 </div>
 </div>
 <div class="mt-3 d-flex flex-wrap gap-2">
 <button type="submit" class="btn btn-primary">@textoBotonGuardar</button>
 <button type="button" class="btn btn-secondary" @onclick="BuscarPorCodigo">Buscar</button>
-<button type="button" class="btn btn-warning" @onclick="EliminarTipoProducto" disabled="@(!existeTipoProducto)">Eliminar</button>
+<button type="button" class="btn btn-warning" @onclick="EliminarEstado" disabled="@(!existeEstado)">Eliminar</button>
 </div>
 </EditForm>
 
-@if (tipoProductos is null)
+@if (estados is null)
 {
-    <p><em>Cargando tipos de productos...</em></p>
+    <p><em>Cargando estados...</em></p>
 }
-else if (!tipoProductos.Any())
+else if (!estados.Any())
 {
-    <p>No se encontraron tipos de productos.</p>
+    <p>No se encontraron estados.</p>
 }
 else
 {
     <table class="table">
         <thead>
             <tr>
-                <th>Código</th>
+                <th>ID</th>
                 <th>Nombre</th>
                 <th>Descripcion</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var p in tipoProductos)
+            @foreach (var e in estados)
             {
                 <tr>
-                    <td>@p.Id</td>
-                    <td>@p.Nombre</td>
-                    <td>@p.Descripcion</td>
+                    <td>@e.Id</td>
+                    <td>@e.Nombre</td>
+                    <td>@e.Descripcion</td>
                     <td>
-                    <button type="button" class="btn btn-sm btn-outline-primary" @onclick="@(() => CargarEnFormulario(p))">Cargar</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" @onclick="@(() => CargarEnFormulario(e))">Cargar</button>
                     </td>
                 </tr>
             }
@@ -75,42 +75,42 @@ else
 }
 
 @code{
-       private List<TipoProducto>? tipoProductos;
+       private List<Estado>? estados;
        [SupplyParameterFromForm]
-       private TipoProducto tipoProductoActual {get;set;} = new();
-       private bool existeTipoProducto = false;
+       private Estado estadoActual {get;set;} = new();
+       private bool existeEstado = false;
        private string textoBotonGuardar = "Crear";
        private string mensaje = "";
        private string claseAviso = "alert alert-info";
        private bool cargando = false;
-       private const string urlBaseApi = "api/TipoProducto";
+       private const string urlBaseApi = "api/Estado";
        protected override async Task OnInitializedAsync(){
              try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
-            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Models.TipoProducto>>>("api/TipoProducto");
-                tipoProductos = respuesta?.Datos ?? new List<Models.TipoProducto>();
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Models.Estado>>>("api/Estado");
+                estados = respuesta?.Datos ?? new List<Models.Estado>();
 }
  catch (Exception error)
         {
-            Console.WriteLine($"Error al cargar productos: {error.Message}");
-                tipoProductos = new List<Models.TipoProducto>();
+            Console.WriteLine($"Error al cargar estados: {error.Message}");
+                estados = new List<Models.Estado>();
         }
-        await CargarTipoProductos();
+        await CargarEstado();
        }
-    private async Task CargarTipoProductos(){
+    private async Task CargarEstado(){
         try{
             
             cargando = true;
             var cliente = FabricaHttp.CreateClient("ApiBack");
-            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Models.TipoProducto>>>(urlBaseApi);
-                tipoProductos = respuesta?.Datos ?? new List<Models.TipoProducto>();
-            mensaje = $"Se cargaron {tipoProductos.Count} tipo de producto(s)";
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Models.Estado>>>(urlBaseApi);
+            estados = respuesta?.Datos ?? new List<Models.Estado>();
+            mensaje = $"Se cargaron {estados.Count} estado(s)";
             claseAviso = "alert alert-success";
 
         }
         catch(Exception ex){
-            mensaje = $"Error al listar el tipo de productos: {ex.Message}";
+            mensaje = $"Error al listar los estados: {ex.Message}";
             claseAviso = "alert alert-danger";
         }
         finally{
@@ -119,77 +119,77 @@ else
     }
        private async Task BuscarPorCodigo(){
         LimpiarMensajes();
-        if(tipoProductoActual.Id == 0){
+        if(estadoActual.Id == 0){
             mensaje = "Debe indicar el ID para buscar.";
             claseAviso = "alert alert-warning";
             return;
         }
         try{
             var cliente = FabricaHttp.CreateClient("ApiBack");
-            var ruta = $"{urlBaseApi}/Id/{tipoProductoActual.Id}";
-            var respuesta =  await cliente.GetFromJsonAsync<RespuestaApi<List<Models.TipoProducto>>>(ruta);
+            var ruta = $"{urlBaseApi}/Id/{estadoActual.Id}";
+            var respuesta =  await cliente.GetFromJsonAsync<RespuestaApi<List<Models.Estado>>>(ruta);
             var encontrado = respuesta?.Datos?.FirstOrDefault();
             if(encontrado is not null){
-                    tipoProductoActual = new Models.TipoProducto{
+                    estadoActual = new Models.Estado{
                     Id = encontrado.Id,
                     Nombre = encontrado.Nombre,
                     Descripcion = encontrado.Descripcion
                 };
-                existeTipoProducto = true;
+                existeEstado = true;
                 textoBotonGuardar = "Actualizar";
-                mensaje = "Tipo de producto cargado en el formulario. ";
+                mensaje = "Estado cargado en el formulario. ";
                 claseAviso = "alert alert-success";
             }
             else{
-                existeTipoProducto = false;
+                existeEstado = false;
                 textoBotonGuardar = "Crear";
-                mensaje = "Tipo de producto no encontrado";
+                mensaje = "Estado no encontrado";
                 claseAviso = "alert alert-warning";
             }
         }
         catch(Exception ex){
-            existeTipoProducto = false;
+            existeEstado = false;
             textoBotonGuardar = "Crear";
-            mensaje = $"Error buscando el tipo de producto: {ex.Message}";
+            mensaje = $"Error buscando el estado: {ex.Message}";
             claseAviso = "alert alert-danger";
         }
     }
     private async Task GuardarSegunEstado(){
-        if(existeTipoProducto)
-        await ActualizarTipoProducto();
+        if(existeEstado)
+        await ActualizarEstado();
         else
-        await CrearTipoProducto();
+        await CrearEstado();
     }
-    private async Task CrearTipoProducto(){
+    private async Task CrearEstado(){
         LimpiarMensajes();
         try{
-            tipoProductoActual.Id = 0;
+            estadoActual.Id = 0;
             var cliente = FabricaHttp.CreateClient("ApiBack");
-            var respuesta = await cliente.PostAsJsonAsync(urlBaseApi, tipoProductoActual);
+            var respuesta = await cliente.PostAsJsonAsync(urlBaseApi, estadoActual);
             if(respuesta.IsSuccessStatusCode){
-                mensaje = "tipo de producto creado correctamente";
+                mensaje = "Estado creado correctamente";
                 claseAviso = "alert alert-success";
-                await CargarTipoProductos();
-                    tipoProductoActual = new Models.TipoProducto();
-                existeTipoProducto = false;
+                await CargarEstado();
+                estadoActual = new Models.Estado();
+                existeEstado = false;
                 textoBotonGuardar = "Crear";
             }
             else{
                 var detalle = await respuesta.Content.ReadAsStringAsync();
-                mensaje = $"No se pudo crear el tipo de producto. Detalle: {detalle}";
+                mensaje = $"No se pudo crear el estado. Detalle: {detalle}";
                 claseAviso = "alert alert-danger";
 
             }
         }
         catch(Exception ex){
-            mensaje = $"Error al crear el tipo de producto: {ex.Message}";
+            mensaje = $"Error al crear el estado: {ex.Message}";
             claseAviso = "alert alert-danger";
         }
 
     }
-    private async Task ActualizarTipoProducto(){
+    private async Task ActualizarEstado(){
         LimpiarMensajes();
-        if(tipoProductoActual.Id == 0){
+        if(estadoActual.Id == 0){
             mensaje = "Debe indicar el ID para actualizar";
             claseAviso = "alert alert-warning";
             return;
@@ -197,51 +197,51 @@ else
         }
         try{
             var cliente = FabricaHttp.CreateClient("ApiBack");
-            var ruta = $"{urlBaseApi}/Id/{tipoProductoActual.Id}";
-            var respuesta = await cliente.PutAsJsonAsync(ruta, tipoProductoActual);
+            var ruta = $"{urlBaseApi}/Id/{estadoActual.Id}";
+            var respuesta = await cliente.PutAsJsonAsync(ruta, estadoActual);
             if(respuesta.IsSuccessStatusCode){
-                mensaje = "tipo de producto actualizado correctamente";
+                mensaje = "Estado actualizado correctamente";
                 claseAviso = "alert alert-success";
-                await CargarTipoProductos();
-                existeTipoProducto = true;
+                await CargarEstado();
+                existeEstado = true;
                 textoBotonGuardar = "Actualizar";
 
             }else{
                 var detalle = await respuesta.Content.ReadAsStringAsync();
-                mensaje = $"No se pudo actualizar el tipo de producto. Detalle: {detalle}";
+                mensaje = $"No se pudo actualizar el Estado. Detalle: {detalle}";
                 claseAviso = "alert alert-danger";
             }
         }
         catch(Exception ex){
-            mensaje = $"Error al actualizar el tipo de producto: {ex.Message}";
+            mensaje = $"Error al actualizar el estado: {ex.Message}";
             claseAviso = "alert alert-danger";
 
         }
     }
-    private async Task EliminarTipoProducto(){
+    private async Task EliminarEstado(){
         LimpiarMensajes();
-        if(tipoProductoActual.Id == 0){
+        if(estadoActual.Id == 0){
             mensaje = "Debe indicar el ID para eliminar";
             claseAviso = "alert alert-warning";
             return;
         }
         try{
             var cliente = FabricaHttp.CreateClient("ApiBack");
-            var ruta = $"{urlBaseApi}/Id/{tipoProductoActual.Id}";
+            var ruta = $"{urlBaseApi}/Id/{estadoActual.Id}";
             var respuesta = await cliente.DeleteAsync(ruta);
             if(respuesta.IsSuccessStatusCode){
-                mensaje = "Tipo de producto eliminar correctamente!";
+                mensaje = "Estado eliminado correctamente!";
                 claseAviso = "alert alert-success";
                 LimpiarFormulario();
             }
             else{
                 var detalle = await respuesta.Content.ReadAsStringAsync();
-                mensaje = $"No se pudo eliminar el tipo de producto. Detalle: {detalle}";
+                mensaje = $"No se pudo eliminar el estado. Detalle: {detalle}";
                 claseAviso = "alert alert-danger";
             }
         }
         catch(Exception ex){
-            mensaje = $"Error al eliminar el tipo del producto: {ex.Message}";
+            mensaje = $"Error al eliminar el estado: {ex.Message}";
             claseAviso = "alert alert-danger";
         }
     }
@@ -251,7 +251,7 @@ else
             var cliente = FabricaHttp.CreateClient("ApiBack");
             var respuesta = await cliente.GetAsync(urlBaseApi);
             if(respuesta.IsSuccessStatusCode){
-                mensaje = "Conexión con la API verificada!!!!1111";
+                mensaje = "Conexión con la API verificada!!";
                 claseAviso = "alert alert-success";
             }
             else{
@@ -264,17 +264,15 @@ else
             claseAviso = "alert alert-danger";
         }
     }
-     private void CargarEnFormulario(Models.TipoProducto tp)
-    {
-        tipoProductoActual = new Models.TipoProducto
-        {
-            Id = tp.Id,
-            Nombre = tp.Nombre,
-            Descripcion = tp.Descripcion
+    private void CargarEnFormulario(Models.Estado es){
+            estadoActual = new Models.Estado{
+            Id = es.Id,
+            Nombre = es.Nombre,
+            Descripcion = es.Descripcion
         };
-        existeTipoProducto = true;
+        existeEstado = true;
         textoBotonGuardar = "Actualizar";
-        mensaje = "Tipo de producto seleccionado desde el listado.";
+        mensaje = "Estado seleccionado desde el listado";
         claseAviso = "alert alert-info";
     }
     private void LimpiarMensajes(){
@@ -282,8 +280,8 @@ else
         claseAviso = "alert alert-info";
     }
     private void LimpiarFormulario(){
-            tipoProductoActual = new Models.TipoProducto();
-        existeTipoProducto = false;
+        estadoActual = new Models.Estado();
+        existeEstado = false;
         textoBotonGuardar = "Crear";
         LimpiarMensajes();
     }

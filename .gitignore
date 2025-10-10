@@ -1,0 +1,13 @@
+bin/
+obj/
+*.user
+*.vspscc
+*.vssscc
+*.suo
+*.pdb
+*.dll
+*.exe
+*.cache
+*.log
+appsettings.Development.json
+ApiBack.csproj
