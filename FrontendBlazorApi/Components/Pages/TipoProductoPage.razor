@@ -197,8 +197,13 @@ else
         }
         try{
             var cliente = FabricaHttp.CreateClient("ApiBack");
+            //
+            TipoProductoTratar tipoProducto = new TipoProductoTratar(){
+                Nombre = tipoProductoActual.Nombre,
+                Descripcion = tipoProductoActual.Descripcion
+            };
             var ruta = $"{urlBaseApi}/Id/{tipoProductoActual.Id}";
-            var respuesta = await cliente.PutAsJsonAsync(ruta, tipoProductoActual);
+            var respuesta = await cliente.PutAsJsonAsync(ruta, tipoProducto);
             if(respuesta.IsSuccessStatusCode){
                 mensaje = "tipo de producto actualizado correctamente";
                 claseAviso = "alert alert-success";
