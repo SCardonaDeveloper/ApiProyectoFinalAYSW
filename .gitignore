@@ -1,5 +1,6 @@
 bin/
 obj/
+out/
 *.user
 *.vspscc
 *.vssscc
@@ -11,3 +12,13 @@ obj/
 *.log
 appsettings.Development.json
 ApiBack.csproj
+.vs/
+.vscode/
+*.swp
+*.bak
+*.tmp
+*.log
+*.cache
+*.db
+*.pid
+*.seed
