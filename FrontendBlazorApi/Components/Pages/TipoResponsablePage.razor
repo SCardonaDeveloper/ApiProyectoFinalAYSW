@@ -212,13 +212,18 @@ else
         try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
+            TipoResponsableTratar tipoResponsable = new TipoResponsableTratar(){
+                Titulo = tipoResponsableActual.Titulo,
+                Descripcion = tipoResponsableActual.Descripcion
+            };
             var ruta = $"{urlBaseApi}/Id/{tipoResponsableActual.Id}";
-            var respuesta = await cliente.PutAsJsonAsync(ruta, tipoResponsableActual);
+            var respuesta = await cliente.PutAsJsonAsync(ruta, tipoResponsable);
             if (respuesta.IsSuccessStatusCode)
             {
                 mensaje = "Tipo de responsable actualizado correctamente.";
                 claseAviso = "alert alert-success";
                 await CargarTipoResponsables();
+                //
             }
             else
             {

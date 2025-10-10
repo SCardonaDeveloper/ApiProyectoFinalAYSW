@@ -11,7 +11,7 @@ namespace FrontendBlazorApi.Models
 
     }
 
-    public class usuarioTratar
+    public class UsuarioTratar
     {
         [JsonIgnore]
         public int Id { get; set; }

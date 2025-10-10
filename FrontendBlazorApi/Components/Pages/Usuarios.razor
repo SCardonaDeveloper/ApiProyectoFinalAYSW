@@ -178,13 +178,13 @@ else
     // =============================================================================
 
     // Lista que contiene todos los usuarios para mostrar en la tabla
-    private List<Usuario> listaUsuarios = new();
+    private List<Models.Usuario> listaUsuarios = new List<Usuario>();
 
     // CRÍTICO: [SupplyParameterFromForm]
     // Este atributo le dice a Blazor que esta propiedad se llena desde el formulario
     // Sin esto, el formulario no funciona correctamente en Blazor Server
     [SupplyParameterFromForm]
-    private Usuario usuarioActual { get; set; } = new();
+    private Usuario usuarioActual { get; set; } = new Usuario();
 
     // Bandera que indica si el usuario en el formulario ya existe en la base de datos
     // Determina si el botón principal dice "Crear" o "Actualizar"
@@ -365,7 +365,7 @@ else
         {
             var cliente = fabricaHttp.CreateClient("ApiBack");
 
-            usuarioTratar usuario = new()
+            UsuarioTratar usuario = new UsuarioTratar()
             {
                 // Id no se envía porque es autogenerado por la base de datos
                 Email = usuarioActual.Email,
@@ -413,10 +413,9 @@ else
     private async Task ActualizarUsuario()
     {
         LimpiarMensajes();
-
-        if (string.IsNullOrWhiteSpace(usuarioActual.Id.ToString()))
+        if (usuarioActual.Id == 0)
         {
-            mensaje = "Debe indicar el id para actualizar.";
+            mensaje = "Debe indicar el ID para actualizar.";
             claseAviso = "alert alert-warning";
             return;
         }
@@ -424,43 +423,31 @@ else
         try
         {
             var cliente = fabricaHttp.CreateClient("ApiBack");
-
-            usuarioTratar usuario = new()
-            {
-                // Id no se envía porque es autogenerado por la base de datos
+            UsuarioTratar usuarioT = new UsuarioTratar(){
                 Email = usuarioActual.Email,
                 Contrasena = usuarioActual.Contrasena,
                 RutaAvatar = usuarioActual.RutaAvatar,
                 Activo = usuarioActual.Activo
             };
-
-            // PUT requiere el código en la URL y el objeto completo en el body
-            var ruta = $"{urlBaseApi}/id/{usuarioActual.Id}";
-            var respuesta = await cliente.PutAsJsonAsync(ruta, usuario);
-
+            var ruta = $"{urlBaseApi}/Id/{usuarioActual.Id}";
+            var respuesta = await cliente.PutAsJsonAsync(ruta, usuarioT);
             if (respuesta.IsSuccessStatusCode)
             {
-
-                // Refresca la lista para mostrar los cambios
-                await CargarUsuarios();
-
                 mensaje = "Usuario actualizado correctamente.";
                 claseAviso = "alert alert-success";
-
-                // Mantiene el usuario en el formulario (no limpia)
-                existeUsuario = true;
-                textoBotonGuardar = "Actualizar";
+                await CargarUsuarios();
+                //
             }
             else
             {
                 var detalle = await respuesta.Content.ReadAsStringAsync();
-                mensaje = $"No se pudo actualizar el usuario. Detalle: {detalle}";
+                mensaje = $"No se pudo actualizar: {detalle}";
                 claseAviso = "alert alert-danger";
             }
         }
-        catch (Exception error)
+        catch (Exception ex)
         {
-            mensaje = $"Error al actualizar usuario: {error.Message}";
+            mensaje = $"Error al actualizar: {ex.Message}";
             claseAviso = "alert alert-danger";
         }
     }

@@ -212,8 +212,13 @@ else
         try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
+            //
+            TipoProyectoTratar tipoProyectoT = new TipoProyectoTratar(){
+                Nombre = tipoProyectoActual.Nombre,
+                Descripcion = tipoProyectoActual.Descripcion
+            };
             var ruta = $"{urlBaseApi}/Id/{tipoProyectoActual.Id}";
-            var respuesta = await cliente.PutAsJsonAsync(ruta, tipoProyectoActual);
+            var respuesta = await cliente.PutAsJsonAsync(ruta, tipoProyectoT);
             if (respuesta.IsSuccessStatusCode)
             {
                 mensaje = "Tipo de proyecto actualizado correctamente.";

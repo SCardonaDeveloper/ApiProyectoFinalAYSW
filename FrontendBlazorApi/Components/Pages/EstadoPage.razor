@@ -197,8 +197,12 @@ else
         }
         try{
             var cliente = FabricaHttp.CreateClient("ApiBack");
+            EstadoTratar estadoT = new EstadoTratar(){
+                Nombre = estadoActual.Nombre,
+                Descripcion = estadoActual.Descripcion
+            };
             var ruta = $"{urlBaseApi}/Id/{estadoActual.Id}";
-            var respuesta = await cliente.PutAsJsonAsync(ruta, estadoActual);
+            var respuesta = await cliente.PutAsJsonAsync(ruta, estadoT);
             if(respuesta.IsSuccessStatusCode){
                 mensaje = "Estado actualizado correctamente";
                 claseAviso = "alert alert-success";
