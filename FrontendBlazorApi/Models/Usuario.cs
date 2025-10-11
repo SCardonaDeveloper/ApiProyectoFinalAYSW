@@ -29,6 +29,4 @@ namespace FrontendBlazorApi.Models
 
     }
 
-    // prueba 
- 
 }

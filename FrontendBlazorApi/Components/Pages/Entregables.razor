@@ -99,7 +99,7 @@
 
         <div class="col-md-3">
             <label class="form-label">FechaModificacion</label>
-            <InputDate class="form-control" @bind-Value="entregableActual.FechaModificacion" />
+            <InputDate class="form-control" @bind-Value="entregableActual.FechaModificacion" readonly />
         </div>
 
         <div class="col-md-3">
@@ -232,6 +232,10 @@ else
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
+        entregableActual.FechaInicio = DateTime.Today;
+        entregableActual.FechaFinPrevista = DateTime.Today;
+        entregableActual.FechaModificacion = DateTime.Today;
+        entregableActual.FechaFinalizacion = DateTime.Today;
         await CargarEntregables();
     }
 
@@ -337,7 +341,7 @@ else
                     Descripcion = encontrado.Descripcion,
                     FechaInicio = encontrado.FechaInicio,
                     FechaFinPrevista = encontrado.FechaFinPrevista,
-                    FechaModificacion = encontrado.FechaModificacion,
+                    FechaModificacion = DateTime.Today,
                     FechaFinalizacion = encontrado.FechaFinalizacion,
 
                 };
@@ -371,6 +375,29 @@ else
     /// </summary>
     private async Task GuardarSegunEstado()
     {
+        // Validación de fechas
+        if (entregableActual.FechaFinPrevista < entregableActual.FechaInicio)
+        {
+            mensaje = "La Fecha de Fin Prevista no puede ser menor que la Fecha de Inicio.";
+            claseAviso = "alert alert-warning";
+            return;
+        }
+        if (entregableActual.FechaFinalizacion < entregableActual.FechaInicio)
+        {
+            mensaje = "La Fecha de Finalización no puede ser menor que la Fecha de Inicio.";
+            claseAviso = "alert alert-warning";
+            return;
+        }
+        if (entregableActual.Titulo == "" || entregableActual.Codigo == "")
+        {
+            mensaje = "El Código y el Título son obligatorios.";
+            claseAviso = "alert alert-warning";
+            return;
+        }
+
+        // Setea la fecha de modificación antes de guardar
+        entregableActual.FechaModificacion = DateTime.Today;
+
         if (existeEntregable)
             await ActualizarEntregable();
         else
@@ -392,6 +419,13 @@ else
             entregableTratar entregable = new()
             {
                 // Id no se envía porque es autogenerado por la base de datos
+                Codigo = entregableActual.Codigo,
+                Titulo = entregableActual.Titulo,
+                Descripcion = entregableActual.Descripcion,
+                FechaInicio = entregableActual.FechaInicio,
+                FechaFinPrevista = entregableActual.FechaFinPrevista,
+                FechaModificacion = entregableActual.FechaModificacion,
+                FechaFinalizacion = entregableActual.FechaFinalizacion
 
             };
 
@@ -401,16 +435,19 @@ else
             // IsSuccessStatusCode: Verifica códigos HTTP 200-299
             if (respuesta.IsSuccessStatusCode)
             {
+                // Limpia completamente el formulario
+                LimpiarFormulario();
+
                 mensaje = "Entregable creado correctamente.";
                 claseAviso = "alert alert-success";
 
                 // Refresca la lista para mostrar el nuevo entregable
                 await CargarEntregables();
 
-                // Limpia el formulario para una nueva creación
+@*                 // Limpia el formulario para una nueva creación
                 entregableActual = new Entregable();
                 existeEntregable = false;
-                textoBotonGuardar = "Crear";
+                textoBotonGuardar = "Crear"; *@
             }
             else
             {
@@ -469,12 +506,12 @@ else
                 // Refresca la lista para mostrar los cambios
                 await CargarEntregables();
 
+                // Limpia completamente el formulario
+                LimpiarFormulario();
+
                 mensaje = "Entregable actualizado correctamente.";
                 claseAviso = "alert alert-success";
 
-                // Mantiene el entregable en el formulario (no limpia)
-                existeEntregable = true;
-                textoBotonGuardar = "Actualizar";
             }
             else
             {
@@ -594,7 +631,7 @@ else
             Descripcion = e.Descripcion,
             FechaInicio = e.FechaInicio,
             FechaFinPrevista = e.FechaFinPrevista,
-            FechaModificacion = e.FechaModificacion,
+            FechaModificacion = DateTime.Today,
             FechaFinalizacion = e.FechaFinalizacion
         };
 
@@ -623,5 +660,11 @@ else
         existeEntregable = false;
         textoBotonGuardar = "Crear";
         LimpiarMensajes();
+
+        // Inicializa las fechas para evitar valores nulos
+        entregableActual.FechaInicio = DateTime.Today;
+        entregableActual.FechaFinPrevista = DateTime.Today;
+        entregableActual.FechaModificacion = DateTime.Today;
+        entregableActual.FechaFinalizacion = DateTime.Today;
     }
 }
