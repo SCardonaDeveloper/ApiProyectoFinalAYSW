@@ -1,113 +1,171 @@
-﻿@* 
-    NavMenu.razor
-    Este componente define el menú lateral de navegación de la aplicación.
-    Aquí se colocan los enlaces a las distintas páginas (componentes .razor).
-    Por defecto la plantilla incluye: Home, Counter y Weather.
-    Se ha eliminado Weather porque era un ejemplo de la plantilla.
-    Más adelante aquí se agregará el acceso a la página de Productos.
-*@
-@using Microsoft.AspNetCore.Components.Routing
+﻿@using Microsoft.AspNetCore.Components.Routing
 
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Gestión de proyectos</a>
-        <button title="Toggle navigation" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
+<div class="@SidebarClass">
+    <div class="sidebar-header">
+        <button class="toggle-btn" @onclick="ToggleSidebar">
+            <i class="bi bi-list"></i>
         </button>
+        <span class="brand-text" style="white-space: nowrap;">Gestión de Proyectos</span>
     </div>
-</div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+    <nav class="nav flex-column mt-3">
+        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+            <i class="bi-house-door-fill"></i><span>Inicio</span>
+        </NavLink>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
+        <NavLink class="nav-link" href="Usuarios">
+            <i class="bi-person-circle"></i><span>Usuarios</span>
+        </NavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="">
-                <div class="d-flex align-items-center">
-                    <i class="bi-house-door-fill"></i>
-                    <span class="etiqueta">Inicio</span>
-                </div>
-            </NavLink>
-        </div>
+        <NavLink class="nav-link" href="TipoResponsablePage">
+            <i class="bi-people-fill"></i><span>Tipos de responsables</span>
+        </NavLink>
 
-        @* Enlace a la página Counter (contador de ejemplo) *@
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="Usuarios">
-                <div class="d-flex align-items-center">
-                    <i class="bi-person-circle"></i>
-                    <span class="etiqueta">Usuarios</span>
-                </div>
-            </NavLink>
-        </div>
+        <NavLink class="nav-link" href="TipoProyectoPage">
+            <i class="bi-kanban"></i><span>Tipos de proyectos</span>
+        </NavLink>
 
-        
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="TipoResponsablePage">
-                <div class="d-flex align-items-center">
-                    <i class="bi-people-fill"></i>
-                    <span class="etiqueta" style="white-space: nowrap;">Tipos de responsables</span>
-                </div>
-            </NavLink>
-        </div>
+        <NavLink class="nav-link" href="EstadoPage">
+            <i class="bi-flag-fill"></i><span>Estados</span>
+        </NavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="TipoProyectoPage">
-                <div class="d-flex align-items-center">
-                    <i class="bi-kanban"></i>
-                    <span class="etiqueta" style="white-space: nowrap;">Tipos de proyectos</span>
-                </div>
-            </NavLink>
-        </div>
+        <NavLink class="nav-link" href="TipoProductoPage">
+            <i class="bi-diagram-3-fill"></i><span>Tipos de Productos</span>
+        </NavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="EstadoPage">
-                <div class="d-flex align-items-center">
-                    <i class="bi-flag-fill"></i>
-                    <span class="etiqueta">Estados</span>
-                </div>
-            </NavLink>
-        </div>
+        <NavLink class="nav-link" href="Entregables">
+            <i class="bi-card-checklist"></i><span>Entregables</span>
+        </NavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="TipoProductoPage">
-                <div class="d-flex align-items-center">
-                    <i class="bi-diagram-3-fill"></i>
-                    <span class="etiqueta" style="white-space: nowrap;">Tipos de Productos</span>
-                </div>
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="Entregables">
-                <div class="d-flex align-items-center">
-                    <i class="bi-card-checklist"></i>
-                    <span class="etiqueta">Entregables</span>
-                </div>
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="VariablesEstrategicas">
-                <div class="d-flex align-items-center">
-                    <i class="bi-card-checklist"></i>
-                    <span class="etiqueta" style="white-space: nowrap;">Variable Estrategica</span>
-                </div>
-            </NavLink>
-        </div>
-
-
-        @* 
-        <div class="nav-item px-3">
-
-        </div> *@
+        <NavLink class="nav-link" href="VariablesEstrategicas">
+            <i class="bi-bullseye"></i><span>Variable Estratégica</span>
+        </NavLink>
     </nav>
 </div>
+
+<style>
+    /* ----- Sidebar base ----- */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 250px;
+        background-color: #1f2937;
+        color: #f3f4f6;
+        padding: 1rem 0;
+        display: flex;
+        flex-direction: column;
+        transition: width 0.3s ease, background-color 0.3s ease;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+        z-index: 100;
+    }
+
+    .sidebar.collapsed {
+        width: 80px;
+    }
+
+    /* ----- Header ----- */
+    .sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.75rem;
+        padding: 0 1rem;
+        font-weight: 600;
+        color: #38bdf8;
+        text-transform: uppercase;
+    }
+
+    .toggle-btn {
+        background: none;
+        border: none;
+        color: #38bdf8;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+
+    .toggle-btn:hover {
+        transform: scale(1.1);
+    }
+
+    .brand-text {
+        overflow: hidden;
+        white-space: nowrap;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .sidebar.collapsed .brand-text {
+        opacity: 0;
+        transform: translateX(-10px);
+        pointer-events: none;
+    }
+
+    /* ----- Links ----- */
+    .nav-link {
+        color: #d1d5db;
+        padding: 0.75rem 1.2rem;
+        font-size: 0.95rem;
+        border-left: 3px solid transparent;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: all 0.25s ease-in-out;
+    }
+
+    .nav-link:hover {
+        background-color: #374151;
+        color: #fff;
+        border-left: 3px solid #38bdf8;
+    }
+
+    .nav-link.active {
+        background-color: #111827;
+        color: #38bdf8;
+        border-left: 3px solid #38bdf8;
+    }
+
+    .nav-link i {
+        font-size: 1.25rem;
+        min-width: 24px;
+        text-align: center;
+    }
+
+    .sidebar.collapsed .nav-link span {
+        display: none;
+    }
+
+    /* ----- Page layout ----- */
+    .page {
+        margin-left: 250px;
+        transition: margin-left 0.3s ease;
+        background-color: #f9fafb;
+        min-height: 100vh;
+        padding: 2rem;
+    }
+
+    .collapsed + .page {
+        margin-left: 80px;
+    }
+
+    @@media (max-width: 768px) {
+        .sidebar {
+            width: 200px;
+        }
+        .sidebar.collapsed {
+            width: 70px;
+        }
+    }
+</style>
+
 @code {
-    private bool colapsado = true;
-    private string? NavMenuCssClass => colapsado ? "collapse" : null;
-    private void ToggleNavMenu()
+    private bool isCollapsed = false;
+
+    private string SidebarClass => isCollapsed ? "sidebar collapsed" : "sidebar";
+
+    private void ToggleSidebar()
     {
-        colapsado = !colapsado;
+        isCollapsed = !isCollapsed;
     }
 }
