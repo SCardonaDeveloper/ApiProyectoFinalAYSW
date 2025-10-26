@@ -12,8 +12,8 @@ namespace FrontendBlazorApi.Models
         private DateOnly FechaInicio;
         private DateOnly FechaFinPrevista;
         private DateOnly FechaModificacion;
-        private string Prioridad;
-        private double PorcentajeAvance;
+        private int Prioridad;
+        private int PorcentajeAvance;
     }
     public class ActividadTratar
     {
