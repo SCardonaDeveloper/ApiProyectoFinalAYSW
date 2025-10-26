@@ -1,11 +1,3 @@
-// ProcedimientosController.cs — Controlador específico para ejecutar procedimientos almacenados
-// Ubicación: Controllers/ProcedimientosController.cs
-//
-// Principios SOLID aplicados:
-// - SRP: El controlador solo coordina peticiones HTTP para procedimientos almacenados
-// - DIP: Depende de IServicioConsultas (abstracción), no de ServicioConsultas (implementación concreta)
-// - ISP: Consume solo los métodos necesarios de IServicioConsultas
-// - OCP: Preparado para agregar más endpoints sin modificar código existente
 
 using System;
 using Microsoft.AspNetCore.Authorization;
