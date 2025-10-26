@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
-using webapicsharp.Repositorios.Abstracciones;
-using webapicsharp.Servicios.Abstracciones;
+using ApiBack.Repositorios.Abstracciones;
+using ApiBack.Servicios.Abstracciones;
 
-namespace webapicsharp.Repositorios
+namespace ApiBack.Repositorios
 {
     public sealed class RepositorioConsultasSqlServer : IRepositorioConsultas
     {

@@ -4,11 +4,11 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
-using webapicsharp.Repositorios.Abstracciones;
-using webapicsharp.Servicios.Abstracciones;
-using webapicsharp.Servicios.Utilidades;
+using ApiBack.Repositorios.Abstracciones;
+using ApiBack.Servicios.Abstracciones;
+using ApiBack.Servicios.Utilidades;
 
-namespace webapicsharp.Repositorios
+namespace ApiBack.Repositorios
 {
     public class RepositorioLecturaSqlServer : IRepositorioLecturaTabla
     {
