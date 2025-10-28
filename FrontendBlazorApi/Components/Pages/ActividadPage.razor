@@ -1,102 +1,136 @@
 @page "/ActividadPage"
 @using System.Net.Http.Json
 @using FrontendBlazorApi.Models
-@using System.Runtime.CompilerServices
+@using System.Text.Json
+@using System.Text.Json.Serialization
 @inject IHttpClientFactory FabricaHttp
 @rendermode InteractiveServer
+
 <PageTitle>Actividad</PageTitle>
-<h3>Gestion de actividades</h3>
+
+<h3>Gestión de actividades</h3>
+
 <div class="mb-3 d-flex gap-2">
     <button type="button" class="btn btn-outline-secondary" @onclick="ProbarConexion">Probar conexión</button>
-    <button type="button" class="btn btn-outline-primary" @onclick="CargarTipoProductos">Mostrar todos</button>
+    <button type="button" class="btn btn-outline-primary" @onclick="CargarActividades">Mostrar todos</button>
     <button type="button" class="btn btn-outline-dark" @onclick="LimpiarFormulario">Limpiar</button>
 </div>
+
 @if (!string.IsNullOrWhiteSpace(mensaje))
 {
     <div class="@claseAviso" role="alert">@mensaje</div>
 }
+
 <h4>Formulario de actividades</h4>
-<EditForm Model="actividadActual" OnValidSubmit="GuardarSegunEstado" FormName="ActividadForm">
+
+<EditForm Model="actividadActual" OnValidSubmit="GuardarSegunEstado">
     <DataAnnotationsValidator />
     <ValidationSummary />
     <div class="row g-3">
-        <div class="col-md-3">
-            <label class="form-label">ID</label>
+        <div class="col-md-2">
+            <label class="form-label fw-bold">ID</label>
             <InputNumber class="form-control" @bind-Value="actividadActual.Id" />
         </div>
-    </div>
-    <div class="row g-3">
+
         <div class="col-md-3">
-            <label class="form-label">ID de Entregable</label>
-            <InputSelect class="form-select" @bind-Value="actividadActual.FkIdEntregable">
+            <label class="form-label fw-bold">Entregable</label>
+            <InputSelect class="form-select" @bind-Value="actividadActual.IdEntregable">
                 <option value="0">-- Seleccione --</option>
                 @foreach (var e in listaEntregables)
                 {
-                    <option value="@e.Id">@e.Titulo (ID: @e.Id)</option>
+                    <option value="@e.Id">@e.Titulo</option>
                 }
             </InputSelect>
         </div>
-        <div class="col-md-5">
-            <label class="form-label">Titulo</label>
+
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Título</label>
             <InputText class="form-control" @bind-Value="actividadActual.Titulo" />
         </div>
+
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Descripción</label>
+            <InputTextArea class="form-control" @bind-Value="actividadActual.Descripcion" />
+        </div>
+
         <div class="col-md-2">
-            <label class="form-label">Descripcion</label>
-            <InputText class="form-control" @bind-Value="actividadActual.Descripcion" />
+            <label class="form-label fw-bold">Fecha inicio</label>
+            <InputDate class="form-control" @bind-Value="actividadActual.FechaInicio" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Fecha fin prevista</label>
+            <InputDate class="form-control" @bind-Value="actividadActual.FechaFinPrevista" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Fecha finalización</label>
+            <InputDate class="form-control" @bind-Value="actividadActual.FechaFinalizacion" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Prioridad</label>
+            <InputSelect class="form-select" @bind-Value="actividadActual.Prioridad">
+                <option value="">-- Seleccione --</option>
+                @for (int i = 1; i <= 5; i++)
+                {
+                    <option value="@i">@i</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Avance (%)</label>
+            <InputNumber class="form-control" @bind-Value="actividadActual.PorcentajeAvance" />
         </div>
     </div>
-    <div class="col-md-3">
-        <label class="form-label">Fecha de Inicio</label>
-        <InputDate class="form-control" @bind-Value="actividadActual.FechaInicio" />
-    </div>
-    <div class="col-md-3">
-        <label class="form-label">Fecha de fin prevista</label>
-        <InputDate class="form-control" @bind-Value="actividadActual.FechaFinPrevista" />
-    </div>
-    <div class="col-md-3">
-        <label class="form-label">Fecha de modificación</label>
-        <InputDate class="form-control" @bind-Value="actividadActual.FechaModificacion" readonly />
-    </div>
-    <div class="col-md-2">
-        <label class="form-label">Prioridad</label>
-        <InputText class="form-control" @bind-Value="actividadActual.Descripcion" />
-    </div>
-    <div class="mt-3 d-flex flex-wrap gap-2">
-        <button type="submit" class="btn btn-primary">@textoBotonGuardar</button>
-        <button type="button" class="btn btn-secondary" @onclick="BuscarPorCodigo">Buscar</button>
-        <button type="button" class="btn btn-warning" @onclick="EliminarTipoProducto"
-            disabled="@(!existeTipoProducto)">Eliminar</button>
+
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary shadow-sm">Guardar</button>
+        <button type="button" class="btn btn-warning shadow-sm" @onclick="LimpiarFormulario">Limpiar</button>
     </div>
 </EditForm>
 
-@if (tipoProductos is null)
+@if (actividades is null)
 {
-    <p><em>Cargando tipos de productos...</em></p>
+    <p><em>Cargando actividades...</em></p>
 }
-else if (!tipoProductos.Any())
+else if (!actividades.Any())
 {
-    <p>No se encontraron tipos de productos.</p>
+    <p>No se encontraron actividades.</p>
 }
 else
 {
     <table class="table">
         <thead>
             <tr>
-                <th>Código</th>
-                <th>Nombre</th>
-                <th>Descripcion</th>
+                <th>Id</th>
+                <th>Entregable</th>
+                <th>Título</th>
+                <th>Descripción</th>
+                <th>Inicio</th>
+                <th>Fin Prevista</th>
+                <th>Finalización</th>
+                <th>Prioridad</th>
+                <th>Avance</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var p in tipoProductos)
+            @foreach (var a in actividades)
             {
                 <tr>
-                    <td>@p.Id</td>
-                    <td>@p.Nombre</td>
-                    <td>@p.Descripcion</td>
+                    <td>@a.Id</td>
+                    <td>@listaEntregables.FirstOrDefault(e => e.Id == a.IdEntregable)?.Titulo</td>
+                    <td>@a.Titulo</td>
+                    <td>@a.Descripcion</td>
+                    <td>@a.FechaInicio.ToShortDateString()</td>
+                    <td>@a.FechaFinPrevista.ToShortDateString()</td>
+                    <td>@a.FechaFinalizacion.ToShortDateString()</td>
+                    <td>@a.Prioridad</td>
+                    <td>@a.PorcentajeAvance%</td>
                     <td>
-                        <button type="button" class="btn btn-sm btn-outline-primary"
-                            @onclick="@(() => CargarEnFormulario(p))">Cargar</button>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="@(() => CargarEnFormulario(a))">Cargar</button>
                     </td>
                 </tr>
             }
@@ -105,212 +139,196 @@ else
 }
 
 @code {
-    private List<TipoProducto>? tipoProductos;
-    [SupplyParameterFromForm]
-    private TipoProducto tipoProductoActual { get; set; } = new();
-    private bool existeTipoProducto = false;
-    private string textoBotonGuardar = "Crear";
+    private List<Actividad> actividades = new List<Actividad>();
+    private Actividad actividadActual = new();
+    private List<EntregableDTO> listaEntregables = new();
+    private bool existeActividad = false;
     private string mensaje = "";
     private string claseAviso = "alert alert-info";
     private bool cargando = false;
-    private const string urlBaseApi = "api/TipoProducto";
+
+    private const string urlBaseApi = "api/Actividad";
+    private const string urlProcedimientos = "api/procedimientos/ejecutarsp";
+    private const string urlEntregables = "api/Entregable";
+    private const string urlConsultas = "api/consultas/ejecutarconsultaparametrizada";
+
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
-            var cliente = FabricaHttp.CreateClient("ApiBack");
-            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Models.TipoProducto>>>("api/TipoProducto");
-            tipoProductos = respuesta?.Datos ?? new List<Models.TipoProducto>();
-        }
-        catch (Exception error)
-        {
-            Console.WriteLine($"Error al cargar productos: {error.Message}");
-            tipoProductos = new List<Models.TipoProducto>();
-        }
-        await CargarTipoProductos();
+        await CargarDatosIniciales();
     }
-    private async Task CargarTipoProductos()
-    {
-        try
-        {
 
-            cargando = true;
-            var cliente = FabricaHttp.CreateClient("ApiBack");
-            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Models.TipoProducto>>>(urlBaseApi);
-            tipoProductos = respuesta?.Datos ?? new List<Models.TipoProducto>();
-            mensaje = $"Se cargaron {tipoProductos.Count} tipo(s) de producto(s)";
+    private async Task CargarDatosIniciales() =>
+        await Task.WhenAll(CargarActividades(), CargarEntregables());
+
+    private async Task CargarActividades()
+{
+    try
+    {
+        cargando = true;
+        var cliente = FabricaHttp.CreateClient("ApiBack");
+
+        var parametrosConsulta = new Dictionary<string, object?>
+        {
+            ["consulta"] = @"
+                SELECT 
+                    a.Id,
+                    a.IdEntregable,
+                    e.Titulo AS TituloEntregable,
+                    a.Titulo,
+                    a.Descripcion,
+                    a.FechaInicio,
+                    a.FechaFinPrevista,
+                    a.FechaFinalizacion,
+                    a.Prioridad,
+                    a.PorcentajeAvance
+                FROM Actividad a
+                INNER JOIN Entregable e ON e.Id = a.IdEntregable
+                ORDER BY a.Id",
+            ["parametros"] = new Dictionary<string, object?>()
+        };
+
+        var respuesta = await cliente.PostAsJsonAsync(urlConsultas, parametrosConsulta);
+
+        if (respuesta.IsSuccessStatusCode)
+        {
+            var resultado = await respuesta.Content.ReadFromJsonAsync<RespuestaConsulta>();
+
+            actividades = resultado?.Resultados?.Select(d => new Actividad
+            {
+                Id = ObtenerInt(d, "Id"),
+                IdEntregable = ObtenerInt(d, "IdEntregable"),
+                Titulo = ObtenerString(d, "Titulo"),
+                Descripcion = ObtenerString(d, "Descripcion"),
+                FechaInicio = ObtenerDateTime(d, "FechaInicio"),
+                FechaFinPrevista = ObtenerDateTime(d, "FechaFinPrevista"),
+                FechaFinalizacion = ObtenerDateTime(d, "FechaFinalizacion"),
+                Prioridad = ObtenerInt(d, "Prioridad"),
+                PorcentajeAvance = ObtenerInt(d, "PorcentajeAvance")
+            }).ToList() ?? new();
+
+            mensaje = $"Se cargaron {actividades.Count} actividad(es).";
             claseAviso = "alert alert-success";
-
         }
-        catch (Exception ex)
+        else
         {
-            mensaje = $"Error al listar el tipo de productos: {ex.Message}";
+            var errorTexto = await respuesta.Content.ReadAsStringAsync();
+            mensaje = $"Error al cargar actividades: {respuesta.StatusCode} - {errorTexto}";
             claseAviso = "alert alert-danger";
-        }
-        finally
-        {
-            cargando = false;
+        
         }
     }
-    private async Task BuscarPorCodigo()
+    catch (Exception ex)
     {
-        LimpiarMensajes();
-        if (tipoProductoActual.Id == 0)
-        {
-            mensaje = "Debe indicar el ID para buscar.";
-            claseAviso = "alert alert-warning";
-            return;
-        }
+        mensaje = $"Error al listar actividades: {ex.Message}";
+        claseAviso = "alert alert-danger";
+    }
+    finally { cargando = false; }
+}
+
+    private async Task CargarEntregables()
+    {
         try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
-            var ruta = $"{urlBaseApi}/Id/{tipoProductoActual.Id}";
-            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Models.TipoProducto>>>(ruta);
-            var encontrado = respuesta?.Datos?.FirstOrDefault();
-            if (encontrado is not null)
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Dictionary<string, object>>>>(urlEntregables);
+            listaEntregables = respuesta?.Datos?.Select(d => new EntregableDTO
             {
-                tipoProductoActual = new Models.TipoProducto
-                {
-                    Id = encontrado.Id,
-                    Nombre = encontrado.Nombre,
-                    Descripcion = encontrado.Descripcion
-                };
-                existeTipoProducto = true;
-                textoBotonGuardar = "Actualizar";
-                mensaje = "Tipo de producto cargado en el formulario. ";
-                claseAviso = "alert alert-success";
-            }
-            else
-            {
-                existeTipoProducto = false;
-                textoBotonGuardar = "Crear";
-                mensaje = "Tipo de producto no encontrado";
-                claseAviso = "alert alert-warning";
-            }
+                Id = ObtenerInt(d, "Id"),
+                Titulo = ObtenerString(d, "Titulo")
+            }).ToList() ?? new();
         }
-        catch (Exception ex)
-        {
-            existeTipoProducto = false;
-            textoBotonGuardar = "Crear";
-            mensaje = $"Error buscando el tipo de producto: {ex.Message}";
-            claseAviso = "alert alert-danger";
-        }
+        catch { }
     }
+
     private async Task GuardarSegunEstado()
     {
-        if (existeTipoProducto)
-            await ActualizarTipoProducto();
+        if (existeActividad)
+            await ActualizarActividad();
         else
-            await CrearTipoProducto();
+            await CrearActividad();
     }
-    private async Task CrearTipoProducto()
+
+    private async Task CrearActividad()
     {
-        LimpiarMensajes();
-        try
-        {
-            tipoProductoActual.Id = 0;
-            var cliente = FabricaHttp.CreateClient("ApiBack");
-            var respuesta = await cliente.PostAsJsonAsync(urlBaseApi, tipoProductoActual);
-            if (respuesta.IsSuccessStatusCode)
-            {
-                mensaje = "tipo de producto creado correctamente";
-                claseAviso = "alert alert-success";
-                await CargarTipoProductos();
-                tipoProductoActual = new Models.TipoProducto();
-                existeTipoProducto = false;
-                textoBotonGuardar = "Crear";
-            }
-            else
-            {
-                var detalle = await respuesta.Content.ReadAsStringAsync();
-                mensaje = $"No se pudo crear el tipo de producto. Detalle: {detalle}";
-                claseAviso = "alert alert-danger";
-
-            }
-        }
-        catch (Exception ex)
-        {
-            mensaje = $"Error al crear el tipo de producto: {ex.Message}";
-            claseAviso = "alert alert-danger";
-        }
-
-    }
-    private async Task ActualizarTipoProducto()
-    {
-        LimpiarMensajes();
-        if (tipoProductoActual.Id == 0)
-        {
-            mensaje = "Debe indicar el ID para actualizar";
-            claseAviso = "alert alert-warning";
-            return;
-
-        }
         try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
-            //
-            TipoProductoTratar tipoProducto = new TipoProductoTratar()
+            var parametros = new Dictionary<string, object?>
             {
-                Nombre = tipoProductoActual.Nombre,
-                Descripcion = tipoProductoActual.Descripcion
+                ["nombreSP"] = "crear_actividad",
+                ["p_identregable"] = actividadActual.IdEntregable,
+                ["p_titulo"] = actividadActual.Titulo,
+                ["p_descripcion"] = actividadActual.Descripcion,
+                ["p_fechainicio"] = actividadActual.FechaInicio.ToString("yyyy-MM-dd"),
+                ["p_fechafinprevista"] = actividadActual.FechaFinPrevista.ToString("yyyy-MM-dd"),
+                ["p_fechafinalizacion"] = actividadActual.FechaFinalizacion.ToString("yyyy-MM-dd"),
+                ["p_prioridad"] = actividadActual.Prioridad,
+                ["p_porcentajeavance"] = actividadActual.PorcentajeAvance
             };
-            var ruta = $"{urlBaseApi}/Id/{tipoProductoActual.Id}";
-            var respuesta = await cliente.PutAsJsonAsync(ruta, tipoProducto);
+
+            var respuesta = await cliente.PostAsJsonAsync(urlProcedimientos, parametros);
             if (respuesta.IsSuccessStatusCode)
             {
-                mensaje = "tipo de producto actualizado correctamente";
+                mensaje = "Actividad creada correctamente";
                 claseAviso = "alert alert-success";
-                await CargarTipoProductos();
-                existeTipoProducto = true;
-                textoBotonGuardar = "Actualizar";
-
-            }
-            else
-            {
-                var detalle = await respuesta.Content.ReadAsStringAsync();
-                mensaje = $"No se pudo actualizar el tipo de producto. Detalle: {detalle}";
-                claseAviso = "alert alert-danger";
-            }
-        }
-        catch (Exception ex)
-        {
-            mensaje = $"Error al actualizar el tipo de producto: {ex.Message}";
-            claseAviso = "alert alert-danger";
-
-        }
-    }
-    private async Task EliminarTipoProducto()
-    {
-        LimpiarMensajes();
-        if (tipoProductoActual.Id == 0)
-        {
-            mensaje = "Debe indicar el ID para eliminar";
-            claseAviso = "alert alert-warning";
-            return;
-        }
-        try
-        {
-            var cliente = FabricaHttp.CreateClient("ApiBack");
-            var ruta = $"{urlBaseApi}/Id/{tipoProductoActual.Id}";
-            var respuesta = await cliente.DeleteAsync(ruta);
-            if (respuesta.IsSuccessStatusCode)
-            {
-                mensaje = "Tipo de producto eliminar correctamente!";
-                claseAviso = "alert alert-success";
+                await CargarActividades();
                 LimpiarFormulario();
             }
             else
             {
                 var detalle = await respuesta.Content.ReadAsStringAsync();
-                mensaje = $"No se pudo eliminar el tipo de producto. Detalle: {detalle}";
+                mensaje = $"Error: {detalle}";
                 claseAviso = "alert alert-danger";
             }
         }
         catch (Exception ex)
         {
-            mensaje = $"Error al eliminar el tipo del producto: {ex.Message}";
+            mensaje = $"Error al crear: {ex.Message}";
             claseAviso = "alert alert-danger";
         }
+    }
+
+    private async Task ActualizarActividad()
+    {
+        if (actividadActual.Id == 0)
+        {
+            mensaje = "Debe indicar un ID para actualizar.";
+            claseAviso = "alert alert-warning";
+            return;
+        }
+        try
+        {
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var ruta = $"{urlBaseApi}/Id/{actividadActual.Id}";
+            var respuesta = await cliente.PutAsJsonAsync(ruta, actividadActual);
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensaje = "Actividad actualizada correctamente.";
+                claseAviso = "alert alert-success";
+                await CargarActividades();
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error al actualizar: {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    private void CargarEnFormulario(Actividad a)
+    {
+        actividadActual = a;
+        existeActividad = true;
+        mensaje = "Actividad cargada para edición.";
+        claseAviso = "alert alert-info";
+    }
+
+    private void LimpiarFormulario()
+    {
+        actividadActual = new();
+        existeActividad = false;
+        mensaje = "";
+        claseAviso = "alert alert-info";
     }
     private async Task ProbarConexion()
     {
@@ -336,30 +354,51 @@ else
             claseAviso = "alert alert-danger";
         }
     }
-    private void CargarEnFormulario(Models.TipoProducto tp)
-    {
-        tipoProductoActual = new Models.TipoProducto
-        {
-            Id = tp.Id,
-            Nombre = tp.Nombre,
-            Descripcion = tp.Descripcion
-        };
-        existeTipoProducto = true;
-        textoBotonGuardar = "Actualizar";
-        mensaje = "Tipo de producto seleccionado desde el listado.";
-        claseAviso = "alert alert-info";
-    }
     private void LimpiarMensajes()
     {
         mensaje = "";
         claseAviso = "alert alert-info";
-    }
-    private void LimpiarFormulario()
+    } 
+
+    private int ObtenerInt(Dictionary<string, object> dict, string key)
     {
-        tipoProductoActual = new Models.TipoProducto();
-        existeTipoProducto = false;
-        textoBotonGuardar = "Crear";
-        LimpiarMensajes();
+        if (!dict.TryGetValue(key, out var valor)) return 0;
+        if (valor is JsonElement elem)
+            return elem.ValueKind == JsonValueKind.Number ? elem.GetInt32() : 0;
+        return Convert.ToInt32(valor);
     }
 
+    private string ObtenerString(Dictionary<string, object> dict, string key)
+    {
+        if (!dict.TryGetValue(key, out var valor)) return "";
+        if (valor is JsonElement elem)
+            return elem.ValueKind == JsonValueKind.String ? elem.GetString() ?? "" : elem.ToString();
+        return valor?.ToString() ?? "";
+    }
+    private DateTime ObtenerDateTime(Dictionary<string, object> dict, string key)
+    {
+        if (!dict.TryGetValue(key, out var valor)) return DateTime.Now;
+        
+        if (valor is JsonElement elem)
+            return elem.ValueKind == JsonValueKind.String ? elem.GetDateTime() : DateTime.Now;
+        
+        return Convert.ToDateTime(valor);
+    }
+
+    private class EntregableDTO
+    {
+        public int Id { get; set; }
+        public string Titulo { get; set; } = "";
+    }
+     private class RespuestaConsulta
+    {
+        [JsonPropertyName("Resultados")]
+        public List<Dictionary<string, object>>? Resultados { get; set; }
+
+        [JsonPropertyName("Total")]
+        public int Total { get; set; }
+
+        [JsonPropertyName("Advertencia")]
+        public string? Advertencia { get; set; }
+    }
 }

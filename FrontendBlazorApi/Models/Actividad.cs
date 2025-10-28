@@ -4,29 +4,32 @@ namespace FrontendBlazorApi.Models
     public class Actividad
     {
         [JsonPropertyName("id")]
-        private int Id;
+        public int Id;
         [JsonPropertyName("IdEntregable")]
-        private int IdEntregable;
-        private string Titulo;
-        private string Descripcion;
-        private DateOnly FechaInicio;
-        private DateOnly FechaFinPrevista;
-        private DateOnly FechaModificacion;
-        private int Prioridad;
-        private int PorcentajeAvance;
+        public int IdEntregable;
+        public string Titulo;
+        public string Descripcion;
+        public DateTime FechaInicio;
+        public DateTime FechaFinPrevista;
+        public DateTime FechaModificacion;
+        public DateTime FechaFinalizacion;
+        public int Prioridad;
+        public int PorcentajeAvance;
     }
     public class ActividadTratar
     {
         [JsonIgnore]
-        private int Id;
+        public int Id;
         [JsonPropertyName("IdEntregable")]
-        private int IdEntregable;
-        private string Titulo;
-        private string Descripcion;
-        private DateOnly FechaInicio;
-        private DateOnly FechaFinPrevista;
-        private DateOnly FechaModificacion;
-        private string Prioridad;
-        private double PorcentajeAvance;
+        [JsonIgnore]
+        public int IdEntregable;
+        public string Titulo;
+        public string Descripcion;
+        public DateOnly FechaInicio;
+        public DateOnly FechaFinPrevista;
+        public DateOnly FechaModificacion;
+        public DateOnly FechaFinalizacion;
+        public string Prioridad;
+        public double PorcentajeAvance;
     }
 }

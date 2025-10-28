@@ -1,4 +1,3 @@
-
 CREATE DATABASE bdProyectos
 USE bdProyectos
 go
@@ -219,3 +218,233 @@ CREATE TABLE Meta_Proyecto (
     CONSTRAINT FK_MetaProyecto_Proyecto FOREIGN KEY (IdProyecto) REFERENCES Proyecto(Id) ON DELETE CASCADE
 );
 go
+CREATE OR ALTER PROCEDURE crear_responsable
+    @IdTipoResponsable INT,
+    @IdUsuario INT,
+    @Nombre NVARCHAR(255)
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM TipoResponsable WHERE Id = @IdTipoResponsable)
+    BEGIN
+        RAISERROR('TipoResponsable no existe', 16, 1);
+        RETURN;
+    END
+    IF NOT EXISTS (SELECT 1 FROM Usuario WHERE Id = @IdUsuario)
+    BEGIN
+        RAISERROR('Usuario no existe', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO Responsable (IdTipoResponsable, IdUsuario, Nombre)
+    VALUES (@IdTipoResponsable, @IdUsuario, @Nombre);
+
+    SELECT SCOPE_IDENTITY() AS NuevoId;
+END;
+GO
+CREATE OR ALTER PROCEDURE crear_proyecto
+    @IdResponsable INT,
+    @IdTipoProyecto INT,
+    @Codigo NVARCHAR(50) = NULL,
+    @Titulo NVARCHAR(255),
+    @Descripcion NVARCHAR(MAX) = NULL,
+    @FechaInicio DATE = NULL,
+    @FechaFinPrevista DATE = NULL,
+    @RutaLogo NVARCHAR(MAX) = NULL,
+    @IdProyectoPadre INT = NULL
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM Responsable WHERE Id = @IdResponsable)
+    BEGIN
+        RAISERROR('Responsable no existe', 16, 1);
+        RETURN;
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM TipoProyecto WHERE Id = @IdTipoProyecto)
+    BEGIN
+        RAISERROR('TipoProyecto no existe', 16, 1);
+        RETURN;
+    END
+
+    IF @IdProyectoPadre IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Proyecto WHERE Id = @IdProyectoPadre)
+    BEGIN
+        RAISERROR('Proyecto padre no existe', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO Proyecto (IdProyectoPadre, IdResponsable, IdTipoProyecto, Codigo, Titulo, Descripcion, FechaInicio, FechaFinPrevista, RutaLogo)
+    VALUES (@IdProyectoPadre, @IdResponsable, @IdTipoProyecto, @Codigo, @Titulo, @Descripcion, @FechaInicio, @FechaFinPrevista, @RutaLogo);
+
+    SELECT SCOPE_IDENTITY() AS NuevoId;
+END;
+GO
+CREATE OR ALTER PROCEDURE crear_estado_proyecto
+    @IdProyecto INT,
+    @IdEstado INT
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM Proyecto WHERE Id = @IdProyecto)
+    BEGIN
+        RAISERROR('Proyecto no existe', 16, 1);
+        RETURN;
+    END
+    IF NOT EXISTS (SELECT 1 FROM Estado WHERE Id = @IdEstado)
+    BEGIN
+        RAISERROR('Estado no existe', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO Estado_Proyecto (IdProyecto, IdEstado)
+    VALUES (@IdProyecto, @IdEstado);
+END;
+GO
+CREATE OR ALTER PROCEDURE crear_producto
+    @IdTipoProducto INT,
+    @Codigo NVARCHAR(50) = NULL,
+    @Titulo NVARCHAR(255),
+    @Descripcion NVARCHAR(MAX) = NULL,
+    @FechaInicio DATE = NULL,
+    @FechaFinPrevista DATE = NULL,
+    @RutaLogo NVARCHAR(MAX) = NULL
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM TipoProducto WHERE Id = @IdTipoProducto)
+    BEGIN
+        RAISERROR('TipoProducto no existe', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO Producto (IdTipoProducto, Codigo, Titulo, Descripcion, FechaInicio, FechaFinPrevista, RutaLogo)
+    VALUES (@IdTipoProducto, @Codigo, @Titulo, @Descripcion, @FechaInicio, @FechaFinPrevista, @RutaLogo);
+
+    SELECT SCOPE_IDENTITY() AS NuevoId;
+END;
+GO
+CREATE OR ALTER PROCEDURE crear_proyecto_producto
+    @IdProyecto INT,
+    @IdProducto INT,
+    @FechaAsociacion DATE = NULL
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM Proyecto WHERE Id = @IdProyecto)
+    BEGIN
+        RAISERROR('Proyecto no existe', 16, 1);
+        RETURN;
+    END
+    IF NOT EXISTS (SELECT 1 FROM Producto WHERE Id = @IdProducto)
+    BEGIN
+        RAISERROR('Producto no existe', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO Proyecto_Producto (IdProyecto, IdProducto, FechaAsociacion)
+    VALUES (@IdProyecto, @IdProducto, @FechaAsociacion);
+END;
+GO
+CREATE OR ALTER PROCEDURE crear_producto_entregable
+    @IdProducto INT,
+    @IdEntregable INT,
+    @FechaAsociacion DATE = NULL
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM Producto WHERE Id = @IdProducto)
+    BEGIN
+        RAISERROR('Producto no existe', 16, 1);
+        RETURN;
+    END
+    IF NOT EXISTS (SELECT 1 FROM Entregable WHERE Id = @IdEntregable)
+    BEGIN
+        RAISERROR('Entregable no existe', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO Producto_Entregable (IdProducto, IdEntregable, FechaAsociacion)
+    VALUES (@IdProducto, @IdEntregable, @FechaAsociacion);
+END;
+GO
+CREATE OR ALTER PROCEDURE crear_responsable_entregable
+    @IdResponsable INT,
+    @IdEntregable INT,
+    @FechaAsociacion DATE = NULL
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM Responsable WHERE Id = @IdResponsable)
+    BEGIN
+        RAISERROR('Responsable no existe', 16, 1);
+        RETURN;
+    END
+    IF NOT EXISTS (SELECT 1 FROM Entregable WHERE Id = @IdEntregable)
+    BEGIN
+        RAISERROR('Entregable no existe', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO Responsable_Entregable (IdResponsable, IdEntregable, FechaAsociacion)
+    VALUES (@IdResponsable, @IdEntregable, @FechaAsociacion);
+END;
+GO
+CREATE OR ALTER PROCEDURE crear_archivo
+    @IdUsuario INT,
+    @Ruta NVARCHAR(MAX),
+    @Nombre NVARCHAR(255),
+    @Tipo NVARCHAR(50) = NULL,
+    @Fecha DATE = NULL
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM Usuario WHERE Id = @IdUsuario)
+    BEGIN
+        RAISERROR('Usuario no existe', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO Archivo (IdUsuario, Ruta, Nombre, Tipo, Fecha)
+    VALUES (@IdUsuario, @Ruta, @Nombre, @Tipo, @Fecha);
+
+    SELECT SCOPE_IDENTITY() AS NuevoId;
+END;
+GO
+CREATE OR ALTER PROCEDURE crear_archivo_entregable
+    @IdArchivo INT,
+    @IdEntregable INT
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM Archivo WHERE Id = @IdArchivo)
+    BEGIN
+        RAISERROR('Archivo no existe', 16, 1);
+        RETURN;
+    END
+    IF NOT EXISTS (SELECT 1 FROM Entregable WHERE Id = @IdEntregable)
+    BEGIN
+        RAISERROR('Entregable no existe', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO Archivo_Entregable (IdArchivo, IdEntregable)
+    VALUES (@IdArchivo, @IdEntregable);
+END;
+GO
+CREATE OR ALTER PROCEDURE crear_actividad
+    @p_identregable INT,
+    @p_titulo NVARCHAR(255),
+    @p_descripcion NVARCHAR(MAX) = NULL,
+    @p_fechainicio DATE = NULL,
+    @p_fechafinprevista DATE = NULL,
+    @p_fechafinalizacion DATE = NULL,
+    @p_prioridad INT = NULL,
+    @p_porcentajeavance INT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF NOT EXISTS (SELECT 1 FROM Entregable WHERE Id = @p_identregable)
+    BEGIN
+        RAISERROR('Entregable no existe', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO Actividad
+        (IdEntregable, Titulo, Descripcion, FechaInicio, FechaFinPrevista, FechaFinalizacion, Prioridad, PorcentajeAvance)
+    VALUES
+        (@p_identregable, @p_titulo, @p_descripcion, @p_fechainicio, @p_fechafinprevista, @p_fechafinalizacion, @p_prioridad, @p_porcentajeavance);
+
+    SELECT SCOPE_IDENTITY() AS NuevoId;
+END;
+GO
