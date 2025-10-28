@@ -1,0 +1,404 @@
+@page "/ActividadPage"
+@using System.Net.Http.Json
+@using FrontendBlazorApi.Models
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@inject IHttpClientFactory FabricaHttp
+@rendermode InteractiveServer
+
+<PageTitle>Actividad</PageTitle>
+
+<h3>Gestión de actividades</h3>
+
+<div class="mb-3 d-flex gap-2">
+    <button type="button" class="btn btn-outline-secondary" @onclick="ProbarConexion">Probar conexión</button>
+    <button type="button" class="btn btn-outline-primary" @onclick="CargarActividades">Mostrar todos</button>
+    <button type="button" class="btn btn-outline-dark" @onclick="LimpiarFormulario">Limpiar</button>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(mensaje))
+{
+    <div class="@claseAviso" role="alert">@mensaje</div>
+}
+
+<h4>Formulario de actividades</h4>
+
+<EditForm Model="actividadActual" OnValidSubmit="GuardarSegunEstado">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="row g-3">
+        <div class="col-md-2">
+            <label class="form-label fw-bold">ID</label>
+            <InputNumber class="form-control" @bind-Value="actividadActual.Id" />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Entregable</label>
+            <InputSelect class="form-select" @bind-Value="actividadActual.IdEntregable">
+                <option value="0">-- Seleccione --</option>
+                @foreach (var e in listaEntregables)
+                {
+                    <option value="@e.Id">@e.Titulo</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label fw-bold">Título</label>
+            <InputText class="form-control" @bind-Value="actividadActual.Titulo" />
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Descripción</label>
+            <InputTextArea class="form-control" @bind-Value="actividadActual.Descripcion" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Fecha inicio</label>
+            <InputDate class="form-control" @bind-Value="actividadActual.FechaInicio" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Fecha fin prevista</label>
+            <InputDate class="form-control" @bind-Value="actividadActual.FechaFinPrevista" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Fecha finalización</label>
+            <InputDate class="form-control" @bind-Value="actividadActual.FechaFinalizacion" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Prioridad</label>
+            <InputSelect class="form-select" @bind-Value="actividadActual.Prioridad">
+                <option value="">-- Seleccione --</option>
+                @for (int i = 1; i <= 5; i++)
+                {
+                    <option value="@i">@i</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label fw-bold">Avance (%)</label>
+            <InputNumber class="form-control" @bind-Value="actividadActual.PorcentajeAvance" />
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary shadow-sm">Guardar</button>
+        <button type="button" class="btn btn-warning shadow-sm" @onclick="LimpiarFormulario">Limpiar</button>
+    </div>
+</EditForm>
+
+@if (actividades is null)
+{
+    <p><em>Cargando actividades...</em></p>
+}
+else if (!actividades.Any())
+{
+    <p>No se encontraron actividades.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Entregable</th>
+                <th>Título</th>
+                <th>Descripción</th>
+                <th>Inicio</th>
+                <th>Fin Prevista</th>
+                <th>Finalización</th>
+                <th>Prioridad</th>
+                <th>Avance</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var a in actividades)
+            {
+                <tr>
+                    <td>@a.Id</td>
+                    <td>@listaEntregables.FirstOrDefault(e => e.Id == a.IdEntregable)?.Titulo</td>
+                    <td>@a.Titulo</td>
+                    <td>@a.Descripcion</td>
+                    <td>@a.FechaInicio.ToShortDateString()</td>
+                    <td>@a.FechaFinPrevista.ToShortDateString()</td>
+                    <td>@a.FechaFinalizacion.ToShortDateString()</td>
+                    <td>@a.Prioridad</td>
+                    <td>@a.PorcentajeAvance%</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="@(() => CargarEnFormulario(a))">Cargar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Actividad> actividades = new List<Actividad>();
+    private Actividad actividadActual = new();
+    private List<EntregableDTO> listaEntregables = new();
+    private bool existeActividad = false;
+    private string mensaje = "";
+    private string claseAviso = "alert alert-info";
+    private bool cargando = false;
+
+    private const string urlBaseApi = "api/Actividad";
+    private const string urlProcedimientos = "api/procedimientos/ejecutarsp";
+    private const string urlEntregables = "api/Entregable";
+    private const string urlConsultas = "api/consultas/ejecutarconsultaparametrizada";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatosIniciales();
+    }
+
+    private async Task CargarDatosIniciales() =>
+        await Task.WhenAll(CargarActividades(), CargarEntregables());
+
+    private async Task CargarActividades()
+{
+    try
+    {
+        cargando = true;
+        var cliente = FabricaHttp.CreateClient("ApiBack");
+
+        var parametrosConsulta = new Dictionary<string, object?>
+        {
+            ["consulta"] = @"
+                SELECT 
+                    a.Id,
+                    a.IdEntregable,
+                    e.Titulo AS TituloEntregable,
+                    a.Titulo,
+                    a.Descripcion,
+                    a.FechaInicio,
+                    a.FechaFinPrevista,
+                    a.FechaFinalizacion,
+                    a.Prioridad,
+                    a.PorcentajeAvance
+                FROM Actividad a
+                INNER JOIN Entregable e ON e.Id = a.IdEntregable
+                ORDER BY a.Id",
+            ["parametros"] = new Dictionary<string, object?>()
+        };
+
+        var respuesta = await cliente.PostAsJsonAsync(urlConsultas, parametrosConsulta);
+
+        if (respuesta.IsSuccessStatusCode)
+        {
+            var resultado = await respuesta.Content.ReadFromJsonAsync<RespuestaConsulta>();
+
+            actividades = resultado?.Resultados?.Select(d => new Actividad
+            {
+                Id = ObtenerInt(d, "Id"),
+                IdEntregable = ObtenerInt(d, "IdEntregable"),
+                Titulo = ObtenerString(d, "Titulo"),
+                Descripcion = ObtenerString(d, "Descripcion"),
+                FechaInicio = ObtenerDateTime(d, "FechaInicio"),
+                FechaFinPrevista = ObtenerDateTime(d, "FechaFinPrevista"),
+                FechaFinalizacion = ObtenerDateTime(d, "FechaFinalizacion"),
+                Prioridad = ObtenerInt(d, "Prioridad"),
+                PorcentajeAvance = ObtenerInt(d, "PorcentajeAvance")
+            }).ToList() ?? new();
+
+            mensaje = $"Se cargaron {actividades.Count} actividad(es).";
+            claseAviso = "alert alert-success";
+        }
+        else
+        {
+            var errorTexto = await respuesta.Content.ReadAsStringAsync();
+            mensaje = $"Error al cargar actividades: {respuesta.StatusCode} - {errorTexto}";
+            claseAviso = "alert alert-danger";
+        
+        }
+    }
+    catch (Exception ex)
+    {
+        mensaje = $"Error al listar actividades: {ex.Message}";
+        claseAviso = "alert alert-danger";
+    }
+    finally { cargando = false; }
+}
+
+    private async Task CargarEntregables()
+    {
+        try
+        {
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Dictionary<string, object>>>>(urlEntregables);
+            listaEntregables = respuesta?.Datos?.Select(d => new EntregableDTO
+            {
+                Id = ObtenerInt(d, "Id"),
+                Titulo = ObtenerString(d, "Titulo")
+            }).ToList() ?? new();
+        }
+        catch { }
+    }
+
+    private async Task GuardarSegunEstado()
+    {
+        if (existeActividad)
+            await ActualizarActividad();
+        else
+            await CrearActividad();
+    }
+
+    private async Task CrearActividad()
+    {
+        try
+        {
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var parametros = new Dictionary<string, object?>
+            {
+                ["nombreSP"] = "crear_actividad",
+                ["p_identregable"] = actividadActual.IdEntregable,
+                ["p_titulo"] = actividadActual.Titulo,
+                ["p_descripcion"] = actividadActual.Descripcion,
+                ["p_fechainicio"] = actividadActual.FechaInicio.ToString("yyyy-MM-dd"),
+                ["p_fechafinprevista"] = actividadActual.FechaFinPrevista.ToString("yyyy-MM-dd"),
+                ["p_fechafinalizacion"] = actividadActual.FechaFinalizacion.ToString("yyyy-MM-dd"),
+                ["p_prioridad"] = actividadActual.Prioridad,
+                ["p_porcentajeavance"] = actividadActual.PorcentajeAvance
+            };
+
+            var respuesta = await cliente.PostAsJsonAsync(urlProcedimientos, parametros);
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensaje = "Actividad creada correctamente";
+                claseAviso = "alert alert-success";
+                await CargarActividades();
+                LimpiarFormulario();
+            }
+            else
+            {
+                var detalle = await respuesta.Content.ReadAsStringAsync();
+                mensaje = $"Error: {detalle}";
+                claseAviso = "alert alert-danger";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error al crear: {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    private async Task ActualizarActividad()
+    {
+        if (actividadActual.Id == 0)
+        {
+            mensaje = "Debe indicar un ID para actualizar.";
+            claseAviso = "alert alert-warning";
+            return;
+        }
+        try
+        {
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var ruta = $"{urlBaseApi}/Id/{actividadActual.Id}";
+            var respuesta = await cliente.PutAsJsonAsync(ruta, actividadActual);
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensaje = "Actividad actualizada correctamente.";
+                claseAviso = "alert alert-success";
+                await CargarActividades();
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error al actualizar: {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    private void CargarEnFormulario(Actividad a)
+    {
+        actividadActual = a;
+        existeActividad = true;
+        mensaje = "Actividad cargada para edición.";
+        claseAviso = "alert alert-info";
+    }
+
+    private void LimpiarFormulario()
+    {
+        actividadActual = new();
+        existeActividad = false;
+        mensaje = "";
+        claseAviso = "alert alert-info";
+    }
+    private async Task ProbarConexion()
+    {
+        LimpiarMensajes();
+        try
+        {
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var respuesta = await cliente.GetAsync(urlBaseApi);
+            if (respuesta.IsSuccessStatusCode)
+            {
+                mensaje = "Conexión con la API verificada!!!!1111";
+                claseAviso = "alert alert-success";
+            }
+            else
+            {
+                mensaje = $"La api respondió con estado {(int)respuesta.StatusCode}";
+                claseAviso = "alert alert-warning";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error en la conexión a la API: {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+    private void LimpiarMensajes()
+    {
+        mensaje = "";
+        claseAviso = "alert alert-info";
+    } 
+
+    private int ObtenerInt(Dictionary<string, object> dict, string key)
+    {
+        if (!dict.TryGetValue(key, out var valor)) return 0;
+        if (valor is JsonElement elem)
+            return elem.ValueKind == JsonValueKind.Number ? elem.GetInt32() : 0;
+        return Convert.ToInt32(valor);
+    }
+
+    private string ObtenerString(Dictionary<string, object> dict, string key)
+    {
+        if (!dict.TryGetValue(key, out var valor)) return "";
+        if (valor is JsonElement elem)
+            return elem.ValueKind == JsonValueKind.String ? elem.GetString() ?? "" : elem.ToString();
+        return valor?.ToString() ?? "";
+    }
+    private DateTime ObtenerDateTime(Dictionary<string, object> dict, string key)
+    {
+        if (!dict.TryGetValue(key, out var valor)) return DateTime.Now;
+        
+        if (valor is JsonElement elem)
+            return elem.ValueKind == JsonValueKind.String ? elem.GetDateTime() : DateTime.Now;
+        
+        return Convert.ToDateTime(valor);
+    }
+
+    private class EntregableDTO
+    {
+        public int Id { get; set; }
+        public string Titulo { get; set; } = "";
+    }
+     private class RespuestaConsulta
+    {
+        [JsonPropertyName("Resultados")]
+        public List<Dictionary<string, object>>? Resultados { get; set; }
+
+        [JsonPropertyName("Total")]
+        public int Total { get; set; }
+
+        [JsonPropertyName("Advertencia")]
+        public string? Advertencia { get; set; }
+    }
+}
