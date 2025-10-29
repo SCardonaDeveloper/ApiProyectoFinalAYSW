@@ -1,0 +1,324 @@
+@page "/ProyectosProductosPage"
+@using System.Net.Http.Json
+@using FrontendBlazorApi.Models
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@inject IJSRuntime jsRuntime
+@inject IHttpClientFactory FabricaHttp
+@rendermode InteractiveServer
+
+<PageTitle>Gestión Proyecto–Producto</PageTitle>
+
+<h3 class="mb-3">Asociación entre Proyectos y Productos</h3>
+
+<div class="mb-3 d-flex gap-2">
+    <button class="btn btn-outline-secondary" @onclick="ProbarConexion">Probar conexión</button>
+    <button class="btn btn-outline-primary" @onclick="CargarAsociaciones">Mostrar asociaciones</button>
+    <button class="btn btn-outline-dark" @onclick="LimpiarFormulario">Limpiar</button>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(mensaje))
+{
+    <div class="@claseAviso" role="alert">@mensaje</div>
+}
+
+<h4>Formulario Asociación Proyecto–Producto</h4>
+
+<EditForm Model="asociacionActual" OnValidSubmit="GuardarAsociacion">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Proyecto</label>
+            <InputSelect class="form-select" @bind-Value="asociacionActual.IdProyecto">
+                <option value="0">-- Seleccione --</option>
+                @foreach (var p in listaProyectos)
+                {
+                    <option value="@p.Id">@p.Titulo</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Producto</label>
+            <InputSelect class="form-select" @bind-Value="asociacionActual.IdProducto">
+                <option value="0">-- Seleccione --</option>
+                @foreach (var pr in listaProductos)
+                {
+                    <option value="@pr.Id">@pr.Titulo</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label fw-bold">Fecha Asociación</label>
+            <InputDate class="form-control" @bind-Value="asociacionActual.FechaAsociacion" />
+        </div>
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">@textoBotonGuardar</button>
+        <button type="button" class="btn btn-warning" @onclick="LimpiarFormulario">Limpiar</button>
+    </div>
+</EditForm>
+
+<hr />
+
+<h4 class="mt-4">Asociaciones Proyecto–Producto</h4>
+
+@if (listaAsociaciones is null)
+{
+    <p><em>Cargando...</em></p>
+}
+else if (!listaAsociaciones.Any())
+{
+    <p>No hay asociaciones registradas.</p>
+}
+else
+{
+    <table class="table table-bordered table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Proyecto</th>
+                <th>Producto</th>
+                <th>Fecha Asociación</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var a in listaAsociaciones)
+            {
+                <tr>
+                    <td>@listaProyectos.FirstOrDefault(p => p.Id == a.IdProyecto)?.Titulo</td>
+                    <td>@listaProductos.FirstOrDefault(p => p.Id == a.IdProducto)?.Titulo</td>
+                    <td>@a.FechaAsociacion.ToShortDateString()</td>
+                    <td class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-success" @onclick="@(() => CargarEnFormulario(a))">Editar</button>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="@(() => EliminarAsociacion(a.IdProyecto, a.IdProducto))">Eliminar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Proyecto> listaProyectos = new();
+    private List<Producto> listaProductos = new();
+    private List<Proyecto_Producto> listaAsociaciones = new();
+    private Proyecto_Producto asociacionActual = new();
+    private string textoBotonGuardar = "Crear";
+    private string mensaje = "";
+    private string claseAviso = "alert alert-info";
+
+    private const string urlConsultas = "api/consultas/ejecutarconsultaparametrizada";
+    private const string urlProcedimientos = "api/procedimientos/ejecutarsp";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarProyectos();
+        await CargarProductos();
+        await CargarAsociaciones();
+    }
+
+    private async Task CargarProyectos()
+    {
+        try
+        {
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var parametros = new Dictionary<string, object?>
+            {
+                ["consulta"] = "SELECT Id, Titulo FROM Proyecto ORDER BY Id",
+                ["parametros"] = new Dictionary<string, object?>()
+            };
+            var resp = await cliente.PostAsJsonAsync(urlConsultas, parametros);
+            if (resp.IsSuccessStatusCode)
+            {
+                var data = await resp.Content.ReadFromJsonAsync<RespuestaConsulta>();
+                listaProyectos = data?.Resultados?.Select(d => new Proyecto
+                {
+                    Id = ObtenerInt(d, "Id"),
+                    Titulo = ObtenerString(d, "Titulo")
+                }).ToList() ?? new();
+            }
+        }
+        catch { }
+    }
+
+    private async Task CargarProductos()
+    {
+        try
+        {
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var parametros = new Dictionary<string, object?>
+            {
+                ["consulta"] = "SELECT Id, Titulo FROM Producto ORDER BY Id",
+                ["parametros"] = new Dictionary<string, object?>()
+            };
+            var resp = await cliente.PostAsJsonAsync(urlConsultas, parametros);
+            if (resp.IsSuccessStatusCode)
+            {
+                var data = await resp.Content.ReadFromJsonAsync<RespuestaConsulta>();
+                listaProductos = data?.Resultados?.Select(d => new Producto
+                {
+                    Id = ObtenerInt(d, "Id"),
+                    Titulo = ObtenerString(d, "Titulo")
+                }).ToList() ?? new();
+            }
+        }
+        catch { }
+    }
+
+    private async Task CargarAsociaciones()
+    {
+        try
+        {
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var parametros = new Dictionary<string, object?>
+            {
+                ["consulta"] = "SELECT * FROM Proyecto_Producto ORDER BY IdProyecto",
+                ["parametros"] = new Dictionary<string, object?>()
+            };
+            var resp = await cliente.PostAsJsonAsync(urlConsultas, parametros);
+            if (resp.IsSuccessStatusCode)
+            {
+                var data = await resp.Content.ReadFromJsonAsync<RespuestaConsulta>();
+                listaAsociaciones = data?.Resultados?.Select(d => new Proyecto_Producto
+                {
+                    IdProyecto = ObtenerInt(d, "IdProyecto"),
+                    IdProducto = ObtenerInt(d, "IdProducto"),
+                    FechaAsociacion = ObtenerDateTime(d, "FechaAsociacion")
+                }).ToList() ?? new();
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error al cargar asociaciones: {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    private async Task GuardarAsociacion()
+    {
+        if (asociacionActual.IdProyecto <= 0 || asociacionActual.IdProducto <= 0)
+        {
+            mensaje = "Debe seleccionar un proyecto y un producto válidos.";
+            claseAviso = "alert alert-danger";
+            return;
+        }
+
+        try
+        {
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var parametros = new Dictionary<string, object?>
+            {
+                ["nombreSP"] = "crear_proyecto_producto",
+                ["IdProyecto"] = asociacionActual.IdProyecto,
+                ["IdProducto"] = asociacionActual.IdProducto,
+                ["FechaAsociacion"] = asociacionActual.FechaAsociacion.ToString("yyyy-MM-dd")
+            };
+            var resp = await cliente.PostAsJsonAsync(urlProcedimientos, parametros);
+            if (resp.IsSuccessStatusCode)
+            {
+                mensaje = "Asociación guardada correctamente.";
+                claseAviso = "alert alert-success";
+                await CargarAsociaciones();
+                LimpiarFormulario();
+            }
+            else
+            {
+                mensaje = $"Error al guardar la asociación. Código: {resp.StatusCode}";
+                claseAviso = "alert alert-danger";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error al guardar: {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    private async Task EliminarAsociacion(int idProyecto, int idProducto)
+    {
+        bool confirmar = await jsRuntime.InvokeAsync<bool>("confirm", $"¿Eliminar asociación del Proyecto {idProyecto} con Producto {idProducto}?");
+        if (!confirmar) return;
+
+        try
+        {
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var parametros = new Dictionary<string, object?>
+            {
+                ["consulta"] = "DELETE FROM Proyecto_Producto WHERE IdProyecto = @idProyecto AND IdProducto = @idProducto",
+                ["parametros"] = new Dictionary<string, object?> {
+                    { "idProyecto", idProyecto },
+                    { "idProducto", idProducto }
+                }
+            };
+            var resp = await cliente.PostAsJsonAsync(urlConsultas, parametros);
+            if (resp.IsSuccessStatusCode)
+            {
+                mensaje = "Asociación eliminada correctamente.";
+                claseAviso = "alert alert-success";
+                await CargarAsociaciones();
+            }
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error al eliminar: {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    private void CargarEnFormulario(Proyecto_Producto a)
+    {
+        asociacionActual = new Proyecto_Producto
+        {
+            IdProyecto = a.IdProyecto,
+            IdProducto = a.IdProducto,
+            FechaAsociacion = a.FechaAsociacion
+        };
+        textoBotonGuardar = "Actualizar";
+        mensaje = "Asociación cargada para edición.";
+        claseAviso = "alert alert-info";
+    }
+
+    private void LimpiarFormulario()
+    {
+        asociacionActual = new Proyecto_Producto { FechaAsociacion = DateTime.Today };
+        textoBotonGuardar = "Crear";
+        mensaje = "";
+    }
+
+    private async Task ProbarConexion()
+    {
+        try
+        {
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var resp = await cliente.GetAsync("api/Proyecto_Producto");
+            mensaje = resp.IsSuccessStatusCode ? "Conexión exitosa." : "Error al conectar.";
+            claseAviso = resp.IsSuccessStatusCode ? "alert alert-success" : "alert alert-danger";
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error: {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    // Métodos auxiliares
+    private int ObtenerInt(Dictionary<string, object> d, string k) =>
+        d.TryGetValue(k, out var v) && v is JsonElement e && e.ValueKind == JsonValueKind.Number ? e.GetInt32() : Convert.ToInt32(v ?? 0);
+
+    private string ObtenerString(Dictionary<string, object> d, string k) =>
+        d.TryGetValue(k, out var v) ? (v is JsonElement e && e.ValueKind == JsonValueKind.String ? e.GetString() ?? "" : v.ToString() ?? "") : "";
+
+    private DateTime ObtenerDateTime(Dictionary<string, object> d, string k) =>
+        d.TryGetValue(k, out var v) && v is JsonElement e && e.ValueKind == JsonValueKind.String ? e.GetDateTime() : DateTime.Now;
+
+    private class RespuestaConsulta
+    {
+        [JsonPropertyName("Resultados")]
+        public List<Dictionary<string, object>>? Resultados { get; set; }
+    }
+}
