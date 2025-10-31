@@ -103,18 +103,30 @@ else
             cargando = true;
             var cliente = FabricaHttp.CreateClient("ApiBack");
             var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Models.TipoResponsable>>>(urlBaseApi);
+            
             tipoResponsables = respuesta?.Datos ?? new List<Models.TipoResponsable>();
-            mensaje = $"Se cargaron {tipoResponsables.Count} tipo(s) de responsable(s).";
-            claseAviso = "alert alert-success";
+            
+            if (!tipoResponsables.Any())
+            {
+                mensaje = "No hay tipos de responsable registrados. Puede crear el primero usando el formulario.";
+                claseAviso = "alert alert-info";
+            }
+            else
+            {
+                mensaje = $"Se cargaron {tipoResponsables.Count} tipo(s) de responsable(s).";
+                claseAviso = "alert alert-success";
+            }
         }
         catch (Exception ex)
         {
             mensaje = $"Error al listar tipo(s) de responsable(s): {ex.Message}";
             claseAviso = "alert alert-danger";
+            tipoResponsables = new List<Models.TipoResponsable>();
         }
         finally
         {
             cargando = false;
+            StateHasChanged();
         }
     }
 
@@ -170,14 +182,26 @@ else
         else
             await CrearTipoResponsable();
     }
-
+    public class TipoResponsableCrear
+    {
+        public string Titulo { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
+    }
     private async Task CrearTipoResponsable()
     {
         LimpiarMensajes();
         try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
-            var respuesta = await cliente.PostAsJsonAsync(urlBaseApi, tipoResponsableActual);
+            
+            // Usar DTO sin ID para creación
+            var tipoResponsableCrear = new TipoResponsableCrear
+            {
+                Titulo = tipoResponsableActual.Titulo,
+                Descripcion = tipoResponsableActual.Descripcion
+            };
+            
+            var respuesta = await cliente.PostAsJsonAsync(urlBaseApi, tipoResponsableCrear);
             if (respuesta.IsSuccessStatusCode)
             {
                 mensaje = "Tipo de responsable creado correctamente.";
@@ -198,7 +222,6 @@ else
             claseAviso = "alert alert-danger";
         }
     }
-
     private async Task ActualizarTipoResponsable()
     {
         LimpiarMensajes();

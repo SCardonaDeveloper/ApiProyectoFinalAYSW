@@ -85,18 +85,18 @@ else
        private bool cargando = false;
        private const string urlBaseApi = "api/TipoProducto";
        protected override async Task OnInitializedAsync(){
-             try
-        {
-            var cliente = FabricaHttp.CreateClient("ApiBack");
-            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Models.TipoProducto>>>("api/TipoProducto");
-                tipoProductos = respuesta?.Datos ?? new List<Models.TipoProducto>();
-}
- catch (Exception error)
-        {
-            Console.WriteLine($"Error al cargar productos: {error.Message}");
-                tipoProductos = new List<Models.TipoProducto>();
-        }
-        await CargarTipoProductos();
+            try
+            {
+                var cliente = FabricaHttp.CreateClient("ApiBack");
+                var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Models.TipoProducto>>>("api/TipoProducto");
+                    tipoProductos = respuesta?.Datos ?? new List<Models.TipoProducto>();
+            }
+            catch (Exception error)
+            {
+                Console.WriteLine($"Error al cargar productos: {error.Message}");
+                    tipoProductos = new List<Models.TipoProducto>();
+            }
+            await CargarTipoProductos();
        }
     private async Task CargarTipoProductos(){
         try{

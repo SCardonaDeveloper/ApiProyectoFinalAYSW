@@ -8,7 +8,8 @@
         <span class="brand-text" style="white-space: nowrap;">Gestión de Proyectos</span>
     </div>
 
-    <nav class="nav flex-column mt-3">
+    <nav class="nav flex-column mt-3 nav-scrollable">
+
         <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
             <i class="bi-house-door-fill"></i><span>Inicio</span>
         </NavLink>
@@ -45,6 +46,24 @@
         </NavLink>
         <NavLink class="nav-link" href="ArchivoPage">
             <i class="bi bi-file-earmark"></i><span>Archivo</span>
+        </NavLink>
+        <NavLink class="nav-link" href="ProductosPage">
+            <i class="bi-list"></i><span>Productos</span>
+        </NavLink>
+        <NavLink class="nav-link" href="ProductoEntregablePage">
+            <i class="bi-list"></i><span>Asociar Producto Entregable</span>
+        </NavLink>
+        <NavLink class="nav-link" href="ProyectosPage">
+            <i class="bi bi-kanban-fill"></i><span>Proyectos</span>
+        </NavLink>
+        <NavLink class="nav-link" href="ProyectosProductosPage">
+            <i class="bi bi-kanban-fill"></i><span>Proyectos-Productos</span>
+        </NavLink>
+        <NavLink class="nav-link" href="ResponsablesPage">
+            <i class="bi bi-file-earmark-person-fill"></i><span>Responsable</span>
+        </NavLink>
+        <NavLink class="nav-link" href="ResponsablesEntregablesPage">
+            <i class="bi bi-file-earmark-person-fill"></i><span>Responsable-Entregable</span>
         </NavLink>
     </nav>
 </div>
@@ -125,6 +144,29 @@
         color: #fff;
         border-left: 3px solid #38bdf8;
     }
+
+    /* ----- Scroll dentro del área de enlaces ----- */
+    .nav-scrollable {
+        flex: 1;                      /* ocupa el espacio restante dentro del sidebar */
+        overflow-y: auto;             /* habilita scroll vertical */
+        overflow-x: hidden;           /* evita scroll horizontal */
+        padding-bottom: 1rem;         /* pequeño margen al final */
+    }
+
+    /* Scrollbar estético */
+    .nav-scrollable::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .nav-scrollable::-webkit-scrollbar-thumb {
+        background-color: #4b5563; /* gris suave */
+        border-radius: 4px;
+    }
+
+    .nav-scrollable::-webkit-scrollbar-thumb:hover {
+        background-color: #38bdf8; /* azul al pasar */
+    }
+
 
     .nav-link.active {
         background-color: #111827;
