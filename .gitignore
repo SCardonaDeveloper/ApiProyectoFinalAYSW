@@ -11,6 +11,7 @@ out/
 *.cache
 *.log
 ApiBack.csproj
+appsettings.Development.json
 .vs/
 .vscode/
 *.swp
