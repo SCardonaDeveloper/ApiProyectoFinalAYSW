@@ -939,42 +939,98 @@ BEGIN
     END CATCH;
 END;
 GO
-CREATE OR ALTER PROCEDURE consultar_entregable_con_actividades
-    @p_id_entregable INT
+CREATE OR ALTER PROCEDURE sp_ConsultarEntregablesConDetalles
+    @IdEntregable INT = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
-    IF NOT EXISTS (SELECT 1 FROM Entregables WHERE Id = @p_id_entregable)
-    BEGIN
-        SELECT '[]' AS Resultado;
-        RETURN;
-    END;
     SELECT 
-        e.Id,
+        e.Id AS IdEntregable,
         e.Codigo,
         e.Titulo,
         e.Descripcion,
         e.FechaInicio,
         e.FechaFinPrevista,
         e.FechaModificacion,
-        e.FechaFinalizacion,
-        (
-            SELECT 
-                a.Id,
-                a.Titulo,
-                a.Descripcion,
-                a.FechaInicio,
-                a.FechaFinPrevista,
-                a.FechaModificacion,
-                a.FechaFinalizacion,
-                a.Prioridad,
-                a.PorcentajeAvance
-            FROM Actividades a
-            WHERE a.FkIdEntregable = e.Id
-            FOR JSON PATH
-        ) AS Actividades
-    FROM Entregables e
-    WHERE e.Id = @p_id_entregable
-    FOR JSON PATH, WITHOUT_ARRAY_WRAPPER;
+        e.FechaFinalizacion
+    FROM Entregable e
+    WHERE (@IdEntregable IS NULL OR e.Id = @IdEntregable);
+    SELECT 
+        a.Id AS IdActividad,
+        a.IdEntregable,
+        a.Titulo,
+        a.Descripcion,
+        a.FechaInicio,
+        a.FechaFinPrevista,
+        a.FechaModificacion,
+        a.FechaFinalizacion,
+        a.Prioridad,
+        a.PorcentajeAvance
+    FROM Actividad a
+    INNER JOIN Entregable e ON e.Id = a.IdEntregable
+    WHERE (@IdEntregable IS NULL OR e.Id = @IdEntregable);
+    SELECT 
+        ae.IdEntregable,
+        ar.Id AS IdArchivo,
+        ar.Nombre,
+        ar.Ruta,
+        ar.Tipo,
+        ar.Fecha,
+        ar.IdUsuario
+    FROM Archivo_Entregable ae
+    INNER JOIN Archivo ar ON ar.Id = ae.IdArchivo
+    INNER JOIN Entregable e ON e.Id = ae.IdEntregable
+    WHERE (@IdEntregable IS NULL OR e.Id = @IdEntregable);
+END;
+GO
+CREATE OR ALTER PROCEDURE sp_Archivo_Actualizar
+    @Id INT,
+    @IdUsuario INT,
+    @Ruta NVARCHAR(MAX),
+    @Nombre NVARCHAR(255),
+    @Tipo NVARCHAR(50) = NULL,
+    @Fecha DATE = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF NOT EXISTS (SELECT 1 FROM Archivo WHERE Id = @Id)
+    BEGIN
+        RAISERROR('No se encontró un archivo con el Id especificado.', 16, 1);
+        RETURN;
+    END
+    UPDATE Archivo
+    SET 
+        IdUsuario = @IdUsuario,
+        Ruta = @Ruta,
+        Nombre = @Nombre,
+        Tipo = @Tipo,
+        Fecha = @Fecha
+    WHERE Id = @Id;
+    SELECT 
+        A.Id,
+        A.IdUsuario,
+        U.Email AS EmailUsuario,
+        A.Ruta,
+        A.Nombre,
+        A.Tipo,
+        A.Fecha
+    FROM Archivo AS A
+    INNER JOIN Usuario AS U ON U.Id = A.IdUsuario
+    WHERE A.Id = @Id;
+END;
+GO
+CREATE OR ALTER PROCEDURE sp_Archivo_Eliminar
+    @Id INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF NOT EXISTS (SELECT 1 FROM Archivo WHERE Id = @Id)
+    BEGIN
+        RAISERROR('No se encontró un archivo con el Id especificado.', 16, 1);
+        RETURN;
+    END
+    DELETE FROM Archivo
+    WHERE Id = @Id;
+    SELECT 'Archivo eliminado correctamente.' AS Mensaje;
 END;
 GO

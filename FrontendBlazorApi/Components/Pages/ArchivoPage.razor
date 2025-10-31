@@ -58,7 +58,7 @@
 
     <div class="mt-3 d-flex flex-wrap gap-2">
         <button type="submit" class="btn btn-primary">@textoBotonGuardar</button>
-        <button type="button" class="btn btn-secondary" @onclick="BuscarPorCodigo">Buscar</button>
+        <button type="button" class="btn btn-secondary" @onclick="BuscarArchivoPorId">Buscar</button>
         <button type="button" class="btn btn-warning" @onclick="ActualizarArchivo" disabled="@(!existeArchivo)">Actualizar</button>
         <button type="button" class="btn btn-danger" @onclick="EliminarArchivo" disabled="@(!existeArchivo)">Eliminar</button>
     </div>
@@ -112,28 +112,247 @@ else
     private Models.Archivo archivoActual {get; set;} = new Models.Archivo();
     private List<Archivo> listaArchivos = new List<Archivo>();
     private const string urlConsultas = "api/consultas/ejecutarconsultaparametrizada";
+    private const string urlUsuarios = "api/Usuario";
+    private const string urlProcedimientos = "api/procedimientos/ejecutarsp";
+    private const string urlBaseApi = "api/Archivo";
     private string mensaje = "";
     private string claseAviso = "alert alert-info";
     private string textoBotonGuardar = "Crear";
     private List<UsuarioDTO> listaUsuarios = new List<UsuarioDTO>();
     private bool existeArchivo = false;
     private bool cargando = false;
+    protected override async Task OnInitializedAsync(){
+        archivoActual.Fecha = DateTime.Today;
+        await CargarDatosIniciales();
+    }
+    private async Task CargarDatosIniciales(){
+        await Task.WhenAll(
+            CargarArchivos(),
+            CargarUsuarios()
+        );
+    }
     private async Task CargarEnFormulario(Archivo a){
-
+        archivoActual = a;
+        existeArchivo = false;
+        mensaje = "";
+        claseAviso = "alert alert-info";
     }
     private async Task CargarArchivos(){
+        try 
+        { 
+            cargando = true;
+            var cliente = fabricaHttp.CreateClient("ApiBack"); 
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Archivo>>>(urlBaseApi); 
+            listaArchivos = respuesta?.Datos ?? new List<Archivo>(); 
+            mensaje = $"Se cargaron {listaArchivos.Count} archivo(s)."; 
+            claseAviso = "alert alert-success"; 
+            }catch (Exception error)
+            { 
+                mensaje = $"Error al listar archivos: {error.Message}"; 
+                claseAviso = "alert alert-danger"; 
+                } finally 
+            { 
+                cargando = false; 
+        } 
+    }
+    private async Task BuscarArchivoPorId(){
+         LimpiarMensajes();
+        if (string.IsNullOrWhiteSpace(archivoActual.Id.ToString()))
+        {
+            mensaje = "Debe indicar el id para buscar.";
+            claseAviso = "alert alert-warning";
+            return;
+        }
+        try
+        {
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var ruta = $"{urlBaseApi}/id/{archivoActual.Id}";
+            var respuestaHttp = await cliente.GetAsync(ruta);
 
+            RespuestaApi<List<Archivo>>? respuesta = null;
+            if (respuestaHttp == null)
+            {
+                respuesta = new RespuestaApi<List<Archivo>> { Datos = new List<Archivo>() };
+            }
+            if (respuestaHttp != null && respuestaHttp.IsSuccessStatusCode)
+            {
+                respuesta = await respuestaHttp.Content.ReadFromJsonAsync<RespuestaApi<List<Archivo>>>();
+            }
+            else if (respuestaHttp != null && respuestaHttp.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                respuesta = new RespuestaApi<List<Archivo>> { Datos = new List<Archivo>() };
+            }
+            else
+            {
+                respuesta = null;
+            }
+            var encontrado = respuesta?.Datos?.FirstOrDefault();
+
+            if (encontrado is not null)
+            {
+                archivoActual = new Archivo
+                {
+                    Id = encontrado.Id,
+                    IdUsuario = encontrado.IdUsuario,
+                    Ruta = encontrado.Ruta, 
+                    Nombre = encontrado.Nombre, 
+                    Tipo = encontrado.Tipo, 
+                    Fecha = encontrado.Fecha
+
+                };
+                existeArchivo = true;
+                textoBotonGuardar = "Actualizar";
+                mensaje = "Archivo cargado en el formulario.";
+                claseAviso = "alert alert-success";
+            }
+            else
+            {
+                existeArchivo = false;
+                textoBotonGuardar = "Crear";
+                mensaje = "Archivo no encontrado.";
+                claseAviso = "alert alert-warning";
+            }
+        }
+        catch (Exception error)
+        {
+            existeArchivo = false;
+            textoBotonGuardar = "Crear";
+            mensaje = $"Error al buscar archivo: {error.Message}";
+            claseAviso = "alert alert-danger";
+        }
+
+    }
+    private async Task CargarUsuarios(){
+        try{
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Dictionary<string, object>>>>(urlUsuarios);
+            listaUsuarios = respuesta?.Datos?.Select(u => new UsuarioDTO{
+                Id = ObtenerInt(u, "Id"),
+                Email = ObtenerString(u, "Email")
+            }).ToList() ?? new();
+
+        }catch{
+
+        }
     }
     private async Task GuardarSegunEstado(){
-
+        if(existeArchivo)
+            await ActualizarArchivo();
+        else
+            await CrearArchivo();
     }
-    private async Task BuscarPorCodigo(){
+    private async Task CrearArchivo(){
+        LimpiarMensajes();
+        try{
+            if(archivoActual.IdUsuario <= 0){
+                mensaje = "Debe seleccionar usuario. ";
+                claseAviso = "alert alert-warning";
+                return;
+            }
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var parametros = new Dictionary<string, object?>{
+                ["nombreSP"] = "crear_archivo", 
+                ["IdUsuario"] = archivoActual.IdUsuario, 
+                ["Ruta"] = archivoActual.Ruta, 
+                ["Nombre"] = archivoActual.Nombre, 
+                ["Tipo"] = archivoActual.Tipo, 
+                ["Fecha"] = archivoActual.Fecha
+            };
+            var respuesta = await cliente.PostAsJsonAsync(urlProcedimientos, parametros);
+            if(respuesta.IsSuccessStatusCode){
+                mensaje = "Archivo creado exitosamenteeee!!!";
+                claseAviso = "alert alert-success";
+                await CargarArchivos();
+                LimpiarFormulario();
+            }else{
+                var detalle = await respuesta.Content.ReadAsStringAsync();
+                mensaje = $"Error al crear el archivo {detalle}";
+                claseAviso = "alert alert-danger";
+            }
+        }catch(Exception ex){
+            mensaje = $"Error al crear archivo {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
 
     }
     private async Task ActualizarArchivo(){
+        LimpiarMensajes();
+        try{
+            if(archivoActual.Id <= 0){
+                mensaje = "Debe indicar el identificador de el archivo. ";
+                claseAviso = "alert alert-warning";
+                return;
+            }
+             var confirmar = await JSRuntime.InvokeAsync<bool>("confirm", 
+                $"¿Está seguro de actualizar el archivo #{archivoActual.Id}?\n\n");
+            if(!confirmar){
+                mensaje = "Actualización canceladaa!. ";
+                claseAviso = "alert alert-info";
+                return;
+            }    
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var parametros = new Dictionary<string, object?>{
+                ["nombreSP"] = "sp_Archivo_Actualizar",
+                ["IdUsuario"] = archivoActual.IdUsuario, 
+                ["Ruta"] = archivoActual.Ruta, 
+                ["Nombre"] = archivoActual.Nombre, 
+                ["Tipo"] = archivoActual.Tipo, 
+                ["Fecha"] = archivoActual.Fecha
+            };
+            var respuesta = await cliente.PostAsJsonAsync(urlProcedimientos, parametros);
+            if(respuesta.IsSuccessStatusCode){
+                mensaje = "Archivo actualizado correctamente";
+                claseAviso = "alert alert-success";
+                await CargarArchivos();
+            }else{
+                var detalle = await respuesta.Content.ReadAsStringAsync();
+                mensaje = $"Error al actualizar {detalle}";
+                claseAviso = "alert alert-danger";
+            }
+        }catch(Exception ex){
+            mensaje = $"Error al actualizar eñ archivo {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
 
     }
     private async Task EliminarArchivo(){
+        LimpiarMensajes();
+        try{
+            if(archivoActual.Id <= 0){
+                mensaje = "Debe indicar la identificacion del archivo para poder eliminarlo";
+                claseAviso = "alert alert-warning";
+                return;
+            }
+            var confirmar = await JSRuntime.InvokeAsync<bool>("confirm", 
+                $"¿Está seguro de eliminar el archivo #{archivoActual.Id}?\n\nEsta acción no se puede deshacer. ");
+            if(!confirmar){
+                mensaje = "Eliminación canceladaa!. ";
+                claseAviso = "alert alert-info";
+                return;
+            }    
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var parametros = new Dictionary<string, object?>{
+                ["nombreSP"] = "sp_Archivo_Eliminar",
+                ["Id"] = archivoActual.Id
+            };
+            var respuesta = await cliente.PostAsJsonAsync(urlProcedimientos, parametros);
+            if(respuesta.IsSuccessStatusCode){
+                mensaje = "Archivo eliminado correctamenteeee!";
+                claseAviso = "alert alert-success";
+                await CargarArchivos();
+                LimpiarFormulario();
+            }else
+            {
+                var detalle = await respuesta.Content.ReadAsStringAsync();
+                mensaje = $"❌ Error al eliminar: {detalle}";
+                claseAviso = "alert alert-danger";
+            }
+
+        }catch (Exception ex)
+        {
+            mensaje = $"❌ Error al eliminar archivo: {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
 
     }
     
@@ -201,7 +420,6 @@ else
     }
     private class UsuarioDTO{
         public int Id {get; set;}
-        public string Usuario {get; set;}
         public string Email {get; set;}
     }
 }

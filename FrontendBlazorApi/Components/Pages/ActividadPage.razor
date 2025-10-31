@@ -154,6 +154,9 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        actividadActual.FechaInicio = DateTime.Today;
+        actividadActual.FechaFinPrevista = DateTime.Today;
+        actividadActual.FechaFinalizacion = DateTime.Today;
         await CargarDatosIniciales();
     }
 

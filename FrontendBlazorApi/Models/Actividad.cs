@@ -3,7 +3,6 @@ namespace FrontendBlazorApi.Models
 {
     public class Actividad
     {
-        [JsonPropertyName("id")]
         public int Id;
         [JsonPropertyName("IdEntregable")]
         public int IdEntregable;

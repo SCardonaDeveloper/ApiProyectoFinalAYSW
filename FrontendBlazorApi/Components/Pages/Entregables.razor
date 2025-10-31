@@ -121,6 +121,47 @@
                             <i class="bi bi-plus-circle"></i> Agregar Actividad
                     </button>
                 </div>
+                <hr class="my-4" />
+<h5 class="mb-3"><i class="bi bi-paperclip text-primary me-2"></i>Archivos del entregable</h5>
+
+@if (entregableActual.Archivos is not null && entregableActual.Archivos.Count > 0)
+{
+    @foreach (var ar in entregableActual.Archivos)
+    {
+        <div class="row g-2 align-items-end mb-2 p-2 bg-light rounded">
+            <div class="col-md-5">
+                <label class="form-label fw-bold"><i class="bi bi-file-earmark-text text-primary"></i>ID del archivo</label>
+                <InputSelect class="form-select" @bind-Value="ar.IdArchivo">
+                <option value = "">--- Seleccione ---</option>
+                @foreach(var arc in listaArchivos){
+                    <option value="@arc.Id">@arc.Id</option>
+                }
+                </InputSelect>
+            </div>
+            <div class="col-md-1">
+                <button type="button" class="btn btn-danger btn-sm w-100 shadow-sm" 
+                        @onclick="() => EliminarArchivo(ar)" 
+                        title="Quitar este archivo">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>No hay archivos. Agregue uno para comenzar.
+    </div>
+}
+
+<div class="col-md-2">
+    <button type="button" class="btn btn-success btn-lg mb-3 shadow-sm" 
+            @onclick="AgregarArchivo" 
+            title="Agregar nuevo archivo">
+        <i class="bi bi-plus-circle"></i> Agregar Archivo
+    </button>
+</div>
                 <div class="mt-3 d-flex flex-wrap gap-2">
                     <button type="submit" class="btn btn-primary btn-lg shadow-sm" title="Guardar entregable">
                         <i class="bi bi-save"></i> @textoBotonGuardar
@@ -169,6 +210,7 @@
                                 <th><i class="bi bi-calendar2-check me-1"></i>Fin Prevista</th>
                                 <th><i class="bi bi-calendar2-x me-1"></i>Finalización</th>
                                 <th><i class="bi bi-list-task me-1"></i>Actividades</th>
+                                <th><i class="bi bi-upload me-1"></i>Cargar</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -186,7 +228,7 @@
                                         <span class="badge bg-primary">@(e.Actividades?.Count ?? 0) act.</span>
                                     </td>
                                     <td>
-                                        <button class="btn btn-sm btn-primary shadow-sm" @onclick="@(async () => await CargarEntregableCompleto(e.Id))" title="Cargar entregable en formulario">
+                                        <button class="btn btn-sm btn-primary shadow-sm" @onclick="@(() => CargarEntregableCompleto(e.Id))" title="Cargar entregable en formulario">
                                             <i class="bi bi-pencil-square"></i>
                                         </button>
                                     </td>
@@ -205,12 +247,15 @@
     private List<Entregable> listaEntregables = new();
     [SupplyParameterFromForm]
     private Entregable entregableActual { get; set; } = new();
+    private List<ActividadDTO> listaActividades = new();
+    private List<ArchivoDTO> listaArchivos = new();
     private bool existeEntregable = false;
     private string textoBotonGuardar = "Crear";
     private string mensaje = "";
     private string claseAviso = "alert alert-info";
     private bool cargando = false;
     private const string urlBaseApi = "api/Entregable";
+    private const string urlArchivos = "api/Archivo";
     private const string urlProcedimientos = "api/procedimientos/ejecutarsp";
     private const string urlConsultas = "api/consultas/ejecutarconsultaparametrizada";
     private const string urlActividades = "api/Actividad";
@@ -220,7 +265,39 @@
         entregableActual.FechaFinPrevista = DateTime.Today;
         entregableActual.FechaModificacion = DateTime.Today;
         entregableActual.FechaFinalizacion = DateTime.Today;
-        await CargarEntregables();
+        CargarDatosIniciales();
+    }
+    private async Task CargarDatosIniciales(){
+        await Task.WhenAll(
+            CargarEntregables(),
+            CargarActividades(), 
+            CargarArchivos()
+        );
+    }
+    private async Task CargarActividades(){
+        try{
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Dictionary<string, object>>>>(urlActividades);
+            listaActividades = respuesta?.Datos?.Select(a => new ActividadDTO{
+                Id = ObtenerInt(a, "Id"),
+                Titulo = ObtenerString(a, "Titulo"),
+                Prioridad = ObtenerInt(a, "Prioridad")
+
+            }).ToList() ?? new ();
+        }catch{ }
+    }
+    public async Task CargarArchivos(){
+        try{
+            var cliente = fabricaHttp.CreateClient("ApiBack");
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Dictionary<string, object>>>>(urlArchivos);
+            listaArchivos = respuesta?.Datos?.Select(a => new ArchivoDTO{
+                Id = ObtenerInt(a, "Id"),
+                Nombre = ObtenerString(a, "Nombre"),
+                Tipo = ObtenerString(a, "Tipo")
+
+            }).ToList() ?? new ();
+
+        }catch{ }
     }
     private async Task CargarEntregables() 
     { 
@@ -228,7 +305,7 @@
         { 
             cargando = true;
             var cliente = fabricaHttp.CreateClient("ApiBack"); 
-            var respuesta = await cliente.GetFromJsonAsync<RespuestaApiEntregable<List<Entregable>>>(urlBaseApi); 
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Entregable>>>(urlBaseApi); 
             listaEntregables = respuesta?.Datos ?? new List<Entregable>(); 
             mensaje = $"Se cargaron {listaEntregables.Count} entregable(s)."; 
             claseAviso = "alert alert-success"; 
@@ -251,8 +328,8 @@
 
         var parametros = new Dictionary<string, object?>
         {
-            ["nombreSP"] = "consultar_entregable_con_actividades",
-            ["p_id_entregable"] = idEntregable
+            ["nombreSP"] = "sp_ConsultarEntregablesConDetalles",
+            ["IdEntregable"] = idEntregable
         };
 
         var respuesta = await cliente.PostAsJsonAsync(urlProcedimientos, parametros);
@@ -278,7 +355,7 @@
 
                 if (!string.IsNullOrEmpty(jsonEntregable))
                 {
-                    var entregableCompleto = JsonSerializer.Deserialize<Entregable>(
+                    var entregableCompleto = JsonSerializer.Deserialize<EntregableCompleto>(
                         jsonEntregable,
                         new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
                     );
@@ -295,23 +372,20 @@
                             FechaFinPrevista = entregableCompleto.FechaFinPrevista,
                             FechaModificacion = entregableCompleto.FechaModificacion,
                             FechaFinalizacion = entregableCompleto.FechaFinalizacion,
-                            Actividades = entregableCompleto.Actividades?.Select(a => new Actividad
+                            Actividades = entregableCompleto.DetalleActividades?.Select(a => new Actividad
                             {
                                 Id = a.Id,
                                 Titulo = a.Titulo,
-                                Descripcion = a.Descripcion,
-                                FechaInicio = a.FechaInicio,
-                                FechaFinPrevista = a.FechaFinPrevista,
-                                FechaModificacion = a.FechaModificacion,
-                                FechaFinalizacion = a.FechaFinalizacion,
                                 Prioridad = a.Prioridad,
-                                PorcentajeAvance = a.PorcentajeAvance
+                            }).ToList() ?? new(),
+                            Archivos = entregableCompleto.DetalleArchivos?.Select(a => new ArchivoEntregable{
+                                IdArchivo = a.IdArchivo
                             }).ToList() ?? new()
                         };
 
                         existeEntregable = true;
                         textoBotonGuardar = "Actualizar";
-                        mensaje = $"Entregable #{entregableActual.Codigo} cargado con {entregableActual.Actividades.Count} actividad(es).";
+                        mensaje = $"Entregable #{entregableActual.Codigo} cargado con {entregableActual.Actividades.Count} actividad(es) y con {entregableActual.Archivos.Count} archivo(s).";
                         claseAviso = "alert alert-success";
                     }
                 }
@@ -592,7 +666,6 @@
             var parametros = new Dictionary<string, object?>
             {
                 ["nombreSP"] = "actualizar_entregable_con_actividades",
-                ["p_id_entregable"] = entregableActual.Id,
                 ["p_codigo"] = entregableActual.Codigo,
                 ["p_titulo"] = entregableActual.Titulo,
                 ["p_descripcion"] = entregableActual.Descripcion,
@@ -645,7 +718,7 @@
             Dictionary<string, object?> parametros = new Dictionary<string, object?>
             {
                 ["nombreSP"] = "eliminar_entregable_completo",
-                ["IdEntregable"] = entregableActual.Codigo
+                ["IdEntregable"] = entregableActual.Id
             };
             var respuesta = await cliente.PostAsJsonAsync(urlProcedimientos, parametros);
 
@@ -697,6 +770,12 @@
         mensaje = "Actividad eliminada.";
         claseAviso = "alert alert-info";
     }
+    public async Task AgregarArchivo(){
+        entregableActual.Archivos.Add(new ArchivoEntregable());
+    }
+    public async Task EliminarArchivo(ArchivoEntregable AE){
+        entregableActual.Archivos.Remove(AE);
+    }
     private async Task ProbarConexion()
     {
         LimpiarMensajes();
@@ -723,24 +802,6 @@
             claseAviso = "alert alert-danger";
         }
     }
-    private void CargarEnFormulario(Entregable e)
-    {
-        entregableActual = new Entregable
-        {
-            Id = e.Id,
-            Codigo = e.Codigo,
-            Titulo = e.Titulo,
-            Descripcion = e.Descripcion,
-            FechaInicio = e.FechaInicio,
-            FechaFinPrevista = e.FechaFinPrevista,
-            FechaModificacion = DateTime.Today,
-            FechaFinalizacion = e.FechaFinalizacion
-        };
-        existeEntregable = true;
-        textoBotonGuardar = "Actualizar";
-        mensaje = "Entregable seleccionado desde el listado.";
-        claseAviso = "alert alert-info";
-    }
     private void LimpiarMensajes()
     {
         mensaje = "";
@@ -750,14 +811,13 @@
     private void LimpiarFormulario()
     {
         entregableActual = new Entregable();
-        entregableActual.Actividades = new List<Actividad>();
-        existeEntregable = false;
-        textoBotonGuardar = "Crear";
-        LimpiarMensajes();
         entregableActual.FechaInicio = DateTime.Today;
         entregableActual.FechaFinPrevista = DateTime.Today;
         entregableActual.FechaModificacion = DateTime.Today;
         entregableActual.FechaFinalizacion = DateTime.Today;
+        existeEntregable = false;
+        textoBotonGuardar = "Crear";
+        LimpiarMensajes();
     }
     
     private string ObtenerString(Dictionary<string, object> dict, string key)
@@ -789,10 +849,35 @@
     public DateTime? FechaModificacion { get; set; }
     public DateTime? FechaFinalizacion { get; set; }
     public List<Actividad>? Actividades { get; set; }
+    public List<ArchivoEntregable> Archivos {get; set;} = new List<ArchivoEntregable>();
+}
+private class EntregableCompleto{
+    public int Id {get; set;}
+    public string Codigo {get; set;}
+    public string Titulo {get; set;} = "";
+    public string Descripcion {get; set;} = "";
+    public DateTime FechaInicio { get; set; }
+    public DateTime FechaFinPrevista { get; set; }
+    public DateTime? FechaModificacion { get; set; }
+    public DateTime? FechaFinalizacion { get; set; }
+    public List<ArchivoEntregable>? DetalleArchivos {get; set;}
+    public List<EntregableDetalleActividad>? DetalleActividades {get; set;}
+
+}
+private class EntregableDetalleActividad{
+    public int Id {get; set;}
+
+    public string Titulo {get; set;}
+
+    public int Prioridad {get; set;}
+}
+public class ArchivoEntregable{
+    [JsonPropertyName("IdArchivo")]
+    public int IdArchivo {get; set;}
 }
 public class Actividad
     {
-        [JsonPropertyName("id")]
+        [JsonPropertyName("Id")]
         public int Id;
         [JsonPropertyName("IdEntregable")]
         public int IdEntregable;
@@ -804,5 +889,16 @@ public class Actividad
         public DateTime FechaFinalizacion;
         public int Prioridad;
         public int PorcentajeAvance;
-    }    
+    }  
+    public class ActividadDTO{
+        public int Id {get; set;}
+        public string Titulo;
+        public int Prioridad;
+
+    }
+    public class ArchivoDTO{
+        public int Id { get; set; }
+        public string Nombre { get; set; }
+        public string Tipo { get; set; }
+    }
 }
