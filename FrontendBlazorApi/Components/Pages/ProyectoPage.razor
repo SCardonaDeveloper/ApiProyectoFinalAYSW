@@ -262,6 +262,8 @@ else
 
                 proyectosPadre = lista.Where(p => p.IdProyectoPadre == 0).ToList();
                 listaProyectosPadre = proyectosPadre;
+                mensaje = $"Se cargaron {proyectosPadre.Count} proyecto(s) padre(s)";
+                claseAviso = "alert alert-success";
             }
         }
         catch (Exception ex)

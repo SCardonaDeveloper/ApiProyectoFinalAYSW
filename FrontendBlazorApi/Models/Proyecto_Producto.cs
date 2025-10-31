@@ -8,6 +8,10 @@ namespace FrontendBlazorApi.Models
         [JsonPropertyName("IdProducto")]
         public int IdProducto;
         public DateTime FechaAsociacion;
+        public Proyecto_Producto()
+        {
+            FechaAsociacion = DateTime.Today;
+        }
     }
     
     public class Proyecto_ProductoTratar
@@ -16,6 +20,6 @@ namespace FrontendBlazorApi.Models
         public int IdProyecto;
         [JsonPropertyName("IdProducto")]
         public int IdProducto;
-        public DateTime FechaAsociacion;
+        public DateOnly FechaAsociacion;
     }
 }

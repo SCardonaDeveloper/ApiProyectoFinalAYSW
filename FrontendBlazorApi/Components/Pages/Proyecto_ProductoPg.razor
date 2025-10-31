@@ -40,7 +40,7 @@
             </InputSelect>
         </div>
 
-        <div class="col-md-4">
+        @*<div class="col-md-4">
             <label class="form-label fw-bold">Producto</label>
             <InputSelect class="form-select" @bind-Value="asociacionActual.IdProducto">
                 <option value="0">-- Seleccione --</option>
@@ -49,7 +49,7 @@
                     <option value="@pr.Id">@pr.Titulo</option>
                 }
             </InputSelect>
-        </div>
+        </div>*@
 
         <div class="col-md-4">
             <label class="form-label fw-bold">Fecha Asociación</label>
@@ -91,7 +91,7 @@ else
             {
                 <tr>
                     <td>@listaProyectos.FirstOrDefault(p => p.Id == a.IdProyecto)?.Titulo</td>
-                    <td>@listaProductos.FirstOrDefault(p => p.Id == a.IdProducto)?.Titulo</td>
+                    @*<td>@listaProductos.FirstOrDefault(p => p.Id == a.IdProducto)?.Titulo</td>*@
                     <td>@a.FechaAsociacion.ToShortDateString()</td>
                     <td class="d-flex gap-1">
                         <button class="btn btn-sm btn-outline-success" @onclick="@(() => CargarEnFormulario(a))">Editar</button>
@@ -105,7 +105,7 @@ else
 
 @code {
     private List<Proyecto> listaProyectos = new();
-    private List<Producto> listaProductos = new();
+    @*private List<Producto> listaProductos = new();*@
     private List<Proyecto_Producto> listaAsociaciones = new();
     private Proyecto_Producto asociacionActual = new();
     private string textoBotonGuardar = "Crear";
@@ -160,11 +160,11 @@ else
             if (resp.IsSuccessStatusCode)
             {
                 var data = await resp.Content.ReadFromJsonAsync<RespuestaConsulta>();
-                listaProductos = data?.Resultados?.Select(d => new Producto
+                @*listaProductos = data?.Resultados?.Select(d => new Producto
                 {
                     Id = ObtenerInt(d, "Id"),
                     Titulo = ObtenerString(d, "Titulo")
-                }).ToList() ?? new();
+                }).ToList() ?? new();@**@
             }
         }
         catch { }

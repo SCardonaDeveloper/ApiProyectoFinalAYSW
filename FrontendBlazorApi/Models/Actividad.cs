@@ -15,6 +15,12 @@ namespace FrontendBlazorApi.Models
         public DateTime FechaFinalizacion;
         public int Prioridad;
         public int PorcentajeAvance;
+        
+        public Actividad(){
+            FechaInicio = DateTime.Today;
+            FechaFinPrevista = DateTime.Today;
+            FechaFinalizacion = DateTime.Today;
+        }
     }
     public class ActividadTratar
     {

@@ -8,6 +8,11 @@ namespace FrontendBlazorApi.Models
         [JsonPropertyName("IdEntregable")]
         public int IdEntregable;
         public DateTime FechaAsociacion;
+        
+        public Responsable_Entregable()
+        {
+            FechaAsociacion = DateTime.Today;
+        }
     }
     
     public class Responsable_EntregableTratar
@@ -18,6 +23,6 @@ namespace FrontendBlazorApi.Models
         [JsonIgnore]
         [JsonPropertyName("IdEntregable")]
         public int IdEntregable;
-        public DateTime FechaAsociacion;
+        public DateOnly FechaAsociacion;
     }
 }

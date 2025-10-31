@@ -45,10 +45,10 @@ namespace FrontendBlazorApi.Models
         public string Codigo;
         public string Titulo;
         public string Descripcion;
-        public DateTime FechaInicio;
-        public DateTime FechaFinPrevista;
-        public DateTime FechaModificacion;
-        public DateTime FechaFinalizacion;
+        public DateOnly FechaInicio;
+        public DateOnly FechaFinPrevista;
+        public DateOnly FechaModificacion;
+        public DateOnly FechaFinalizacion;
         public string RutaLogo;
     }
 }
