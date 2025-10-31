@@ -12,7 +12,7 @@ using System.Text.Json;
 
 namespace ApiBack.Controllers
 {
-   
+
     [Route("api/{tabla}")]                                // Ruta dinámica: /api/usuarios, /api/productos, etc.
     [ApiController]                                       // Activa validación automática, binding, y comportamientos de API REST
     public class EntidadesController : ControllerBase
@@ -23,7 +23,7 @@ namespace ApiBack.Controllers
         private readonly ILogger<EntidadesController> _logger;  // Para logging estructurado, auditoría y debugging
         private readonly IConfiguration _configuration;         // Para acceso a configuraciones desde appsettings.json
 
-        
+
         public EntidadesController(
             IServicioCrud servicioCrud,           // Lógica de negocio y coordinación de operaciones CRUD
             ILogger<EntidadesController> logger,  // Logging estructurado, auditoría y monitoreo de operaciones
@@ -67,7 +67,7 @@ namespace ApiBack.Controllers
                     limite?.ToString() ?? "por defecto"  // Límite especificado o indicador de valor por defecto
                 );
 
-            
+
                 var filas = await _servicioCrud.ListarAsync(tabla, esquema, limite);
                 _logger.LogInformation(
                     "RESULTADO exitoso - Registros obtenidos: {Cantidad} de tabla {Tabla}",
@@ -704,7 +704,7 @@ namespace ApiBack.Controllers
                 var parametrosRequeridos = new[] { "campoUsuario", "campoContrasena", "valorUsuario", "valorContrasena" };
                 foreach (var parametro in parametrosRequeridos)
                 {
-                    if (!datosConvertidos.ContainsKey(parametro) || 
+                    if (!datosConvertidos.ContainsKey(parametro) ||
                         string.IsNullOrWhiteSpace(datosConvertidos[parametro]?.ToString()))
                     {
                         return BadRequest(new
@@ -734,7 +734,7 @@ namespace ApiBack.Controllers
                             "ÉXITO autenticación - Usuario {Usuario} autenticado correctamente en tabla {Tabla}",
                             valorUsuario, tabla
                         );
-                        
+
                         return Ok(new
                         {
                             estado = 200,
@@ -749,7 +749,7 @@ namespace ApiBack.Controllers
                             "FALLO autenticación - Usuario {Usuario} no encontrado en tabla {Tabla}",
                             valorUsuario, tabla
                         );
-                        
+
                         return NotFound(new
                         {
                             estado = 404,
@@ -764,7 +764,7 @@ namespace ApiBack.Controllers
                             "FALLO autenticación - Contraseña incorrecta para usuario {Usuario} en tabla {Tabla}",
                             valorUsuario, tabla
                         );
-                        
+
                         return Unauthorized(new
                         {
                             estado = 401,
