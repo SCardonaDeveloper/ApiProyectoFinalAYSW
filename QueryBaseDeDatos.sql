@@ -298,23 +298,25 @@ BEGIN
 END;
 GO
 CREATE OR ALTER PROCEDURE crear_producto
-    @IdTipoProducto INT,
-    @Codigo NVARCHAR(50) = NULL,
-    @Titulo NVARCHAR(255),
-    @Descripcion NVARCHAR(MAX) = NULL,
-    @FechaInicio DATE = NULL,
-    @FechaFinPrevista DATE = NULL,
-    @RutaLogo NVARCHAR(MAX) = NULL
+    @p_IdTipoProducto INT,
+    @p_Codigo NVARCHAR(50) = NULL,
+    @p_Titulo NVARCHAR(255),
+    @p_Descripcion NVARCHAR(MAX) = NULL,
+    @p_FechaInicio DATE = NULL,
+    @p_FechaFinPrevista DATE = NULL,
+    @p_FechaModificacion DATE = NULL,
+	@p_FechaFinalizacion DATE = NULL,
+    @p_RutaLogo NVARCHAR(MAX) = NULL
 AS
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM TipoProducto WHERE Id = @IdTipoProducto)
+    IF NOT EXISTS (SELECT 1 FROM TipoProducto WHERE Id = @p_IdTipoProducto)
     BEGIN
         RAISERROR('TipoProducto no existe', 16, 1);
         RETURN;
     END
 
-    INSERT INTO Producto (IdTipoProducto, Codigo, Titulo, Descripcion, FechaInicio, FechaFinPrevista, RutaLogo)
-    VALUES (@IdTipoProducto, @Codigo, @Titulo, @Descripcion, @FechaInicio, @FechaFinPrevista, @RutaLogo);
+    INSERT INTO Producto (IdTipoProducto, Codigo, Titulo, Descripcion, FechaInicio, FechaFinPrevista, FechaModificacion, FechaFinalizacion, RutaLogo)
+    VALUES (@p_IdTipoProducto, @p_Codigo, @p_Titulo, @p_Descripcion, @p_FechaInicio, @p_FechaFinPrevista, @p_FechaModificacion, @p_FechaFinalizacion, @p_RutaLogo);
 
     SELECT SCOPE_IDENTITY() AS NuevoId;
 END;
@@ -341,24 +343,54 @@ BEGIN
 END;
 GO
 CREATE OR ALTER PROCEDURE crear_producto_entregable
-    @IdProducto INT,
-    @IdEntregable INT,
-    @FechaAsociacion DATE = NULL
+    @p_IdProducto INT,
+    @p_IdEntregable INT,
+    @p_FechaAsociacion DATE = NULL
 AS
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM Producto WHERE Id = @IdProducto)
+    IF NOT EXISTS (SELECT 1 FROM Producto WHERE Id = @p_IdProducto)
     BEGIN
         RAISERROR('Producto no existe', 16, 1);
         RETURN;
     END
-    IF NOT EXISTS (SELECT 1 FROM Entregable WHERE Id = @IdEntregable)
+    IF NOT EXISTS (SELECT 1 FROM Entregable WHERE Id = @p_IdEntregable)
     BEGIN
         RAISERROR('Entregable no existe', 16, 1);
         RETURN;
     END
 
     INSERT INTO Producto_Entregable (IdProducto, IdEntregable, FechaAsociacion)
-    VALUES (@IdProducto, @IdEntregable, @FechaAsociacion);
+    VALUES (@p_IdProducto, @p_IdEntregable, @p_FechaAsociacion);
+END;
+GO
+CREATE OR ALTER PROCEDURE eliminar_producto_entregable
+    @p_IdProducto INT,
+    @p_IdEntregable INT
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM Producto_Entregable WHERE IdProducto = @p_IdProducto and IdEntregable = @p_IdEntregable)
+    BEGIN
+        RAISERROR('Registro no existe', 16, 1);
+        RETURN;
+    END
+
+    DELETE FROM Producto_Entregable WHERE IdProducto = @p_IdProducto and IdEntregable = @p_IdEntregable;
+END;
+GO
+CREATE OR ALTER PROCEDURE actualizar_producto_entregable
+    @p_IdProducto INT,
+    @p_IdEntregable INT,
+    @p_FechaAsociacion DATE = NULL
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM Producto_Entregable WHERE IdProducto = @p_IdProducto and IdEntregable = @p_IdEntregable)
+    BEGIN
+        RAISERROR('Registro no existe', 16, 1);
+        RETURN;
+    END
+
+    UPDATE Producto_Entregable set FechaAsociacion = @p_FechaAsociacion
+	WHERE IdProducto = @p_IdProducto and IdEntregable = @p_IdEntregable;
 END;
 GO
 CREATE OR ALTER PROCEDURE crear_responsable_entregable
@@ -1034,3 +1066,26 @@ BEGIN
     SELECT 'Archivo eliminado correctamente.' AS Mensaje;
 END;
 GO
+Create or alter procedure Buscar_Datos_Catalogo
+	@Maestra nvarchar(50)
+as 
+Begin 
+	if @Maestra = 'Productos' 
+		BEGIN
+			Select  Prod.Id, 
+								Prod.IdTipoProducto, 
+								Prod.Codigo,
+								Prod.Titulo,
+								Prod.Descripcion,
+								Prod.FechaInicio, 
+								Prod.FechaFinPrevista, 
+								Prod.FechaModificacion, 
+								Prod.FechaFinalizacion, 
+								Prod.RutaLogo
+			From Producto Prod 
+			Inner Join TipoProducto TiPro
+			On Prod.IdTipoProducto = TiPro.Id
+			Order By Prod.Id;
+		END
+End; 
+Go 
