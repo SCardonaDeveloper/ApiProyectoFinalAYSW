@@ -86,13 +86,18 @@ namespace ApiBack.Controllers
                     lista.Add(filaDiccionario);
                 }
                 _logger.LogInformation(
-                    "ÉXITO ejecución consulta SQL - Registros obtenidos: {Cantidad}", 
+                    "ÉXITO ejecución consulta SQL - Registros obtenidos: {Cantidad}",
                     lista.Count     // Cantidad exacta de registros devueltos
                 );
+                // Si no hay datos, devolver JSON estructurado (no texto plano)
                 if (lista.Count == 0)
                 {
-                    _logger.LogInformation("SIN DATOS - Consulta ejecutada correctamente pero no devolvió registros");
-                    return NotFound("La consulta se ejecutó correctamente pero no devolvió resultados.");
+                   return Ok(new
+                    {
+                        Resultados = new List<object>(),
+                        Total = 0,
+                        Advertencia = "Consulta ejecutada correctamente, pero no devolvió resultados."
+                    });
                 }
                 return Ok(new
                 {

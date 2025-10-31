@@ -1,40 +1,54 @@
 using System.Text.Json.Serialization;
 namespace FrontendBlazorApi.Models
 {
-    public class Actividad
+    
+    public class Proyecto
     {
+        [JsonPropertyName("id")]
         public int Id;
-        [JsonPropertyName("IdEntregable")]
-        public int IdEntregable;
+        [JsonPropertyName("IdProyectoPadre")]
+        public int IdProyectoPadre;
+        [JsonPropertyName("IdResponsable")]
+        public int IdResponsable;
+        [JsonPropertyName("IdTipoProyecto")]
+        public int IdTipoProyecto;
+        public string Codigo;
         public string Titulo;
         public string Descripcion;
         public DateTime FechaInicio;
         public DateTime FechaFinPrevista;
         public DateTime FechaModificacion;
         public DateTime FechaFinalizacion;
-        public int Prioridad;
-        public int PorcentajeAvance;
-        
-        public Actividad(){
+        public string RutaLogo;
+
+        public Proyecto()
+        {
             FechaInicio = DateTime.Today;
             FechaFinPrevista = DateTime.Today;
             FechaFinalizacion = DateTime.Today;
         }
+
     }
-    public class ActividadTratar
+    public class ProyectoTratar
     {
         [JsonIgnore]
         public int Id;
-        [JsonPropertyName("IdEntregable")]
+        [JsonPropertyName("IdProyectoPadre")]
         [JsonIgnore]
-        public int IdEntregable;
+        public int IdProyectoPadre;
+        [JsonPropertyName("IdResponsable")]
+        [JsonIgnore]
+        public int IdResponsable;
+        [JsonPropertyName("IdTipoProyecto")]
+        [JsonIgnore]
+        public int IdTipoProyecto;
+        public string Codigo;
         public string Titulo;
         public string Descripcion;
         public DateOnly FechaInicio;
         public DateOnly FechaFinPrevista;
         public DateOnly FechaModificacion;
         public DateOnly FechaFinalizacion;
-        public string Prioridad;
-        public double PorcentajeAvance;
+        public string RutaLogo;
     }
 }

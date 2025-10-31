@@ -241,6 +241,56 @@ BEGIN
     SELECT SCOPE_IDENTITY() AS NuevoId;
 END;
 GO
+
+CREATE OR ALTER PROCEDURE actualizar_responsable
+    @Id INT,
+    @IdTipoResponsable INT,
+    @IdUsuario INT,
+    @Nombre NVARCHAR(255)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        -- Validar que el responsable exista
+        IF NOT EXISTS (SELECT 1 FROM Responsable WHERE Id = @Id)
+        BEGIN
+            RAISERROR('El responsable indicado no existe.', 16, 1);
+            RETURN;
+        END
+
+        -- Validar FK: TipoResponsable
+        IF NOT EXISTS (SELECT 1 FROM TipoResponsable WHERE Id = @IdTipoResponsable)
+        BEGIN
+            RAISERROR('El tipo de responsable no existe.', 16, 1);
+            RETURN;
+        END
+
+        -- Validar FK: Usuario
+        IF NOT EXISTS (SELECT 1 FROM Usuario WHERE Id = @IdUsuario)
+        BEGIN
+            RAISERROR('El usuario no existe.', 16, 1);
+            RETURN;
+        END
+
+        -- Actualizar registro
+        UPDATE Responsable
+        SET 
+            IdTipoResponsable = @IdTipoResponsable,
+            IdUsuario = @IdUsuario,
+            Nombre = @Nombre
+        WHERE Id = @Id;
+
+        SELECT @Id AS IdActualizado, 'Responsable actualizado correctamente.' AS Mensaje;
+    END TRY
+    BEGIN CATCH
+        DECLARE @ErrorMsg NVARCHAR(MAX) = ERROR_MESSAGE();
+        RAISERROR(@ErrorMsg, 16, 1);
+    END CATCH
+END;
+GO
+
+
 CREATE OR ALTER PROCEDURE crear_proyecto
     @IdResponsable INT,
     @IdTipoProyecto INT,
@@ -478,6 +528,218 @@ BEGIN
         (@p_identregable, @p_titulo, @p_descripcion, @p_fechainicio, @p_fechafinprevista, @p_fechafinalizacion, @p_prioridad, @p_porcentajeavance);
 
     SELECT SCOPE_IDENTITY() AS NuevoId;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE crear_usuario
+    @Email NVARCHAR(150),
+    @Contrasena NVARCHAR(255),
+    @RutaAvatar NVARCHAR(MAX) = NULL,
+    @Activo BIT = 1
+AS
+BEGIN
+    IF EXISTS (SELECT 1 FROM Usuario WHERE Email = @Email)
+    BEGIN
+        RAISERROR('Ya existe un usuario con este correo electr�nico.', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO Usuario (Email, Contrasena, RutaAvatar, Activo)
+    VALUES (@Email, @Contrasena, @RutaAvatar, @Activo);
+
+    SELECT SCOPE_IDENTITY() AS NuevoId;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE actualizar_usuario
+    @Id INT,
+    @Email NVARCHAR(150),
+    @RutaAvatar NVARCHAR(MAX) = NULL,
+    @Activo BIT = 1
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM Usuario WHERE Id = @Id)
+    BEGIN
+        RAISERROR('El usuario indicado no existe.', 16, 1);
+        RETURN;
+    END
+
+    UPDATE Usuario
+    SET Email = @Email, RutaAvatar = @RutaAvatar, Activo = @Activo
+    WHERE Id = @Id;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE eliminar_usuario
+    @Id INT
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM Usuario WHERE Id = @Id)
+    BEGIN
+        RAISERROR('Usuario no encontrado.', 16, 1);
+        RETURN;
+    END
+
+    DELETE FROM Usuario WHERE Id = @Id;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE crear_tiporesponsable
+    @Titulo NVARCHAR(50),
+    @Descripcion NVARCHAR(255)
+AS
+BEGIN
+    IF EXISTS (SELECT 1 FROM TipoResponsable WHERE Titulo = @Titulo)
+    BEGIN
+        RAISERROR('Ya existe un tipo de responsable con este t�tulo.', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO TipoResponsable (Titulo, Descripcion)
+    VALUES (@Titulo, @Descripcion);
+
+    SELECT SCOPE_IDENTITY() AS NuevoId;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE actualizar_tiporesponsable
+    @Id INT,
+    @Titulo NVARCHAR(50),
+    @Descripcion NVARCHAR(255)
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM TipoResponsable WHERE Id = @Id)
+    BEGIN
+        RAISERROR('Tipo de responsable no existe.', 16, 1);
+        RETURN;
+    END
+
+    UPDATE TipoResponsable
+    SET Titulo = @Titulo, Descripcion = @Descripcion
+    WHERE Id = @Id;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE eliminar_tiporesponsable
+    @Id INT
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM TipoResponsable WHERE Id = @Id)
+    BEGIN
+        RAISERROR('Tipo de responsable no encontrado.', 16, 1);
+        RETURN;
+    END
+
+    DELETE FROM TipoResponsable WHERE Id = @Id;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE crear_estado
+    @Nombre NVARCHAR(50),
+    @Descripcion NVARCHAR(255)
+AS
+BEGIN
+    IF EXISTS (SELECT 1 FROM Estado WHERE Nombre = @Nombre)
+    BEGIN
+        RAISERROR('Ya existe un estado con este nombre.', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO Estado (Nombre, Descripcion)
+    VALUES (@Nombre, @Descripcion);
+
+    SELECT SCOPE_IDENTITY() AS NuevoId;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE crear_tipoproyecto
+    @Nombre NVARCHAR(150),
+    @Descripcion NVARCHAR(255)
+AS
+BEGIN
+    IF EXISTS (SELECT 1 FROM TipoProyecto WHERE Nombre = @Nombre)
+    BEGIN
+        RAISERROR('Ya existe un tipo de proyecto con este nombre.', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO TipoProyecto (Nombre, Descripcion)
+    VALUES (@Nombre, @Descripcion);
+
+    SELECT SCOPE_IDENTITY() AS NuevoId;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE crear_variable
+    @Titulo NVARCHAR(255),
+    @Descripcion NVARCHAR(MAX) = NULL
+AS
+BEGIN
+    INSERT INTO VariableEstrategica (Titulo, Descripcion)
+    VALUES (@Titulo, @Descripcion);
+
+    SELECT SCOPE_IDENTITY() AS NuevoId;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE crear_objetivo
+    @IdVariable INT,
+    @Titulo NVARCHAR(255),
+    @Descripcion NVARCHAR(MAX) = NULL
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM VariableEstrategica WHERE Id = @IdVariable)
+    BEGIN
+        RAISERROR('Variable no existe.', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO ObjetivoEstrategico (IdVariable, Titulo, Descripcion)
+    VALUES (@IdVariable, @Titulo, @Descripcion);
+
+    SELECT SCOPE_IDENTITY() AS NuevoId;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE crear_meta
+    @IdObjetivo INT,
+    @Titulo NVARCHAR(255),
+    @Descripcion NVARCHAR(MAX) = NULL
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM ObjetivoEstrategico WHERE Id = @IdObjetivo)
+    BEGIN
+        RAISERROR('Objetivo no existe.', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO MetaEstrategica (IdObjetivo, Titulo, Descripcion)
+    VALUES (@IdObjetivo, @Titulo, @Descripcion);
+
+    SELECT SCOPE_IDENTITY() AS NuevoId;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE crear_meta_proyecto
+    @IdMeta INT,
+    @IdProyecto INT,
+    @FechaAsociacion DATE = NULL
+AS
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM MetaEstrategica WHERE Id = @IdMeta)
+    BEGIN
+        RAISERROR('Meta no existe.', 16, 1);
+        RETURN;
+    END
+
+    IF NOT EXISTS (SELECT 1 FROM Proyecto WHERE Id = @IdProyecto)
+    BEGIN
+        RAISERROR('Proyecto no existe.', 16, 1);
+        RETURN;
+    END
+
+    INSERT INTO Meta_Proyecto (IdMeta, IdProyecto, FechaAsociacion)
+    VALUES (@IdMeta, @IdProyecto, @FechaAsociacion);
 END;
 GO
 CREATE OR ALTER PROCEDURE crear_entregable_con_actividades

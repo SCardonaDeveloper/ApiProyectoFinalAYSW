@@ -13,6 +13,7 @@ namespace FrontendBlazorApi.Models
         [Required(ErrorMessage = "La descripción es obligatoria")]
         [StringLength(250, ErrorMessage = "La descripción no puede tener más de 250 caracteres")]
         public string? Descripcion { get; set; } = string.Empty;
+        
     }
     public class TipoResponsableTratar
     {

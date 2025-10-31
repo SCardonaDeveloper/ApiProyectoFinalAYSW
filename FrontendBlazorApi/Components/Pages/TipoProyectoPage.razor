@@ -91,6 +91,19 @@ else
     private bool cargando = false;
     private const string urlBaseApi = "api/TipoProyecto";
 
+    // Agregar estas clases DTO dentro del bloque @code
+    public class TipoProyectoCrear
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
+    }
+
+    public class TipoProyectoActualizar
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await CargarTipoProyecto();
@@ -104,17 +117,28 @@ else
             var cliente = FabricaHttp.CreateClient("ApiBack");
             var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Models.TipoProyecto>>>(urlBaseApi);
             tipoProyecto = respuesta?.Datos ?? new List<Models.TipoProyecto>();
-            mensaje = $"Se cargaron {tipoProyecto.Count} tipo(s) de proyecto(s).";
-            claseAviso = "alert alert-success";
+            
+            if (!tipoProyecto.Any())
+            {
+                mensaje = "No hay tipos de proyecto registrados. Puede crear el primero usando el formulario.";
+                claseAviso = "alert alert-info";
+            }
+            else
+            {
+                mensaje = $"Se cargaron {tipoProyecto.Count} tipo(s) de proyecto(s).";
+                claseAviso = "alert alert-success";
+            }
         }
         catch (Exception ex)
         {
             mensaje = $"Error al listar tipos de proyecto(s): {ex.Message}";
             claseAviso = "alert alert-danger";
+            tipoProyecto = new List<Models.TipoProyecto>();
         }
         finally
         {
             cargando = false;
+            StateHasChanged();
         }
     }
 
@@ -177,7 +201,15 @@ else
         try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
-            var respuesta = await cliente.PostAsJsonAsync(urlBaseApi, tipoProyectoActual);
+            
+            // Usar DTO sin ID para creación
+            var tipoProyectoCrear = new TipoProyectoCrear
+            {
+                Nombre = tipoProyectoActual.Nombre,
+                Descripcion = tipoProyectoActual.Descripcion
+            };
+            
+            var respuesta = await cliente.PostAsJsonAsync(urlBaseApi, tipoProyectoCrear);
             if (respuesta.IsSuccessStatusCode)
             {
                 mensaje = "Tipo de proyecto creado correctamente.";
@@ -212,13 +244,16 @@ else
         try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
-            //
-            TipoProyectoTratar tipoProyectoT = new TipoProyectoTratar(){
+            
+            // Usar DTO sin ID para actualización
+            var tipoProyectoActualizar = new TipoProyectoActualizar
+            {
                 Nombre = tipoProyectoActual.Nombre,
                 Descripcion = tipoProyectoActual.Descripcion
             };
+            
             var ruta = $"{urlBaseApi}/Id/{tipoProyectoActual.Id}";
-            var respuesta = await cliente.PutAsJsonAsync(ruta, tipoProyectoT);
+            var respuesta = await cliente.PutAsJsonAsync(ruta, tipoProyectoActualizar);
             if (respuesta.IsSuccessStatusCode)
             {
                 mensaje = "Tipo de proyecto actualizado correctamente.";
