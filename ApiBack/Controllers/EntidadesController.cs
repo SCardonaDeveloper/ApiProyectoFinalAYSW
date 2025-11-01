@@ -1,5 +1,3 @@
-
-
 using System;                                             // Para DateTime y excepciones básicas
 using Microsoft.AspNetCore.Authorization;                // Para [AllowAnonymous] y políticas de autorización
 using Microsoft.AspNetCore.Mvc;                          // Para ControllerBase, IActionResult, atributos HTTP
@@ -17,8 +15,6 @@ namespace ApiBack.Controllers
     [ApiController]                                       // Activa validación automática, binding, y comportamientos de API REST
     public class EntidadesController : ControllerBase
     {
-        // Dependencias inyectadas - Aplicando DIP (Dependency Inversion Principle)
-        // Cada dependencia tiene una responsabilidad específica y bien definida (SRP)
         private readonly IServicioCrud _servicioCrud;           // Para lógica de negocio CRUD y reglas del dominio
         private readonly ILogger<EntidadesController> _logger;  // Para logging estructurado, auditoría y debugging
         private readonly IConfiguration _configuration;         // Para acceso a configuraciones desde appsettings.json
@@ -30,10 +26,6 @@ namespace ApiBack.Controllers
             IConfiguration configuration         // Acceso a configuraciones desde appsettings.json y otras fuentes
         )
         {
-            // Validaciones defensivas - Guard clauses para prevenir errores de configuración DI
-            // En funcionamiento normal de una aplicación correctamente configurada, 
-            // estas excepciones nunca deberían lanzarse
-
             _servicioCrud = servicioCrud ?? throw new ArgumentNullException(
                 nameof(servicioCrud),
                 "IServicioCrud no fue inyectado correctamente. Verificar registro de servicios en Program.cs"

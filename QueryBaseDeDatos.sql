@@ -742,7 +742,7 @@ BEGIN
     VALUES (@IdMeta, @IdProyecto, @FechaAsociacion);
 END;
 GO
-CREATE OR ALTER PROCEDURE crear_entregable_con_actividades
+CREATE OR ALTER PROCEDURE crear_entregable_con_actividades_y_archivos
     @Codigo NVARCHAR(50) = NULL,
     @Titulo NVARCHAR(255),
     @Descripcion NVARCHAR(MAX) = NULL,
@@ -750,7 +750,8 @@ CREATE OR ALTER PROCEDURE crear_entregable_con_actividades
     @FechaFinPrevista DATE = NULL,
     @FechaModificacion DATE = NULL,
     @FechaFinalizacion DATE = NULL,
-    @Actividades NVARCHAR(MAX) = NULL 
+    @Actividades NVARCHAR(MAX) = NULL,
+    @Archivos NVARCHAR(MAX) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -760,7 +761,10 @@ BEGIN
     DECLARE @NuevoId INT = SCOPE_IDENTITY();
     IF @Actividades IS NOT NULL
     BEGIN
-        INSERT INTO Actividad (IdEntregable, Titulo, Descripcion, FechaInicio, FechaFinPrevista, FechaFinalizacion, Prioridad, PorcentajeAvance)
+        INSERT INTO Actividad (
+            IdEntregable, Titulo, Descripcion, FechaInicio,
+            FechaFinPrevista, FechaFinalizacion, Prioridad, PorcentajeAvance
+        )
         SELECT 
             @NuevoId,
             JSON_VALUE(a.value, '$.Titulo'),
@@ -772,7 +776,14 @@ BEGIN
             TRY_CONVERT(INT, JSON_VALUE(a.value, '$.PorcentajeAvance'))
         FROM OPENJSON(@Actividades) AS a;
     END
-
+    IF @Archivos IS NOT NULL
+    BEGIN
+        INSERT INTO Archivo_Entregable (IdArchivo, IdEntregable)
+        SELECT 
+            TRY_CONVERT(INT, JSON_VALUE(a.value, '$.IdArchivo')),
+            @NuevoId
+        FROM OPENJSON(@Archivos) a;
+    END
     SELECT @NuevoId AS IdEntregable;
 END;
 GO
@@ -937,7 +948,7 @@ CREATE OR ALTER PROCEDURE actualizar_entregable_completo
     @Descripcion NVARCHAR(MAX),
     @FechaInicio DATE,
     @FechaFinPrevista DATE,
-    @FechaModificacion DATE,
+    @FechaModificacion = GETDATE(),
     @FechaFinalizacion DATE,
     @Actividades NVARCHAR(MAX) = NULL,  
     @Responsables NVARCHAR(MAX) = NULL,
@@ -991,6 +1002,7 @@ BEGIN
             TRY_CONVERT(INT, JSON_VALUE(f.value, '$.IdArchivo')),
             @IdEntregable
         FROM OPENJSON(@Archivos) AS f;
+        SELECT @IdEntregable AS IdEntregable;
     END;
 END;
 GO
@@ -1234,47 +1246,55 @@ BEGIN
 END;
 GO
 CREATE OR ALTER PROCEDURE sp_ConsultarEntregablesConDetalles
-    @IdEntregable INT = NULL
+    @IdEntregable INT
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT 
-        e.Id AS IdEntregable,
-        e.Codigo,
-        e.Titulo,
-        e.Descripcion,
-        e.FechaInicio,
-        e.FechaFinPrevista,
-        e.FechaModificacion,
-        e.FechaFinalizacion
-    FROM Entregable e
-    WHERE (@IdEntregable IS NULL OR e.Id = @IdEntregable);
-    SELECT 
-        a.Id AS IdActividad,
-        a.IdEntregable,
-        a.Titulo,
-        a.Descripcion,
-        a.FechaInicio,
-        a.FechaFinPrevista,
-        a.FechaModificacion,
-        a.FechaFinalizacion,
-        a.Prioridad,
-        a.PorcentajeAvance
-    FROM Actividad a
-    INNER JOIN Entregable e ON e.Id = a.IdEntregable
-    WHERE (@IdEntregable IS NULL OR e.Id = @IdEntregable);
-    SELECT 
-        ae.IdEntregable,
-        ar.Id AS IdArchivo,
-        ar.Nombre,
-        ar.Ruta,
-        ar.Tipo,
-        ar.Fecha,
-        ar.IdUsuario
-    FROM Archivo_Entregable ae
-    INNER JOIN Archivo ar ON ar.Id = ae.IdArchivo
-    INNER JOIN Entregable e ON e.Id = ae.IdEntregable
-    WHERE (@IdEntregable IS NULL OR e.Id = @IdEntregable);
+
+    SELECT (
+        SELECT 
+            e.Id AS Id,
+            e.Codigo,
+            e.Titulo,
+            e.Descripcion,
+            e.FechaInicio,
+            e.FechaFinPrevista,
+            e.FechaModificacion,
+            e.FechaFinalizacion,
+            (
+                SELECT 
+                    a.Id AS IdActividad,
+                    a.IdEntregable,
+                    a.Titulo,
+                    a.Descripcion,
+                    a.FechaInicio,
+                    a.FechaFinPrevista,
+                    a.FechaModificacion,
+                    a.FechaFinalizacion,
+                    a.Prioridad,
+                    a.PorcentajeAvance
+                FROM Actividad a
+                WHERE a.IdEntregable = e.Id
+                FOR JSON PATH
+            ) AS  DetalleActividades,
+            (
+                SELECT 
+                    ar.Id AS IdArchivo,
+                    ar.Nombre,
+                    ar.Ruta,
+                    ar.Tipo,
+                    ar.Fecha,
+                    ar.IdUsuario
+                FROM Archivo_Entregable ae
+                INNER JOIN Archivo ar ON ar.Id = ae.IdArchivo
+                WHERE ae.IdEntregable = e.Id
+                FOR JSON PATH
+            ) AS DetalleArchivos
+
+        FROM Entregable e
+        WHERE e.Id = @IdEntregable
+        FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
+    ) AS Json;
 END;
 GO
 CREATE OR ALTER PROCEDURE sp_Archivo_Actualizar
@@ -1351,3 +1371,18 @@ Begin
 		END
 End; 
 Go 
+CREATE OR ALTER PROCEDURE eliminar_actividad
+    @IdActividad INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF NOT EXISTS (SELECT 1 FROM Actividad WHERE Id = @IdActividad)
+    BEGIN
+        RAISERROR ('La actividad especificada no existe.', 16, 1);
+        RETURN;
+    END
+
+    DELETE FROM Actividad
+    WHERE Id = @IdActividad;
+END;
+GO

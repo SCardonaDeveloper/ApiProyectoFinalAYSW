@@ -4,6 +4,7 @@
 @using System.Text.Json
 @using System.Text.Json.Serialization
 @inject IHttpClientFactory FabricaHttp
+@inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
 <PageTitle>Actividad</PageTitle>
@@ -86,8 +87,10 @@
     </div>
 
     <div class="mt-4 d-flex gap-2">
-        <button type="submit" class="btn btn-primary shadow-sm">Guardar</button>
+        <button type="submit" class="btn btn-primary" @onclick="GuardarSegunEstado">@textoBotonGuardar</button>
         <button type="button" class="btn btn-warning shadow-sm" @onclick="LimpiarFormulario">Limpiar</button>
+        <button type="button" class="btn btn-secondary" @onclick="BuscarActividadPorId">Buscar</button>
+        <button type="button" class="btn btn-danger" @onclick="EliminarActividad" disabled="@(!existeActividad)">Eliminar</button>
     </div>
 </EditForm>
 
@@ -146,7 +149,7 @@ else
     private string mensaje = "";
     private string claseAviso = "alert alert-info";
     private bool cargando = false;
-
+    private string textoBotonGuardar = "Crear";
     private const string urlBaseApi = "api/Actividad";
     private const string urlProcedimientos = "api/procedimientos/ejecutarsp";
     private const string urlEntregables = "api/Entregable";
@@ -161,72 +164,72 @@ else
     }
 
     private async Task CargarDatosIniciales() =>
-        await Task.WhenAll(CargarActividades(), CargarEntregables());
+    await Task.WhenAll(CargarActividades(), CargarEntregables());
 
     private async Task CargarActividades()
-{
-    try
     {
-        cargando = true;
-        var cliente = FabricaHttp.CreateClient("ApiBack");
-
-        var parametrosConsulta = new Dictionary<string, object?>
+        try
         {
-            ["consulta"] = @"
-                SELECT 
-                    a.Id,
-                    a.IdEntregable,
-                    e.Titulo AS TituloEntregable,
-                    a.Titulo,
-                    a.Descripcion,
-                    a.FechaInicio,
-                    a.FechaFinPrevista,
-                    a.FechaFinalizacion,
-                    a.Prioridad,
-                    a.PorcentajeAvance
-                FROM Actividad a
-                INNER JOIN Entregable e ON e.Id = a.IdEntregable
-                ORDER BY a.Id",
-            ["parametros"] = new Dictionary<string, object?>()
-        };
+            cargando = true;
+            var cliente = FabricaHttp.CreateClient("ApiBack");
 
-        var respuesta = await cliente.PostAsJsonAsync(urlConsultas, parametrosConsulta);
-
-        if (respuesta.IsSuccessStatusCode)
-        {
-            var resultado = await respuesta.Content.ReadFromJsonAsync<RespuestaConsulta>();
-
-            actividades = resultado?.Resultados?.Select(d => new Actividad
+            var parametrosConsulta = new Dictionary<string, object?>
             {
-                Id = ObtenerInt(d, "Id"),
-                IdEntregable = ObtenerInt(d, "IdEntregable"),
-                Titulo = ObtenerString(d, "Titulo"),
-                Descripcion = ObtenerString(d, "Descripcion"),
-                FechaInicio = ObtenerDateTime(d, "FechaInicio"),
-                FechaFinPrevista = ObtenerDateTime(d, "FechaFinPrevista"),
-                FechaFinalizacion = ObtenerDateTime(d, "FechaFinalizacion"),
-                Prioridad = ObtenerInt(d, "Prioridad"),
-                PorcentajeAvance = ObtenerInt(d, "PorcentajeAvance")
-            }).ToList() ?? new();
+                ["consulta"] = @"
+SELECT
+a.Id,
+a.IdEntregable,
+e.Titulo AS TituloEntregable,
+a.Titulo,
+a.Descripcion,
+a.FechaInicio,
+a.FechaFinPrevista,
+a.FechaFinalizacion,
+a.Prioridad,
+a.PorcentajeAvance
+FROM Actividad a
+INNER JOIN Entregable e ON e.Id = a.IdEntregable
+ORDER BY a.Id",
+                ["parametros"] = new Dictionary<string, object?>()
+            };
 
-            mensaje = $"Se cargaron {actividades.Count} actividad(es).";
-            claseAviso = "alert alert-success";
+            var respuesta = await cliente.PostAsJsonAsync(urlConsultas, parametrosConsulta);
+
+            if (respuesta.IsSuccessStatusCode)
+            {
+                var resultado = await respuesta.Content.ReadFromJsonAsync<RespuestaConsulta>();
+
+                actividades = resultado?.Resultados?.Select(d => new Actividad
+                {
+                    Id = ObtenerInt(d, "Id"),
+                    IdEntregable = ObtenerInt(d, "IdEntregable"),
+                    Titulo = ObtenerString(d, "Titulo"),
+                    Descripcion = ObtenerString(d, "Descripcion"),
+                    FechaInicio = ObtenerDateTime(d, "FechaInicio"),
+                    FechaFinPrevista = ObtenerDateTime(d, "FechaFinPrevista"),
+                    FechaFinalizacion = ObtenerDateTime(d, "FechaFinalizacion"),
+                    Prioridad = ObtenerInt(d, "Prioridad"),
+                    PorcentajeAvance = ObtenerInt(d, "PorcentajeAvance")
+                }).ToList() ?? new();
+
+                mensaje = $"Se cargaron {actividades.Count} actividad(es).";
+                claseAviso = "alert alert-success";
+            }
+            else
+            {
+                var errorTexto = await respuesta.Content.ReadAsStringAsync();
+                mensaje = $"Error al cargar actividades: {respuesta.StatusCode} - {errorTexto}";
+                claseAviso = "alert alert-danger";
+
+            }
         }
-        else
+        catch (Exception ex)
         {
-            var errorTexto = await respuesta.Content.ReadAsStringAsync();
-            mensaje = $"Error al cargar actividades: {respuesta.StatusCode} - {errorTexto}";
+            mensaje = $"Error al listar actividades: {ex.Message}";
             claseAviso = "alert alert-danger";
-        
         }
+        finally { cargando = false; }
     }
-    catch (Exception ex)
-    {
-        mensaje = $"Error al listar actividades: {ex.Message}";
-        claseAviso = "alert alert-danger";
-    }
-    finally { cargando = false; }
-}
 
     private async Task CargarEntregables()
     {
@@ -317,15 +320,125 @@ else
             claseAviso = "alert alert-danger";
         }
     }
+    private async Task BuscarActividadPorId()
+    {
+        LimpiarMensajes();
+        if (string.IsNullOrWhiteSpace(actividadActual.Id.ToString()))
+        {
+            mensaje = "Debe indicar el id para buscar.";
+            claseAviso = "alert alert-warning";
+            return;
+        }
+        try
+        {
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var ruta = $"{urlBaseApi}/id/{actividadActual.Id}";
+            var respuestaHttp = await cliente.GetAsync(ruta);
 
+            RespuestaApi<List<Actividad>>? respuesta = null;
+            if (respuestaHttp == null)
+            {
+                respuesta = new RespuestaApi<List<Actividad>> { Datos = new List<Actividad>() };
+            }
+            if (respuestaHttp != null && respuestaHttp.IsSuccessStatusCode)
+            {
+                respuesta = await respuestaHttp.Content.ReadFromJsonAsync<RespuestaApi<List<Actividad>>>();
+            }
+            else if (respuestaHttp != null && respuestaHttp.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                respuesta = new RespuestaApi<List<Actividad>> { Datos = new List<Actividad>() };
+            }
+            else
+            {
+                respuesta = null;
+            }
+            var encontrado = respuesta?.Datos?.FirstOrDefault();
+
+            if (encontrado is not null)
+            {
+                actividadActual = new Actividad
+                {
+                    Id = encontrado.Id,
+                    IdEntregable = encontrado.IdEntregable,
+                    Titulo = encontrado.Titulo,
+                    Descripcion = encontrado.Descripcion,
+                    FechaInicio = encontrado.FechaInicio,
+                    FechaFinPrevista = encontrado.FechaFinPrevista,
+                    FechaModificacion = encontrado.FechaModificacion,
+                    FechaFinalizacion = encontrado.FechaFinalizacion,
+                    Prioridad = encontrado.Prioridad,
+                    PorcentajeAvance = encontrado.PorcentajeAvance
+                };
+                existeActividad = true;
+                textoBotonGuardar = "Actualizar";
+                mensaje = "Actividad cargada en el formulario.";
+                claseAviso = "alert alert-success";
+            }
+            else
+            {
+                existeActividad = false;
+                textoBotonGuardar = "Crear";
+                mensaje = "Actividad no encontrada.";
+                claseAviso = "alert alert-warning";
+            }
+        }
+        catch (Exception error)
+        {
+            existeActividad = false;
+            textoBotonGuardar = "Crear";
+            mensaje = $"Error al buscar actividad: {error.Message}";
+            claseAviso = "alert alert-danger";
+        }
+
+    }
+    private async Task EliminarActividad(){
+        LimpiarMensajes();
+        try{
+            if(actividadActual.Id <= 0){
+                mensaje = "Debe indicar la identificacion de la actividad para poder eliminarla";
+                claseAviso = "alert alert-warning";
+                return;
+            }
+            var confirmar = await JSRuntime.InvokeAsync<bool>("confirm", 
+                $"¿Está seguro de eliminar la actividad #{actividadActual.Id}?\n\nEsta acción no se puede deshacer. ");
+            if(!confirmar){
+                mensaje = "Eliminación canceladaa!. ";
+                claseAviso = "alert alert-info";
+                return;
+            }    
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var parametros = new Dictionary<string, object?>{
+                ["nombreSP"] = "eliminar_actividad",
+                ["IdActividad"] = actividadActual.Id
+            };
+            var respuesta = await cliente.PostAsJsonAsync(urlProcedimientos, parametros);
+            if(respuesta.IsSuccessStatusCode){
+                mensaje = "Actividad eliminada correctamenteeee!";
+                claseAviso = "alert alert-success";
+                await CargarActividades();
+                LimpiarFormulario();
+            }else
+            {
+                var detalle = await respuesta.Content.ReadAsStringAsync();
+                mensaje = $"❌ Error al eliminar: {detalle}";
+                claseAviso = "alert alert-danger";
+            }
+
+        }catch (Exception ex)
+        {
+            mensaje = $"❌ Error al eliminar actividad: {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
+
+    }
     private void CargarEnFormulario(Actividad a)
     {
         actividadActual = a;
         existeActividad = true;
         mensaje = "Actividad cargada para edición.";
         claseAviso = "alert alert-info";
+        textoBotonGuardar = "Actualizar";
     }
-
     private void LimpiarFormulario()
     {
         actividadActual = new();
@@ -361,7 +474,7 @@ else
     {
         mensaje = "";
         claseAviso = "alert alert-info";
-    } 
+    }
 
     private int ObtenerInt(Dictionary<string, object> dict, string key)
     {
@@ -381,10 +494,10 @@ else
     private DateTime ObtenerDateTime(Dictionary<string, object> dict, string key)
     {
         if (!dict.TryGetValue(key, out var valor)) return DateTime.Now;
-        
+
         if (valor is JsonElement elem)
             return elem.ValueKind == JsonValueKind.String ? elem.GetDateTime() : DateTime.Now;
-        
+
         return Convert.ToDateTime(valor);
     }
 
@@ -393,7 +506,7 @@ else
         public int Id { get; set; }
         public string Titulo { get; set; } = "";
     }
-     private class RespuestaConsulta
+    private class RespuestaConsulta
     {
         [JsonPropertyName("Resultados")]
         public List<Dictionary<string, object>>? Resultados { get; set; }

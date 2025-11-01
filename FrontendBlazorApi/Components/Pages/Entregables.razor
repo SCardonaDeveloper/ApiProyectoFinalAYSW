@@ -231,11 +231,73 @@ else
                                         <button class="btn btn-sm btn-primary shadow-sm" @onclick="@(() => CargarEntregableCompleto(e.Id))" title="Cargar entregable en formulario">
                                             <i class="bi bi-pencil-square"></i>
                                         </button>
+                                        <button class="btn btn-sm btn-outline-primary"@onclick="@(() => VerDetalleEntregable(e))"title="Ver actividades y archivos">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
                                     </td>
                                 </tr>
                             }
                         </tbody>
                     </table>
+                    @if (entregableSeleccionado != null)
+                    {
+                        <div class="mt-5">
+                        <h5 class="text-primary">Detalles del Entregable: @entregableSeleccionado.Titulo</h5>
+                        <h6 class="mt-3 text-success">Actividades</h6>
+                        @if (entregableSeleccionado.Actividades == null || !entregableSeleccionado.Actividades.Any())
+                        {
+                            <p>No hay actividades asociadas.</p>
+                        }
+                        else
+                        {
+                            <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Título</th>
+                                    <th>Prioridad</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var a in entregableSeleccionado.Actividades)
+                                {
+                                    <tr>
+                                        <td>@a.Id</td>
+                                        <td>@a.Titulo</td>
+                                        <td>@a.Prioridad</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+
+        <h6 class="mt-4 text-info">Archivos</h6>
+
+        @if (entregableSeleccionado.Archivos == null || !entregableSeleccionado.Archivos.Any())
+        {
+            <p>No hay archivos asociados.</p>
+        }
+        else
+        {
+            <table class="table table-sm table-bordered">
+                <thead>
+                    <tr>
+                        <th>ID Archivo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ar in entregableSeleccionado.Archivos)
+                    {
+                        <tr>
+                            <td>@ar.IdArchivo</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+}
+
                 </div>
             }
         </div>
@@ -248,6 +310,7 @@ else
     [SupplyParameterFromForm]
     private Entregable entregableActual { get; set; } = new();
     private List<ActividadDTO> listaActividades = new();
+    private Entregable? entregableSeleccionado;
     private List<ArchivoDTO> listaArchivos = new();
     private bool existeEntregable = false;
     private string textoBotonGuardar = "Crear";
@@ -261,11 +324,12 @@ else
     private const string urlActividades = "api/Actividad";
     protected override async Task OnInitializedAsync()
     {
+        await CargarDatosIniciales();
         entregableActual.FechaInicio = DateTime.Today;
         entregableActual.FechaFinPrevista = DateTime.Today;
         entregableActual.FechaModificacion = DateTime.Today;
         entregableActual.FechaFinalizacion = DateTime.Today;
-        CargarDatosIniciales();
+        
     }
     private async Task CargarDatosIniciales(){
         await Task.WhenAll(
@@ -374,7 +438,7 @@ else
                             FechaFinalizacion = entregableCompleto.FechaFinalizacion,
                             Actividades = entregableCompleto.DetalleActividades?.Select(a => new Actividad
                             {
-                                Id = a.Id,
+                                Id = a.IdActividad,
                                 Titulo = a.Titulo,
                                 Prioridad = a.Prioridad,
                             }).ToList() ?? new(),
@@ -406,6 +470,72 @@ else
     {
         mensaje = $"Error al cargar entregable: {ex.Message}";
         claseAviso = "alert alert-danger";
+    }
+}
+private async Task VerDetalleEntregable(Entregable e)
+{
+    entregableSeleccionado = null;
+
+    try
+    {
+        var cliente = fabricaHttp.CreateClient("ApiBack");
+
+        var parametros = new Dictionary<string, object?>
+        {
+            ["nombreSP"] = "sp_ConsultarEntregablesConDetalles",
+            ["IdEntregable"] = e.Id
+        };
+
+        var respuesta = await cliente.PostAsJsonAsync(urlProcedimientos, parametros);
+
+        if (respuesta.IsSuccessStatusCode)
+        {
+            var resultado = await respuesta.Content.ReadFromJsonAsync<RespuestaSP>();
+
+            if (resultado?.Resultados != null && resultado.Resultados.Count > 0)
+            {
+                var fila = resultado.Resultados[0];
+
+                var json = fila.Values.FirstOrDefault()?.ToString();
+                mensaje = json;
+
+                var completo = JsonSerializer.Deserialize<EntregableCompleto>(json!,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                if (completo != null)
+                {
+                    entregableSeleccionado = new Entregable
+                    {
+                        Id = completo.Id,
+                        Codigo = completo.Codigo,
+                        Titulo = completo.Titulo,
+                        Descripcion = completo.Descripcion,
+                        FechaInicio = completo.FechaInicio,
+                        FechaFinPrevista = completo.FechaFinPrevista,
+                        FechaModificacion = completo.FechaModificacion,
+                        FechaFinalizacion = completo.FechaFinalizacion,
+
+                        Actividades = completo.DetalleActividades?
+                            .Select(a => new Actividad
+                            {
+                                Id = a.IdActividad,
+                                Titulo = a.Titulo,
+                                Prioridad = a.Prioridad
+                            }).ToList() ?? new(),
+
+                        Archivos = completo.DetalleArchivos?
+                            .Select(a => new ArchivoEntregable
+                            {
+                                IdArchivo = a.IdArchivo
+                            }).ToList() ?? new()
+                    };
+                }
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        mensaje = ex.Message;
     }
 }
     private async Task BuscarPorId()
@@ -583,16 +713,22 @@ else
                     a.PorcentajeAvance
                 })
             );
+            var archivosJson = JsonSerializer.Serialize(
+                entregableActual.Archivos.Select(a => new {
+                    a.IdArchivo
+                })
+            );
             var parametros = new Dictionary<string, object?>{
-                ["nombreSP"] = "crear_entregable_con_actividades",
-                ["p_codigo"] = entregableActual.Codigo,
-                ["p_titulo"] = entregableActual.Titulo,
-                ["p_descripcion"] = entregableActual.Descripcion,
-                ["p_fechainicio"] = entregableActual.FechaInicio.ToString("yyyy-MM-dd"),
-                ["p_fechafinprevista"] = entregableActual.FechaFinPrevista.ToString("yyyy-MM-dd"),
-                ["p_fechamodificacion"] = DateTime.Now.ToString("yyyy-MM-dd"),
-                ["p_fechafinalizacion"] = entregableActual.FechaFinalizacion?.ToString("yyyy-MM-dd"),
-                ["p_actividades"] = actividadesJson
+                ["nombreSP"] = "crear_entregable_con_actividades_y_archivos",
+                ["Codigo"] = entregableActual.Codigo,
+                ["Titulo"] = entregableActual.Titulo,
+                ["Descripcion"] = entregableActual.Descripcion,
+                ["FechaInicio"] = entregableActual.FechaInicio.ToString("yyyy-MM-dd"),
+                ["FechaFinPrevista"] = entregableActual.FechaFinPrevista.ToString("yyyy-MM-dd"),
+                ["FechaModificacion"] = DateTime.Now.ToString("yyyy-MM-dd"),
+                ["FechaFinalizacion"] = entregableActual.FechaFinalizacion?.ToString("yyyy-MM-dd"),
+                ["Actividades"] = actividadesJson,
+                ["Archivos"] = archivosJson
             };
             var respuesta = await cliente.PostAsJsonAsync(urlProcedimientos, parametros);
             if (respuesta.IsSuccessStatusCode)
@@ -652,6 +788,11 @@ else
 
                 })
             );
+            var archivosJson = JsonSerializer.Serialize(
+                entregableActual.Archivos.Select(a => new {
+                    a.IdArchivo
+                })
+            );
             entregableTratar entregable = new()
             {
                 Codigo = entregableActual.Codigo,
@@ -665,7 +806,7 @@ else
             };
             var parametros = new Dictionary<string, object?>
             {
-                ["nombreSP"] = "actualizar_entregable_con_actividades",
+                ["nombreSP"] = "actualizar_entregable_completo",
                 ["p_codigo"] = entregableActual.Codigo,
                 ["p_titulo"] = entregableActual.Titulo,
                 ["p_descripcion"] = entregableActual.Descripcion,
@@ -673,7 +814,8 @@ else
                 ["p_fechafinprevista"] = entregableActual.FechaFinPrevista.ToString("yyyy-MM-dd"),
                 ["p_fechamodificacion"] = DateTime.Now.ToString("yyyy-MM-dd"),
                 ["p_fechafinalizacion"] = entregableActual.FechaFinalizacion?.ToString("yyyy-MM-dd"),
-                ["p_actividades"] = detallesJson
+                ["p_actividades"] = detallesJson,
+                ["p_archivos"] = archivosJson
             };
             var respuesta = await cliente.PutAsJsonAsync(urlProcedimientos, parametros);
 
@@ -770,8 +912,14 @@ else
         mensaje = "Actividad eliminada.";
         claseAviso = "alert alert-info";
     }
-    public async Task AgregarArchivo(){
-        entregableActual.Archivos.Add(new ArchivoEntregable());
+    public void AgregarArchivo()
+    {
+        entregableActual.Archivos ??= new List<ArchivoEntregable>();
+
+        entregableActual.Archivos.Add(new ArchivoEntregable
+        {
+            IdEntregable = entregableActual.Id > 0 ? entregableActual.Id : 0
+        });
     }
     public async Task EliminarArchivo(ArchivoEntregable AE){
         entregableActual.Archivos.Remove(AE);
@@ -865,7 +1013,7 @@ private class EntregableCompleto{
 
 }
 private class EntregableDetalleActividad{
-    public int Id {get; set;}
+    public int IdActividad {get; set;}
 
     public string Titulo {get; set;}
 
@@ -874,6 +1022,7 @@ private class EntregableDetalleActividad{
 public class ArchivoEntregable{
     [JsonPropertyName("IdArchivo")]
     public int IdArchivo {get; set;}
+    public int IdEntregable {get; set;}
 }
 public class Actividad
     {
