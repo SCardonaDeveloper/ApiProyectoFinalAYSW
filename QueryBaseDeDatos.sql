@@ -742,7 +742,7 @@ BEGIN
     VALUES (@IdMeta, @IdProyecto, @FechaAsociacion);
 END;
 GO
-CREATE OR ALTER PROCEDURE crear_entregable_con_actividades
+CREATE OR ALTER PROCEDURE crear_entregable_con_actividades_y_archivos
     @Codigo NVARCHAR(50) = NULL,
     @Titulo NVARCHAR(255),
     @Descripcion NVARCHAR(MAX) = NULL,
@@ -750,7 +750,8 @@ CREATE OR ALTER PROCEDURE crear_entregable_con_actividades
     @FechaFinPrevista DATE = NULL,
     @FechaModificacion DATE = NULL,
     @FechaFinalizacion DATE = NULL,
-    @Actividades NVARCHAR(MAX) = NULL 
+    @Actividades NVARCHAR(MAX) = NULL,
+    @Archivos NVARCHAR(MAX) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -760,7 +761,10 @@ BEGIN
     DECLARE @NuevoId INT = SCOPE_IDENTITY();
     IF @Actividades IS NOT NULL
     BEGIN
-        INSERT INTO Actividad (IdEntregable, Titulo, Descripcion, FechaInicio, FechaFinPrevista, FechaFinalizacion, Prioridad, PorcentajeAvance)
+        INSERT INTO Actividad (
+            IdEntregable, Titulo, Descripcion, FechaInicio,
+            FechaFinPrevista, FechaFinalizacion, Prioridad, PorcentajeAvance
+        )
         SELECT 
             @NuevoId,
             JSON_VALUE(a.value, '$.Titulo'),
@@ -772,7 +776,14 @@ BEGIN
             TRY_CONVERT(INT, JSON_VALUE(a.value, '$.PorcentajeAvance'))
         FROM OPENJSON(@Actividades) AS a;
     END
-
+    IF @Archivos IS NOT NULL
+    BEGIN
+        INSERT INTO Archivo_Entregable (IdArchivo, IdEntregable)
+        SELECT 
+            TRY_CONVERT(INT, JSON_VALUE(a.value, '$.IdArchivo')),
+            @NuevoId
+        FROM OPENJSON(@Archivos) a;
+    END
     SELECT @NuevoId AS IdEntregable;
 END;
 GO
@@ -937,7 +948,7 @@ CREATE OR ALTER PROCEDURE actualizar_entregable_completo
     @Descripcion NVARCHAR(MAX),
     @FechaInicio DATE,
     @FechaFinPrevista DATE,
-    @FechaModificacion DATE,
+    @FechaModificacion = GETDATE(),
     @FechaFinalizacion DATE,
     @Actividades NVARCHAR(MAX) = NULL,  
     @Responsables NVARCHAR(MAX) = NULL,
@@ -991,6 +1002,7 @@ BEGIN
             TRY_CONVERT(INT, JSON_VALUE(f.value, '$.IdArchivo')),
             @IdEntregable
         FROM OPENJSON(@Archivos) AS f;
+        SELECT @IdEntregable AS IdEntregable;
     END;
 END;
 GO
@@ -1234,47 +1246,55 @@ BEGIN
 END;
 GO
 CREATE OR ALTER PROCEDURE sp_ConsultarEntregablesConDetalles
-    @IdEntregable INT = NULL
+    @IdEntregable INT
 AS
 BEGIN
     SET NOCOUNT ON;
-    SELECT 
-        e.Id AS IdEntregable,
-        e.Codigo,
-        e.Titulo,
-        e.Descripcion,
-        e.FechaInicio,
-        e.FechaFinPrevista,
-        e.FechaModificacion,
-        e.FechaFinalizacion
-    FROM Entregable e
-    WHERE (@IdEntregable IS NULL OR e.Id = @IdEntregable);
-    SELECT 
-        a.Id AS IdActividad,
-        a.IdEntregable,
-        a.Titulo,
-        a.Descripcion,
-        a.FechaInicio,
-        a.FechaFinPrevista,
-        a.FechaModificacion,
-        a.FechaFinalizacion,
-        a.Prioridad,
-        a.PorcentajeAvance
-    FROM Actividad a
-    INNER JOIN Entregable e ON e.Id = a.IdEntregable
-    WHERE (@IdEntregable IS NULL OR e.Id = @IdEntregable);
-    SELECT 
-        ae.IdEntregable,
-        ar.Id AS IdArchivo,
-        ar.Nombre,
-        ar.Ruta,
-        ar.Tipo,
-        ar.Fecha,
-        ar.IdUsuario
-    FROM Archivo_Entregable ae
-    INNER JOIN Archivo ar ON ar.Id = ae.IdArchivo
-    INNER JOIN Entregable e ON e.Id = ae.IdEntregable
-    WHERE (@IdEntregable IS NULL OR e.Id = @IdEntregable);
+
+    SELECT (
+        SELECT 
+            e.Id AS Id,
+            e.Codigo,
+            e.Titulo,
+            e.Descripcion,
+            e.FechaInicio,
+            e.FechaFinPrevista,
+            e.FechaModificacion,
+            e.FechaFinalizacion,
+            (
+                SELECT 
+                    a.Id AS IdActividad,
+                    a.IdEntregable,
+                    a.Titulo,
+                    a.Descripcion,
+                    a.FechaInicio,
+                    a.FechaFinPrevista,
+                    a.FechaModificacion,
+                    a.FechaFinalizacion,
+                    a.Prioridad,
+                    a.PorcentajeAvance
+                FROM Actividad a
+                WHERE a.IdEntregable = e.Id
+                FOR JSON PATH
+            ) AS  DetalleActividades,
+            (
+                SELECT 
+                    ar.Id AS IdArchivo,
+                    ar.Nombre,
+                    ar.Ruta,
+                    ar.Tipo,
+                    ar.Fecha,
+                    ar.IdUsuario
+                FROM Archivo_Entregable ae
+                INNER JOIN Archivo ar ON ar.Id = ae.IdArchivo
+                WHERE ae.IdEntregable = e.Id
+                FOR JSON PATH
+            ) AS DetalleArchivos
+
+        FROM Entregable e
+        WHERE e.Id = @IdEntregable
+        FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
+    ) AS Json;
 END;
 GO
 CREATE OR ALTER PROCEDURE sp_Archivo_Actualizar
@@ -1351,95 +1371,18 @@ Begin
 		END
 End; 
 Go 
+CREATE OR ALTER PROCEDURE eliminar_actividad
+    @IdActividad INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    IF NOT EXISTS (SELECT 1 FROM Actividad WHERE Id = @IdActividad)
+    BEGIN
+        RAISERROR ('La actividad especificada no existe.', 16, 1);
+        RETURN;
+    END
 
-INSERT INTO Usuario (Email, Contrasena, RutaAvatar, Activo)
-VALUES
-('admin@empresa.com', '1234segura', NULL, 1),
-('juan.perez@empresa.com', 'clave123', NULL, 1),
-('maria.gomez@empresa.com', 'pass321', NULL, 1);
-INSERT INTO TipoResponsable (Titulo, Descripcion)
-VALUES
-('Administrador', 'Gestiona todos los proyectos y usuarios'),
-('Coordinador', 'Supervisa la ejecución de proyectos'),
-('Investigador', 'Desarrolla actividades en los proyectos');
-INSERT INTO Responsable (IdTipoResponsable, IdUsuario, Nombre)
-VALUES
-(1, 1, 'Carlos López'),
-(2, 2, 'Juan Pérez'),
-(3, 3, 'María Gómez')
-INSERT INTO TipoProyecto (Nombre, Descripcion)
-VALUES
-('Investigación', 'Proyectos de investigación académica'),
-('Desarrollo', 'Proyectos de desarrollo tecnológico');
-INSERT INTO Estado (Nombre, Descripcion)
-VALUES
-('Planeado', 'Proyecto en planificación'),
-('En ejecución', 'Proyecto actualmente en curso'),
-('Finalizado', 'Proyecto completado');
-INSERT INTO Proyecto (IdResponsable, IdTipoProyecto, Codigo, Titulo, Descripcion, FechaInicio, FechaFinPrevista, RutaLogo)
-VALUES
-(1, 1, 'PRJ-001', 'Sistema de Gestión Académica', 'Proyecto para mejorar los procesos de matrícula', '2025-01-10', '2025-12-31', NULL),
-(2, 2, 'PRJ-002', 'App de Monitoreo Ambiental', 'Desarrollo de aplicación móvil para medir la calidad del aire', '2025-03-01', '2025-11-30', NULL);
-INSERT INTO Estado_Proyecto (IdProyecto, IdEstado)
-VALUES
-(1, 2),
-(2, 1);
-INSERT INTO TipoProducto (Nombre, Descripcion)
-VALUES
-('Software', 'Aplicaciones informáticas'),
-('Informe técnico', 'Documentos de resultados');
-INSERT INTO Producto (IdTipoProducto, Codigo, Titulo, Descripcion, FechaInicio, FechaFinPrevista)
-VALUES
-(1, 'PROD-001', 'Módulo de Usuarios', 'Desarrollo del módulo de autenticación', '2025-02-01', '2025-04-30'),
-(2, 'PROD-002', 'Informe de Avances', 'Documento con resultados parciales', '2025-03-15', '2025-05-30');
-INSERT INTO Proyecto_Producto (IdProyecto, IdProducto, FechaAsociacion)
-VALUES
-(1, 1, '2025-02-01'),
-(1, 2, '2025-03-15');
-INSERT INTO Entregable (Codigo, Titulo, Descripcion, FechaInicio, FechaFinPrevista)
-VALUES
-('ENT-001', 'Diseño de base de datos', 'Estructura del sistema de información', '2025-02-01', '2025-02-28'),
-('ENT-002', 'Informe intermedio', 'Resultados preliminares del proyecto', '2025-04-01', '2025-05-15');
-INSERT INTO Producto_Entregable (IdProducto, IdEntregable, FechaAsociacion)
-VALUES
-(1, 1, '2025-02-01'),
-(2, 2, '2025-04-01');
-INSERT INTO Responsable_Entregable (IdResponsable, IdEntregable, FechaAsociacion)
-VALUES
-(3, 1, '2025-02-01'),
-(2, 2, '2025-04-01');
-INSERT INTO Archivo (IdUsuario, Ruta, Nombre, Tipo, Fecha)
-VALUES
-(3, '/archivos/diseno_db.pdf', 'Diseño Base de Datos', 'PDF', '2025-02-20'),
-(2, '/archivos/informe_avance.docx', 'Informe Avance', 'DOCX', '2025-04-15');
-INSERT INTO Archivo_Entregable (IdArchivo, IdEntregable)
-VALUES
-(1, 1),
-(2, 2);
-INSERT INTO Actividad (IdEntregable, Titulo, Descripcion, FechaInicio, FechaFinPrevista, Prioridad, PorcentajeAvance)
-VALUES
-(1, 'Modelado de datos', 'Creación de diagramas entidad-relación', '2025-02-01', '2025-02-10', 1, 100),
-(2, 'Redacción de informe', 'Preparación del documento de avances', '2025-04-01', '2025-04-20', 2, 60);
-INSERT INTO Presupuesto (IdProyecto, MontoSolicitado, Estado, MontoAprobado, PeriodoAnio, FechaSolicitud, FechaAprobacion)
-VALUES
-(1, 50000.00, 'Aprobado', 45000.00, 2025, '2025-01-05', '2025-02-01'),
-(2, 30000.00, 'Pendiente', NULL, 2025, '2025-03-10', NULL);
-INSERT INTO DistribucionPresupuesto (IdPresupuestoPadre, IdProyectoHijo, MontoAsignado)
-VALUES
-(1, 2, 5000.00);
-INSERT INTO EjecucionPresupuesto (IdPresupuesto, Anio, MontoPlaneado, MontoEjecutado, Observaciones)
-VALUES
-(1, 2025, 45000.00, 20000.00, 'Primera fase ejecutada');
-INSERT INTO VariableEstrategica (Titulo, Descripcion)
-VALUES
-('Innovación Tecnológica', 'Fomentar el uso de tecnología en los procesos educativos');
-INSERT INTO ObjetivoEstrategico (IdVariable, Titulo, Descripcion)
-VALUES
-(1, 'Desarrollar sistemas académicos', 'Crear herramientas tecnológicas que optimicen la gestión educativa');
-INSERT INTO MetaEstrategica (IdObjetivo, Titulo, Descripcion)
-VALUES
-(1, 'Implementar 2 sistemas académicos en 2025', 'Al menos dos proyectos tecnológicos desarrollados en el año');
-INSERT INTO Meta_Proyecto (IdMeta, IdProyecto, FechaAsociacion)
-VALUES
-(1, 1, '2025-01-15'),
-(1, 2, '2025-03-01');
+    DELETE FROM Actividad
+    WHERE Id = @IdActividad;
+END;
+GO

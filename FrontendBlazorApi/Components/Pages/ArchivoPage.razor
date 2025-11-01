@@ -54,10 +54,14 @@
             <label class="form-label">Fecha</label>
             <InputDate class="form-control" @bind-Value="archivoActual.Fecha" />
         </div>
+        <div>
+            <InputFile OnChange="SubirArchivo" />
+        </div>
+        
     </div>
 
     <div class="mt-3 d-flex flex-wrap gap-2">
-        <button type="submit" class="btn btn-primary">@textoBotonGuardar</button>
+        <button type="submit" class="btn btn-primary" @onclick="GuardarSegunEstado">@textoBotonGuardar</button>
         <button type="button" class="btn btn-secondary" @onclick="BuscarArchivoPorId">Buscar</button>
         <button type="button" class="btn btn-warning" @onclick="ActualizarArchivo" disabled="@(!existeArchivo)">Actualizar</button>
         <button type="button" class="btn btn-danger" @onclick="EliminarArchivo" disabled="@(!existeArchivo)">Eliminar</button>
@@ -133,9 +137,10 @@ else
     }
     private async Task CargarEnFormulario(Archivo a){
         archivoActual = a;
-        existeArchivo = false;
+        existeArchivo = true;
         mensaje = "";
         claseAviso = "alert alert-info";
+        textoBotonGuardar = "Actualizar";
     }
     private async Task CargarArchivos(){
         try 
@@ -156,7 +161,7 @@ else
         } 
     }
     private async Task BuscarArchivoPorId(){
-         LimpiarMensajes();
+        LimpiarMensajes();
         if (string.IsNullOrWhiteSpace(archivoActual.Id.ToString()))
         {
             mensaje = "Debe indicar el id para buscar.";
@@ -388,6 +393,34 @@ else
             claseAviso = "alert alert-danger";
         }
     }
+    private async Task SubirArchivo(InputFileChangeEventArgs e)
+{
+    var archivo = e.File;
+    var cliente = fabricaHttp.CreateClient("ApiBack");
+    var contenido = new MultipartFormDataContent();
+    contenido.Add(new StreamContent(archivo.OpenReadStream(10_000_000)), "archivo", archivo.Name);
+    var respuesta = await cliente.PostAsync("api/archivos/subir", contenido);
+    if (!respuesta.IsSuccessStatusCode)
+    {
+        mensaje = "Error al subir archivo";
+        return;
+    }
+
+    var datos = await respuesta.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+    var registro = new Dictionary<string, object?>
+    {
+        ["Nombre"] = datos["nombre"],
+        ["Ruta"] = datos["ruta"],
+        ["Tipo"] = datos["tipo"],
+        ["Fecha"] = DateTime.Now,
+        ["IdUsuario"] = datos["IdUsuario"]
+    };
+    var respuesta2 = await cliente.PostAsJsonAsync("api/Archivo", registro);
+    if (respuesta2.IsSuccessStatusCode)
+        mensaje = "Archivo registrado exitosamente";
+    else
+        mensaje = "Archivo subido, pero no se guardó el registro";
+}
     private void LimpiarFormulario()
     {
         archivoActual = new Archivo { Fecha = DateTime.Now };
