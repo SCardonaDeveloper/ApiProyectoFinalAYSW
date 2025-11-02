@@ -5,7 +5,7 @@
 using FrontendBlazorApi.Components;          // Importa el espacio de nombres donde está App.razor
 using Microsoft.AspNetCore.Components;       // Librerías base de Blazor
 using Microsoft.AspNetCore.Components.Web;   // Funcionalidades adicionales de renderizado
-using FrontendBlazorApi.Apis;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
