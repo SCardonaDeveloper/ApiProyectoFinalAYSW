@@ -904,6 +904,9 @@ BEGIN
     END;
 END;
 GO
+-- ================================================
+-- PROCEDIMIENTO: eliminar_proyecto_completo
+-- ================================================
 CREATE OR ALTER PROCEDURE eliminar_proyecto_completo
     @IdProyecto INT
 AS
@@ -912,6 +915,10 @@ BEGIN
     DELETE FROM Proyecto WHERE Id = @IdProyecto;
 END;
 GO
+
+-- ================================================
+-- PROCEDIMIENTO: actualizar_producto_con_entregables
+-- ================================================
 CREATE OR ALTER PROCEDURE actualizar_producto_con_entregables
     @IdProducto INT,
     @Entregables NVARCHAR(MAX) = NULL  
@@ -932,15 +939,22 @@ BEGIN
     END;
 END;
 GO
+
+-- ================================================
+-- PROCEDIMIENTO: eliminar_producto_completo
+-- ================================================
 CREATE OR ALTER PROCEDURE eliminar_producto_completo
     @IdProducto INT
 AS
 BEGIN
     SET NOCOUNT ON;
-
     DELETE FROM Producto WHERE Id = @IdProducto;
 END;
 GO
+
+-- ================================================
+-- PROCEDIMIENTO: actualizar_entregable_completo
+-- ================================================
 CREATE OR ALTER PROCEDURE actualizar_entregable_completo
     @IdEntregable INT,
     @Codigo NVARCHAR(50),
@@ -948,14 +962,20 @@ CREATE OR ALTER PROCEDURE actualizar_entregable_completo
     @Descripcion NVARCHAR(MAX),
     @FechaInicio DATE,
     @FechaFinPrevista DATE,
-    @FechaModificacion = GETDATE(),
-    @FechaFinalizacion DATE,
+    @FechaModificacion DATE = NULL,
+    @FechaFinalizacion DATE = NULL,
     @Actividades NVARCHAR(MAX) = NULL,  
     @Responsables NVARCHAR(MAX) = NULL,
     @Archivos NVARCHAR(MAX) = NULL     
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    -- Si no se envía fecha de modificación, usar la actual
+    IF @FechaModificacion IS NULL
+        SET @FechaModificacion = GETDATE();
+
+    -- 1️⃣ Actualizar datos principales del entregable
     UPDATE Entregable
     SET Codigo = @Codigo,
         Titulo = @Titulo,
@@ -965,6 +985,8 @@ BEGIN
         FechaModificacion = @FechaModificacion,
         FechaFinalizacion = @FechaFinalizacion
     WHERE Id = @IdEntregable;
+
+    -- 2️⃣ Reemplazar actividades
     DELETE FROM Actividad WHERE IdEntregable = @IdEntregable;
 
     IF @Actividades IS NOT NULL
@@ -982,6 +1004,8 @@ BEGIN
             TRY_CONVERT(INT, JSON_VALUE(a.value, '$.PorcentajeAvance'))
         FROM OPENJSON(@Actividades) AS a;
     END;
+
+    -- 3️⃣ Reemplazar responsables
     DELETE FROM Responsable_Entregable WHERE IdEntregable = @IdEntregable;
 
     IF @Responsables IS NOT NULL
@@ -993,6 +1017,8 @@ BEGIN
             TRY_CONVERT(DATE, JSON_VALUE(r.value, '$.FechaAsociacion'))
         FROM OPENJSON(@Responsables) AS r;
     END;
+
+    -- 4️⃣ Reemplazar archivos
     DELETE FROM Archivo_Entregable WHERE IdEntregable = @IdEntregable;
 
     IF @Archivos IS NOT NULL
@@ -1002,10 +1028,13 @@ BEGIN
             TRY_CONVERT(INT, JSON_VALUE(f.value, '$.IdArchivo')),
             @IdEntregable
         FROM OPENJSON(@Archivos) AS f;
-        SELECT @IdEntregable AS IdEntregable;
     END;
+
+    -- Retornar el Id actualizado
+    SELECT @IdEntregable AS IdEntregable;
 END;
 GO
+
 CREATE OR ALTER PROCEDURE eliminar_entregable_completo
     @IdEntregable INT
 AS
