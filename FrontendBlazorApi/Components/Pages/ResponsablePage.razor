@@ -10,8 +10,6 @@
 
 <h3 class="mb-3">Gestión de Responsables</h3>
 
-<!-- REEMPLAZA estos componentes en tu formulario -->
-
 <div class="col-md-3">
     <label class="form-label fw-bold">Tipo Responsable *</label>
     <select @bind="responsableActual.IdTipoResponsable" class="form-control @(mostrarErrorTipo ? "is-invalid" : "")">
@@ -416,13 +414,14 @@ else
         try
         {
             var cliente = HttpClientFactory.CreateClient("ApiBack");
-
+            var actividadesJson = JsonSerializer.Serialize(responsableActual);
             var parametros = new Dictionary<string, object?>
             {
                 ["nombreSP"] = "crear_responsable",
                 ["IdTipoResponsable"] = responsableActual.IdTipoResponsable,
                 ["IdUsuario"] = responsableActual.IdUsuario,
-                ["Nombre"] = responsableActual.Nombre
+                ["Nombre"] = responsableActual.Nombre,
+                ["actividadesJson"] = actividadesJson
             };
 
             var respuesta = await cliente.PostAsJsonAsync(urlProcedimientos, parametros);
@@ -447,8 +446,6 @@ else
             mensaje = $"Error al crear responsable: {ex.Message}";
             claseAviso = "alert alert-danger";
         }
-        
-        StateHasChanged();
     }
 
     // Los demás métodos se mantienen igual...
