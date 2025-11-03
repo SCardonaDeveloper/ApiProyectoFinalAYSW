@@ -948,7 +948,7 @@ CREATE OR ALTER PROCEDURE actualizar_entregable_completo
     @Descripcion NVARCHAR(MAX),
     @FechaInicio DATE,
     @FechaFinPrevista DATE,
-    @FechaModificacion = GETDATE(),
+    @FechaModificacion DATE = GETDATE(),
     @FechaFinalizacion DATE,
     @Actividades NVARCHAR(MAX) = NULL,  
     @Responsables NVARCHAR(MAX) = NULL,
