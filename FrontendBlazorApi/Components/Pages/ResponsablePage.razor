@@ -10,52 +10,44 @@
 
 <h3 class="mb-3">Gestión de Responsables</h3>
 
-<!-- Agregar sección de datos disponibles -->
-<div class="row mb-3">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h6>Tipos de Responsable Disponibles</h6>
-            </div>
-            <div class="card-body">
-                @if (tiposResponsable?.Any() == true)
-                {
-                    <ul class="list-group">
-                        @foreach (var tr in tiposResponsable)
-                        {
-                            <li class="list-group-item">ID: @tr.Id - @tr.Titulo</li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <p class="text-warning">No hay tipos de responsable registrados</p>
-                }
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h6>Usuarios Disponibles</h6>
-            </div>
-            <div class="card-body">
-                @if (usuarios?.Any() == true)
-                {
-                    <ul class="list-group">
-                        @foreach (var u in usuarios)
-                        {
-                            <li class="list-group-item">ID: @u.Id - @u.</li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <p class="text-warning">No hay usuarios registrados</p>
-                }
-            </div>
-        </div>
-    </div>
+<!-- REEMPLAZA estos componentes en tu formulario -->
+
+<div class="col-md-3">
+    <label class="form-label fw-bold">Tipo Responsable *</label>
+    <select @bind="responsableActual.IdTipoResponsable" class="form-control @(mostrarErrorTipo ? "is-invalid" : "")">
+        <option value="0">Seleccione un tipo</option>
+        @if (tiposResponsable?.Any() == true)
+        {
+            @foreach (var tr in tiposResponsable)
+            {
+                <option value="@tr.Id">@tr.Titulo</option>
+            }
+        }
+    </select>
+    @if (mostrarErrorTipo)
+    {
+        <div class="invalid-feedback">Debe seleccionar un tipo de responsable válido</div>
+    }
+    <small class="form-text text-muted">Valor seleccionado: @responsableActual.IdTipoResponsable</small>
+</div>
+
+<div class="col-md-3">
+    <label class="form-label fw-bold">Usuario *</label>
+    <select @bind="responsableActual.IdUsuario" class="form-control @(mostrarErrorUsuario ? "is-invalid" : "")">
+        <option value="0">Seleccione un usuario</option>
+        @if (usuarios?.Any() == true)
+        {
+            @foreach (var u in usuarios)
+            {
+                <option value="@u.Id">@u.Email</option>
+            }
+        }
+    </select>
+    @if (mostrarErrorUsuario)
+    {
+        <div class="invalid-feedback">Debe seleccionar un usuario válido</div>
+    }
+    <small class="form-text text-muted">Valor seleccionado: @responsableActual.IdUsuario</small>
 </div>
 
 <div class="mb-3 d-flex gap-2">
@@ -82,12 +74,14 @@
 
         <div class="col-md-3">
             <label class="form-label fw-bold">Tipo Responsable</label>
-            <!-- CAMBIO: Usar @bind en lugar de @bind-Value para InputSelect -->
-            <InputSelect @bind-Value="responsableActual.IdTipoResponsable" class="form-control">
-                <option value="0">Seleccione un tipo</option>
-                @foreach (var tr in tiposResponsable)
+            <InputSelect @bind-Value="responsableActual.IdTipoResponsable" class="form-control" TValue="int">
+                <option value="0" disabled>Seleccione un tipo</option>
+                @if (tiposResponsable != null && tiposResponsable.Any())
                 {
-                    <option value="@tr.Id">@tr.Id - @tr.Titulo</option>
+                    @foreach (var tr in tiposResponsable)
+                    {
+                        <option value="@tr.Id">@tr.Id - @tr.Titulo</option>
+                    }
                 }
             </InputSelect>
             <small class="form-text text-muted">Valor seleccionado: @responsableActual.IdTipoResponsable</small>
@@ -95,16 +89,19 @@
 
         <div class="col-md-3">
             <label class="form-label fw-bold">Usuario</label>
-            <!-- CAMBIO: Usar @bind en lugar de @bind-Value para InputSelect -->
-            <InputSelect @bind-Value="responsableActual.IdUsuario" class="form-control">
-                <option value="0">Seleccione un usuario</option>
-                @foreach (var u in usuarios)
+            <InputSelect @bind-Value="responsableActual.IdUsuario" class="form-control" TValue="int">
+                <option value="0" disabled>Seleccione un usuario</option>
+                @if (usuarios != null && usuarios.Any())
                 {
-                    <option value="@u.Id">@u.Id - @u.Email</option>
+                    @foreach (var u in usuarios)
+                    {
+                        <option value="@u.Id">@u.Id - @u.Email</option>
+                    }
                 }
             </InputSelect>
             <small class="form-text text-muted">Valor seleccionado: @responsableActual.IdUsuario</small>
         </div>
+
 
         <div class="col-md-4">
             <label class="form-label fw-bold">Nombre del Responsable</label>
@@ -181,10 +178,44 @@ else
 
     private async Task CargarDatosReferencia()
     {
-        await CargarTiposResponsable();
-        await CargarUsuarios();
+        mensaje = "Cargando datos de referencia...";
+        claseAviso = "alert alert-info";
+        StateHasChanged();
+        
+        // Forzar recreación de listas
+        tiposResponsable = new List<TipoResponsable>();
+        usuarios = new List<Usuario>();
+        
+        await Task.WhenAll(
+            CargarTiposResponsableAlternativo(),
+            CargarUsuarios()
+        );
+        
+        mensaje = $"Datos cargados: {tiposResponsable.Count} tipos, {usuarios.Count} usuarios";
+        claseAviso = "alert alert-success";
+        StateHasChanged();
     }
-
+    private async Task CargarTiposResponsableAlternativo()
+    {
+        try
+        {
+            var cliente = HttpClientFactory.CreateClient("ApiBack");
+            
+            // Consulta más simple para debug
+            var respuesta = await cliente.GetAsync("api/TipoResponsable");
+            
+            if (respuesta.IsSuccessStatusCode)
+            {
+                var tipos = await respuesta.Content.ReadFromJsonAsync<List<TipoResponsable>>();
+                tiposResponsable = tipos ?? new List<TipoResponsable>();
+                Console.WriteLine($"ALTERNATIVO: Tipos cargados: {tiposResponsable.Count}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR en método alternativo: {ex.Message}");
+        }
+    }
     private async Task CargarTiposResponsable()
     {
         try
@@ -196,10 +227,19 @@ else
                 ["parametros"] = new Dictionary<string, object?>()
             };
 
+            Console.WriteLine("DEBUG: Intentando cargar tipos de responsable...");
+            
             var respuesta = await cliente.PostAsJsonAsync(urlConsultas, parametrosConsulta);
+            Console.WriteLine($"DEBUG: Respuesta HTTP: {respuesta.StatusCode}");
+            
             if (respuesta.IsSuccessStatusCode)
             {
+                var contenido = await respuesta.Content.ReadAsStringAsync();
+                Console.WriteLine($"DEBUG: Contenido respuesta: {contenido}");
+                
                 var data = await respuesta.Content.ReadFromJsonAsync<RespuestaConsulta>();
+                Console.WriteLine($"DEBUG: Resultados obtenidos: {data?.Resultados?.Count ?? 0}");
+                
                 tiposResponsable = data?.Resultados?.Select(d => new TipoResponsable
                 {
                     Id = ObtenerInt(d, "Id"),
@@ -207,17 +247,28 @@ else
                     Descripcion = ObtenerString(d, "Descripcion")
                 }).ToList() ?? new();
                 
-                // DEBUG: Ver qué datos se cargaron
-                Console.WriteLine($"Tipos de responsable cargados: {tiposResponsable.Count}");
+                // DEBUG más detallado
+                Console.WriteLine($"DEBUG: Tipos de responsable cargados: {tiposResponsable.Count}");
                 foreach (var tr in tiposResponsable)
                 {
-                    Console.WriteLine($"ID: {tr.Id}, Titulo: {tr.Titulo}");
+                    Console.WriteLine($"ID: {tr.Id}, Titulo: {tr.Titulo}, Desc: {tr.Descripcion}");
                 }
+                
+                StateHasChanged(); // Forzar actualización
+            }
+            else
+            {
+                Console.WriteLine($"ERROR: No se pudieron cargar tipos de responsable. Status: {respuesta.StatusCode}");
+                mensaje = $"Error al cargar tipos de responsable: {respuesta.StatusCode}";
+                claseAviso = "alert alert-danger";
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error al cargar tipos de responsable: {ex.Message}");
+            Console.WriteLine($"EXCEPCIÓN al cargar tipos de responsable: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            mensaje = $"Error al cargar tipos de responsable: {ex.Message}";
+            claseAviso = "alert alert-danger";
         }
     }
 
@@ -294,37 +345,49 @@ else
         }
     }
 
+    private bool mostrarErrorTipo = false;
+    private bool mostrarErrorUsuario = false;
+
     private async Task GuardarSegunEstado()
     {
-        Console.WriteLine($"DEBUG - Tipo seleccionado: {responsableActual.IdTipoResponsable}");
-        Console.WriteLine($"DEBUG - Usuario seleccionado: {responsableActual.IdUsuario}");
-        Console.WriteLine($"DEBUG - Nombre: {responsableActual.Nombre}");
+        // Resetear estados de error
+        mostrarErrorTipo = false;
+        mostrarErrorUsuario = false;
+        
+        Console.WriteLine($"DEBUG - Validando: Tipo={responsableActual.IdTipoResponsable}, Usuario={responsableActual.IdUsuario}, Nombre={responsableActual.Nombre}");
 
-        // Validaciones antes de guardar
+        // Validaciones
+        bool esValido = true;
+        
         if (responsableActual.IdTipoResponsable <= 0)
         {
-            mensaje = "Debe seleccionar un tipo de responsable válido.";
-            claseAviso = "alert alert-warning";
-            StateHasChanged();
-            return;
+            mostrarErrorTipo = true;
+            esValido = false;
+            Console.WriteLine("ERROR: Tipo de responsable no seleccionado");
         }
 
         if (responsableActual.IdUsuario <= 0)
         {
-            mensaje = "Debe seleccionar un usuario válido.";
-            claseAviso = "alert alert-warning";
-            StateHasChanged();
-            return;
+            mostrarErrorUsuario = true;
+            esValido = false;
+            Console.WriteLine("ERROR: Usuario no seleccionado");
         }
 
         if (string.IsNullOrWhiteSpace(responsableActual.Nombre))
         {
-            mensaje = "El nombre del responsable es requerido.";
+            esValido = false;
+            Console.WriteLine("ERROR: Nombre vacío");
+        }
+
+        if (!esValido)
+        {
+            mensaje = "Por favor, complete todos los campos requeridos correctamente.";
             claseAviso = "alert alert-warning";
             StateHasChanged();
             return;
         }
 
+        // Si pasa validaciones, guardar
         if (responsableActual.Id <= 0)
         {
             await CrearResponsable();
@@ -334,7 +397,6 @@ else
             await ActualizarResponsable();
         }
     }
-
     public class TipoResponsable
     {
         public int Id { get; set; }
@@ -364,6 +426,9 @@ else
             };
 
             var respuesta = await cliente.PostAsJsonAsync(urlProcedimientos, parametros);
+            var detalle = await respuesta.Content.ReadAsStringAsync();
+            Console.WriteLine($"DEBUG - Respuesta crear_responsable: {detalle}");
+
             if (respuesta.IsSuccessStatusCode)
             {
                 mensaje = "Responsable creado correctamente.";
@@ -373,7 +438,6 @@ else
             }
             else
             {
-                var detalle = await respuesta.Content.ReadAsStringAsync();
                 mensaje = $"Error al crear: {detalle}";
                 claseAviso = "alert alert-danger";
             }
@@ -479,10 +543,20 @@ else
 
     private void LimpiarFormulario()
     {
-        responsableActual = new Responsables();
+        responsableActual = new Responsables
+        {
+            Id = 0,
+            IdTipoResponsable = 0,  // Asegurar que empiece en 0
+            IdUsuario = 0,          // Asegurar que empiece en 0  
+            Nombre = string.Empty
+        };
         textoBotonGuardar = "Crear";
         existeResponsable = false;
         mensaje = "";
+        mostrarErrorTipo = false;
+        mostrarErrorUsuario = false;
+        
+        Console.WriteLine("DEBUG - Formulario limpiado");
         StateHasChanged();
     }
 
