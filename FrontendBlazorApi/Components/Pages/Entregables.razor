@@ -782,6 +782,7 @@ private async Task VerDetalleEntregable(Entregable e)
                     a.Descripcion, 
                     a.FechaInicio, 
                     a.FechaFinPrevista,
+                    a.FechaModificacion,
                     a.FechaFinalizacion, 
                     a.Prioridad,
                     a.PorcentajeAvance
@@ -807,15 +808,16 @@ private async Task VerDetalleEntregable(Entregable e)
             var parametros = new Dictionary<string, object?>
             {
                 ["nombreSP"] = "actualizar_entregable_completo",
-                ["p_codigo"] = entregableActual.Codigo,
-                ["p_titulo"] = entregableActual.Titulo,
-                ["p_descripcion"] = entregableActual.Descripcion,
-                ["p_fechainicio"] = entregableActual.FechaInicio.ToString("yyyy-MM-dd"),
-                ["p_fechafinprevista"] = entregableActual.FechaFinPrevista.ToString("yyyy-MM-dd"),
-                ["p_fechamodificacion"] = DateTime.Now.ToString("yyyy-MM-dd"),
-                ["p_fechafinalizacion"] = entregableActual.FechaFinalizacion?.ToString("yyyy-MM-dd"),
-                ["p_actividades"] = detallesJson,
-                ["p_archivos"] = archivosJson
+                ["IdEntregable"] = entregableActual.Id,
+                ["Codigo"] = entregableActual.Codigo,
+                ["Titulo"] = entregableActual.Titulo,
+                ["Descripcion"] = entregableActual.Descripcion,
+                ["FechaInicio"] = entregableActual.FechaInicio.ToString("yyyy-MM-dd"),
+                ["FechaFinPrevista"] = entregableActual.FechaFinPrevista.ToString("yyyy-MM-dd"),
+                ["FechaModificacion"] = DateTime.Now.ToString("yyyy-MM-dd"),
+                ["FechaFinalizacion"] = entregableActual.FechaFinalizacion?.ToString("yyyy-MM-dd"),
+                ["Actividades"] = detallesJson,
+                ["Archivos"] = archivosJson
             };
             var respuesta = await cliente.PutAsJsonAsync(urlProcedimientos, parametros);
 
