@@ -29,6 +29,8 @@ html, body {
     border-radius: 8px;
 }
 
+
+
 /* ======== Panel lateral ======== */
 .sidebar-custom {
     background-color: var(--color-secondary);
@@ -57,6 +59,7 @@ html, body {
 .btn-primary:hover {
     background-color: var(--color-primary);
 }
+
 
 /* ======== Tablas ======== */
 .table thead {

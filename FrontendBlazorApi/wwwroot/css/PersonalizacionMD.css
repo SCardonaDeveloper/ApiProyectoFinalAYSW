@@ -1,0 +1,142 @@
+:root {
+  --color-1: #164773;
+  --color-2: #0B2B40;
+  --color-3: #1E5959;
+  --color-4: #3B8C6E;
+  --color-5: #89D99D;
+
+  --color-bg: #f7f9fb;
+  --color-text: #102030;
+  --radius: 0.65rem;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: "Segoe UI", Roboto, sans-serif;
+}
+
+/* Encabezado de página */
+h3, h4 {
+  color: var(--color-2);
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+/* Cards */
+.card {
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  background-color: var(--color-1) !important;
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+}
+
+.card-header h4 {
+  color: white;
+  font-weight: 600;
+}
+
+/* Botones personalizados */
+.btn {
+  border-radius: var(--radius);
+  font-weight: 500;
+  transition: all 0.25s ease-in-out;
+}
+
+.btn-outline-primary {
+  color: var(--color-1);
+  border-color: var(--color-1);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--color-1) !important;
+  color: white;
+}
+
+.btn-outline-dark {
+  color: var(--color-3);
+  border-color: var(--color-3);
+}
+
+.btn-outline-dark:hover {
+  background-color: var(--color-3);
+  color: white;
+}
+
+.btn-primary {
+  background-color: var(--color-4);
+  border-color: var(--color-1);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-5);
+}
+
+.btn-danger {
+  background-color: #b23a48;
+  border: none;
+}
+
+.btn-danger:hover {
+  background-color: #922e3a;
+}
+
+/* Tabla */
+.table thead {
+  background-color: var(--color-1);
+  color: white;
+}
+
+.table tbody tr:hover {
+  background-color: var(--color-5);
+  color: var(--color-2);
+}
+
+/* Alertas */
+.alert {
+  border-radius: var(--radius);
+  border: none;
+}
+
+.alert-info {
+  background-color: #247ac6;
+  color: white;
+}
+
+.alert-success {
+  background-color: var(--color-5);
+  color: black;
+}
+
+.alert-danger {
+  background-color: #b23a48;
+  color: white;
+}
+
+/* Inputs */
+.form-control,
+.form-select {
+  border-radius: var(--radius);
+  border: 1px solid var(--color-3);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--color-4);
+  box-shadow: 0 0 0 0.15rem rgba(59, 140, 110, 0.25);
+}
+
+/* Spinner */
+.spinner-border {
+  color: var(--color-4);
+}
+
+/* Animaciones suaves */
+button, .btn, .form-control, .form-select {
+  transition: all 0.2s ease;
+}
