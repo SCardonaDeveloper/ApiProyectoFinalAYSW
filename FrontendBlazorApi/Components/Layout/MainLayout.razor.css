@@ -3,12 +3,12 @@
     flex-direction: row;
     height: 100vh;
 }
-main {
-    flex: 1;
-    overflow-y: auto;
-    background-color: #f8fafc;
-    padding: 1.5rem;
+.main {
+    margin-left: 270px; /* mismo ancho que el sidebar */
+    padding: 20px;
+    background-color: #F8F9FA;
 }
+
 
 .sidebar {
     background: none;

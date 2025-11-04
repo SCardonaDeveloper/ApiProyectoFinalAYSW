@@ -5,155 +5,152 @@
 @using System.Text.Json.Serialization
 @inject IHttpClientFactory HttpClientFactory
 @inject IJSRuntime jsRuntime
+@rendermode InteractiveServer
 
 <PageTitle>Gestión de Responsables</PageTitle>
+<link href="css/PersonalizacionMD.css" rel="stylesheet" />
 
-<h3 class="mb-3">Gestión de Responsables</h3>
+<div class="container-fluid py-3">
+    <div class="d-flex align-items-center mb-4">
+        <i class="bi bi-person-badge fs-2 text-primary me-3"></i>
+        <h3 class="mb-0">Gestión de Responsables</h3>
+    </div>
 
-<div class="col-md-3">
-    <label class="form-label fw-bold">Tipo Responsable *</label>
-    <select @bind="responsableActual.IdTipoResponsable" class="form-control @(mostrarErrorTipo ? "is-invalid" : "")">
-        <option value="0">Seleccione un tipo</option>
-        @if (tiposResponsable?.Any() == true)
-        {
-            @foreach (var tr in tiposResponsable)
-            {
-                <option value="@tr.Id">@tr.Titulo</option>
-            }
-        }
-    </select>
-    @if (mostrarErrorTipo)
+    <div class="mb-3 d-flex gap-2 flex-wrap">
+        <button type="button" class="btn btn-outline-secondary btn-lg shadow-sm" @onclick="ProbarConexion" title="Probar conexión con la API">
+            <i class="bi bi-wifi"></i>
+        </button>
+        <button type="button" class="btn btn-outline-primary btn-lg shadow-sm" @onclick="CargarResponsables" title="Mostrar todos los responsables">
+            <i class="bi bi-list-ul"></i>
+        </button>
+        <button type="button" class="btn btn-outline-dark btn-lg shadow-sm" @onclick="LimpiarFormulario" title="Limpiar formulario">
+            <i class="bi bi-eraser"></i>
+        </button>
+        <button type="button" class="btn btn-outline-info btn-lg shadow-sm" @onclick="CargarDatosReferencia" title="Actualizar listas de referencia">
+            <i class="bi bi-arrow-repeat"></i>
+        </button>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(mensaje))
     {
-        <div class="invalid-feedback">Debe seleccionar un tipo de responsable válido</div>
+        <div class="@claseAviso shadow-sm" role="alert">
+            <i class="bi bi-info-circle me-2"></i>@mensaje
+        </div>
     }
-    <small class="form-text text-muted">Valor seleccionado: @responsableActual.IdTipoResponsable</small>
-</div>
 
-<div class="col-md-3">
-    <label class="form-label fw-bold">Usuario *</label>
-    <select @bind="responsableActual.IdUsuario" class="form-control @(mostrarErrorUsuario ? "is-invalid" : "")">
-        <option value="0">Seleccione un usuario</option>
-        @if (usuarios?.Any() == true)
-        {
-            @foreach (var u in usuarios)
-            {
-                <option value="@u.Id">@u.Email</option>
-            }
-        }
-    </select>
-    @if (mostrarErrorUsuario)
-    {
-        <div class="invalid-feedback">Debe seleccionar un usuario válido</div>
-    }
-    <small class="form-text text-muted">Valor seleccionado: @responsableActual.IdUsuario</small>
-</div>
-
-<div class="mb-3 d-flex gap-2">
-    <button class="btn btn-outline-primary" @onclick="CargarResponsables">Mostrar Todos</button>
-    <button class="btn btn-outline-dark" @onclick="LimpiarFormulario">Limpiar</button>
-    <button class="btn btn-outline-info" @onclick="CargarDatosReferencia">Actualizar Listas</button>
-</div>
-
-@if (!string.IsNullOrWhiteSpace(mensaje))
-{
-    <div class="@claseAviso">@mensaje</div>
-}
-
-<!-- CAMBIO IMPORTANTE: OnValidSubmit en lugar de OnSubmit -->
-<EditForm Model="responsableActual" OnValidSubmit="GuardarSegunEstado" FormName="formResponsable">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-
-    <div class="row g-3">
-        <div class="col-md-2">
-            <label class="form-label fw-bold">ID</label>
-            <InputNumber class="form-control" @bind-Value="responsableActual.Id" readonly />
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-person-lines-fill me-2"></i>Formulario de Responsable</h4>
         </div>
+        <div class="card-body">
+            <EditForm Model="responsableActual" OnValidSubmit="GuardarSegunEstado" FormName="ResponsableForm">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
 
-        <div class="col-md-3">
-            <label class="form-label fw-bold">Tipo Responsable</label>
-            <InputSelect @bind-Value="responsableActual.IdTipoResponsable" class="form-control" TValue="int">
-                <option value="0" disabled>Seleccione un tipo</option>
-                @if (tiposResponsable != null && tiposResponsable.Any())
-                {
-                    @foreach (var tr in tiposResponsable)
-                    {
-                        <option value="@tr.Id">@tr.Id - @tr.Titulo</option>
-                    }
-                }
-            </InputSelect>
-            <small class="form-text text-muted">Valor seleccionado: @responsableActual.IdTipoResponsable</small>
-        </div>
+                <div class="row g-3">
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold"><i class="bi bi-hash text-primary"></i> Id</label>
+                        <InputNumber class="form-control" @bind-Value="responsableActual.Id" readonly />
+                    </div>
 
-        <div class="col-md-3">
-            <label class="form-label fw-bold">Usuario</label>
-            <InputSelect @bind-Value="responsableActual.IdUsuario" class="form-control" TValue="int">
-                <option value="0" disabled>Seleccione un usuario</option>
-                @if (usuarios != null && usuarios.Any())
-                {
-                    @foreach (var u in usuarios)
-                    {
-                        <option value="@u.Id">@u.Id - @u.Email</option>
-                    }
-                }
-            </InputSelect>
-            <small class="form-text text-muted">Valor seleccionado: @responsableActual.IdUsuario</small>
-        </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold"><i class="bi bi-diagram-3 text-primary"></i> Tipo Responsable</label>
+                        <InputSelect class="form-select" @bind-Value="responsableActual.IdTipoResponsable">
+                            <option value="0">Seleccione un tipo</option>
+                            @foreach (var tr in tiposResponsable)
+                            {
+                                <option value="@tr.Id">@tr.Id - @tr.Titulo</option>
+                            }
+                        </InputSelect>
+                    </div>
 
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold"><i class="bi bi-person text-primary"></i> Usuario</label>
+                        <InputSelect class="form-select" @bind-Value="responsableActual.IdUsuario">
+                            <option value="0">Seleccione un usuario</option>
+                            @foreach (var u in usuarios)
+                            {
+                                <option value="@u.Id">@u.Id - @u.Email</option>
+                            }
+                        </InputSelect>
+                    </div>
 
-        <div class="col-md-4">
-            <label class="form-label fw-bold">Nombre del Responsable</label>
-            <InputText class="form-control" @bind-Value="responsableActual.Nombre" placeholder="Ingrese el nombre completo" />
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold"><i class="bi bi-card-text text-primary"></i> Nombre</label>
+                        <InputText class="form-control" @bind-Value="responsableActual.Nombre" placeholder="Ingrese el nombre completo" />
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                        <i class="bi bi-save"></i> @textoBotonGuardar
+                    </button>
+                    <button type="button" class="btn btn-danger btn-lg shadow-sm" @onclick="EliminarResponsableActual" disabled="@(!existeResponsable)">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                </div>
+            </EditForm>
         </div>
     </div>
 
-    <div class="mt-4 d-flex gap-2">
-        <button type="submit" class="btn btn-primary">@textoBotonGuardar</button>
-        <button type="button" class="btn btn-warning" @onclick="LimpiarFormulario">Limpiar</button>
-    </div>
-</EditForm>
-
-<hr />
-
-<h4 class="mt-4">Lista de Responsables</h4>
-
-@if (listaResponsables is null)
-{
-    <p><em>Cargando responsables...</em></p>
-}
-else if (!listaResponsables.Any())
-{
-    <p>No hay responsables registrados.</p>
-}
-else
-{
-    <table class="table table-striped table-hover">
-        <thead class="table-light">
-            <tr>
-                <th>ID</th>
-                <th>Tipo Responsable</th>
-                <th>Usuario</th>
-                <th>Nombre</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var r in listaResponsables)
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-table me-2"></i>Lista de Responsables</h4>
+        </div>
+        <div class="card-body">
+            @if (cargando)
             {
-                <tr>
-                    <td>@r.Id</td>
-                    <td>@r.IdTipoResponsable</td>
-                    <td>@r.IdUsuario</td>
-                    <td>@r.Nombre</td>
-                    <td>
-                        <button class="btn btn-sm btn-success" @onclick="@(() => CargarEnFormulario(r))">Editar</button>
-                        <button class="btn btn-sm btn-danger" @onclick="@(() => EliminarResponsable(r.Id))">Eliminar</button>
-                    </td>
-                </tr>
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-3"><em>Cargando responsables...</em></p>
+                </div>
             }
-        </tbody>
-    </table>
-}
+            else if (listaResponsables.Count == 0)
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>No hay responsables registrados.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-primary">
+                            <tr>
+                                <th><i class="bi bi-hash me-1"></i>ID</th>
+                                <th><i class="bi bi-diagram-3 me-1"></i>Tipo Responsable</th>
+                                <th><i class="bi bi-person me-1"></i>Usuario</th>
+                                <th><i class="bi bi-card-text me-1"></i>Nombre</th>
+                                <th><i class="bi bi-pencil-square me-1"></i>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in listaResponsables)
+                            {
+                                <tr>
+                                    <td class="fw-bold">@r.Id</td>
+                                    <td>@r.IdTipoResponsable</td>
+                                    <td>@r.IdUsuario</td>
+                                    <td>@r.Nombre</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary shadow-sm" @onclick="@(() => CargarEnFormulario(r))">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger shadow-sm" @onclick="@(() => EliminarResponsable(r.Id))">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
 
 @code {
     private List<Responsables> listaResponsables = new();
@@ -164,6 +161,7 @@ else
     private string textoBotonGuardar = "Crear";
     private string mensaje = "";
     private string claseAviso = "alert alert-info";
+    private bool cargando = false;
 
     private const string urlConsultas = "api/consultas/ejecutarconsultaparametrizada";
     private const string urlProcedimientos = "api/procedimientos/ejecutarsp";
@@ -174,100 +172,49 @@ else
         await CargarResponsables();
     }
 
-    private async Task CargarDatosReferencia()
-    {
-        mensaje = "Cargando datos de referencia...";
-        claseAviso = "alert alert-info";
-        StateHasChanged();
-        
-        // Forzar recreación de listas
-        tiposResponsable = new List<TipoResponsable>();
-        usuarios = new List<Usuario>();
-        
-        await Task.WhenAll(
-            CargarTiposResponsableAlternativo(),
-            CargarUsuarios()
-        );
-        
-        mensaje = $"Datos cargados: {tiposResponsable.Count} tipos, {usuarios.Count} usuarios";
-        claseAviso = "alert alert-success";
-        StateHasChanged();
-    }
-    private async Task CargarTiposResponsableAlternativo()
+    private async Task ProbarConexion()
     {
         try
         {
             var cliente = HttpClientFactory.CreateClient("ApiBack");
-            
-            // Consulta más simple para debug
-            var respuesta = await cliente.GetAsync("api/TipoResponsable");
-            
-            if (respuesta.IsSuccessStatusCode)
-            {
-                var tipos = await respuesta.Content.ReadFromJsonAsync<List<TipoResponsable>>();
-                tiposResponsable = tipos ?? new List<TipoResponsable>();
-                Console.WriteLine($"ALTERNATIVO: Tipos cargados: {tiposResponsable.Count}");
-            }
+            var respuesta = await cliente.GetAsync("api/Responsable");
+            mensaje = respuesta.IsSuccessStatusCode
+                ? "Conexión con la API verificada."
+                : $"Error de conexión: {(int)respuesta.StatusCode}";
+            claseAviso = respuesta.IsSuccessStatusCode ? "alert alert-success" : "alert alert-warning";
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"ERROR en método alternativo: {ex.Message}");
+            mensaje = $"Error de conexión: {ex.Message}";
+            claseAviso = "alert alert-danger";
         }
     }
+
+    private async Task CargarDatosReferencia()
+    {
+        await Task.WhenAll(CargarTiposResponsable(), CargarUsuarios());
+    }
+
     private async Task CargarTiposResponsable()
     {
         try
         {
             var cliente = HttpClientFactory.CreateClient("ApiBack");
-            var parametrosConsulta = new Dictionary<string, object?>
+            var parametros = new Dictionary<string, object?>
             {
                 ["consulta"] = "SELECT * FROM TipoResponsable ORDER BY Id",
                 ["parametros"] = new Dictionary<string, object?>()
             };
 
-            Console.WriteLine("DEBUG: Intentando cargar tipos de responsable...");
-            
-            var respuesta = await cliente.PostAsJsonAsync(urlConsultas, parametrosConsulta);
-            Console.WriteLine($"DEBUG: Respuesta HTTP: {respuesta.StatusCode}");
-            
-            if (respuesta.IsSuccessStatusCode)
+            var respuesta = await cliente.PostAsJsonAsync(urlConsultas, parametros);
+            var data = await respuesta.Content.ReadFromJsonAsync<RespuestaConsulta>();
+            tiposResponsable = data?.Resultados?.Select(d => new TipoResponsable
             {
-                var contenido = await respuesta.Content.ReadAsStringAsync();
-                Console.WriteLine($"DEBUG: Contenido respuesta: {contenido}");
-                
-                var data = await respuesta.Content.ReadFromJsonAsync<RespuestaConsulta>();
-                Console.WriteLine($"DEBUG: Resultados obtenidos: {data?.Resultados?.Count ?? 0}");
-                
-                tiposResponsable = data?.Resultados?.Select(d => new TipoResponsable
-                {
-                    Id = ObtenerInt(d, "Id"),
-                    Titulo = ObtenerString(d, "Titulo"),
-                    Descripcion = ObtenerString(d, "Descripcion")
-                }).ToList() ?? new();
-                
-                // DEBUG más detallado
-                Console.WriteLine($"DEBUG: Tipos de responsable cargados: {tiposResponsable.Count}");
-                foreach (var tr in tiposResponsable)
-                {
-                    Console.WriteLine($"ID: {tr.Id}, Titulo: {tr.Titulo}, Desc: {tr.Descripcion}");
-                }
-                
-                StateHasChanged(); // Forzar actualización
-            }
-            else
-            {
-                Console.WriteLine($"ERROR: No se pudieron cargar tipos de responsable. Status: {respuesta.StatusCode}");
-                mensaje = $"Error al cargar tipos de responsable: {respuesta.StatusCode}";
-                claseAviso = "alert alert-danger";
-            }
+                Id = ObtenerInt(d, "Id"),
+                Titulo = ObtenerString(d, "Titulo")
+            }).ToList() ?? new();
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"EXCEPCIÓN al cargar tipos de responsable: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
-            mensaje = $"Error al cargar tipos de responsable: {ex.Message}";
-            claseAviso = "alert alert-danger";
-        }
+        catch { }
     }
 
     private async Task CargarUsuarios()
@@ -275,138 +222,84 @@ else
         try
         {
             var cliente = HttpClientFactory.CreateClient("ApiBack");
-            var parametrosConsulta = new Dictionary<string, object?>
+            var parametros = new Dictionary<string, object?>
             {
                 ["consulta"] = "SELECT * FROM Usuario ORDER BY Id",
                 ["parametros"] = new Dictionary<string, object?>()
             };
 
-            var respuesta = await cliente.PostAsJsonAsync(urlConsultas, parametrosConsulta);
-            if (respuesta.IsSuccessStatusCode)
+            var respuesta = await cliente.PostAsJsonAsync(urlConsultas, parametros);
+            var data = await respuesta.Content.ReadFromJsonAsync<RespuestaConsulta>();
+            usuarios = data?.Resultados?.Select(d => new Usuario
             {
-                var data = await respuesta.Content.ReadFromJsonAsync<RespuestaConsulta>();
-                usuarios = data?.Resultados?.Select(d => new Usuario
-                {
-                    Id = ObtenerInt(d, "Id"),
-                    Email = ObtenerString(d, "Email")
-                }).ToList() ?? new();
-                
-                // DEBUG: Ver qué datos se cargaron
-                Console.WriteLine($"Usuarios cargados: {usuarios.Count}");
-                foreach (var u in usuarios)
-                {
-                    Console.WriteLine($"ID: {u.Id}, Email: {u.Email}");
-                }
-            }
+                Id = ObtenerInt(d, "Id"),
+                Email = ObtenerString(d, "Email")
+            }).ToList() ?? new();
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error al cargar usuarios: {ex.Message}");
-        }
+        catch { }
     }
 
     private async Task CargarResponsables()
     {
+        cargando = true;
         try
         {
             var cliente = HttpClientFactory.CreateClient("ApiBack");
-            var parametrosConsulta = new Dictionary<string, object?>
+            var parametros = new Dictionary<string, object?>
             {
                 ["consulta"] = "SELECT * FROM Responsable ORDER BY Id",
                 ["parametros"] = new Dictionary<string, object?>()
             };
 
-            var respuesta = await cliente.PostAsJsonAsync(urlConsultas, parametrosConsulta);
-            if (respuesta.IsSuccessStatusCode)
+            var respuesta = await cliente.PostAsJsonAsync(urlConsultas, parametros);
+            var data = await respuesta.Content.ReadFromJsonAsync<RespuestaConsulta>();
+            listaResponsables = data?.Resultados?.Select(d => new Responsables
             {
-                var data = await respuesta.Content.ReadFromJsonAsync<RespuestaConsulta>();
-                listaResponsables = data?.Resultados?.Select(d => new Responsables
-                {
-                    Id = ObtenerInt(d, "Id"),
-                    IdTipoResponsable = ObtenerInt(d, "IdTipoResponsable"),
-                    IdUsuario = ObtenerInt(d, "IdUsuario"),
-                    Nombre = ObtenerString(d, "Nombre")
-                }).ToList() ?? new();
-                mensaje = $"Cargado(s) {listaResponsables.Count} responsable(s) exitosamente.";
-                claseAviso = "alert alert-success";
-            }
-            else
-            {
-                mensaje = "Error al obtener responsables.";
-                claseAviso = "alert alert-danger";
-            }
+                Id = ObtenerInt(d, "Id"),
+                IdTipoResponsable = ObtenerInt(d, "IdTipoResponsable"),
+                IdUsuario = ObtenerInt(d, "IdUsuario"),
+                Nombre = ObtenerString(d, "Nombre")
+            }).ToList() ?? new();
+
+            mensaje = $"Se cargaron {listaResponsables.Count} responsable(s).";
+            claseAviso = "alert alert-success";
         }
         catch (Exception ex)
         {
             mensaje = $"Error al cargar responsables: {ex.Message}";
             claseAviso = "alert alert-danger";
         }
+        finally
+        {
+            cargando = false;
+        }
     }
-
-    private bool mostrarErrorTipo = false;
-    private bool mostrarErrorUsuario = false;
 
     private async Task GuardarSegunEstado()
     {
-        // Resetear estados de error
-        mostrarErrorTipo = false;
-        mostrarErrorUsuario = false;
-        
-        Console.WriteLine($"DEBUG - Validando: Tipo={responsableActual.IdTipoResponsable}, Usuario={responsableActual.IdUsuario}, Nombre={responsableActual.Nombre}");
-
-        // Validaciones
-        bool esValido = true;
-        
         if (responsableActual.IdTipoResponsable <= 0)
         {
-            mostrarErrorTipo = true;
-            esValido = false;
-            Console.WriteLine("ERROR: Tipo de responsable no seleccionado");
+            mensaje = "Debe seleccionar un tipo de responsable válido.";
+            claseAviso = "alert alert-warning";
+            return;
         }
-
         if (responsableActual.IdUsuario <= 0)
         {
-            mostrarErrorUsuario = true;
-            esValido = false;
-            Console.WriteLine("ERROR: Usuario no seleccionado");
+            mensaje = "Debe seleccionar un usuario válido.";
+            claseAviso = "alert alert-warning";
+            return;
         }
-
         if (string.IsNullOrWhiteSpace(responsableActual.Nombre))
         {
-            esValido = false;
-            Console.WriteLine("ERROR: Nombre vacío");
-        }
-
-        if (!esValido)
-        {
-            mensaje = "Por favor, complete todos los campos requeridos correctamente.";
+            mensaje = "Debe indicar un nombre.";
             claseAviso = "alert alert-warning";
-            StateHasChanged();
             return;
         }
 
-        // Si pasa validaciones, guardar
-        if (responsableActual.Id <= 0)
-        {
-            await CrearResponsable();
-        }
-        else
-        {
+        if (existeResponsable)
             await ActualizarResponsable();
-        }
-    }
-    public class TipoResponsable
-    {
-        public int Id { get; set; }
-        public string Titulo { get; set; } = string.Empty;
-        public string Descripcion { get; set; } = string.Empty;
-    }
-
-    public class Usuario
-    {
-        public int Id { get; set; }
-        public string Nombre { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
+        else
+            await CrearResponsable();
     }
 
     private async Task CrearResponsable()
@@ -414,20 +307,15 @@ else
         try
         {
             var cliente = HttpClientFactory.CreateClient("ApiBack");
-            var actividadesJson = JsonSerializer.Serialize(responsableActual);
             var parametros = new Dictionary<string, object?>
             {
                 ["nombreSP"] = "crear_responsable",
                 ["IdTipoResponsable"] = responsableActual.IdTipoResponsable,
                 ["IdUsuario"] = responsableActual.IdUsuario,
-                ["Nombre"] = responsableActual.Nombre,
-                ["actividadesJson"] = actividadesJson
+                ["Nombre"] = responsableActual.Nombre
             };
 
             var respuesta = await cliente.PostAsJsonAsync(urlProcedimientos, parametros);
-            var detalle = await respuesta.Content.ReadAsStringAsync();
-            Console.WriteLine($"DEBUG - Respuesta crear_responsable: {detalle}");
-
             if (respuesta.IsSuccessStatusCode)
             {
                 mensaje = "Responsable creado correctamente.";
@@ -437,24 +325,22 @@ else
             }
             else
             {
-                mensaje = $"Error al crear: {detalle}";
+                mensaje = "Error al crear responsable.";
                 claseAviso = "alert alert-danger";
             }
         }
         catch (Exception ex)
         {
-            mensaje = $"Error al crear responsable: {ex.Message}";
+            mensaje = $"Error: {ex.Message}";
             claseAviso = "alert alert-danger";
         }
     }
 
-    // Los demás métodos se mantienen igual...
     private async Task ActualizarResponsable()
     {
         try
         {
             var cliente = HttpClientFactory.CreateClient("ApiBack");
-
             var parametros = new Dictionary<string, object?>
             {
                 ["nombreSP"] = "actualizar_responsable",
@@ -483,19 +369,27 @@ else
             mensaje = $"Error: {ex.Message}";
             claseAviso = "alert alert-danger";
         }
-        
-        StateHasChanged();
+    }
+
+    private async Task EliminarResponsableActual()
+    {
+        if (!existeResponsable || responsableActual.Id <= 0)
+        {
+            mensaje = "Debe seleccionar un responsable para eliminar.";
+            claseAviso = "alert alert-warning";
+            return;
+        }
+        await EliminarResponsable(responsableActual.Id);
     }
 
     private async Task EliminarResponsable(int id)
     {
-        bool confirmar = await jsRuntime.InvokeAsync<bool>("confirm", $"¿Seguro que deseas eliminar el responsable con ID {id}?");
+        bool confirmar = await jsRuntime.InvokeAsync<bool>("confirm", $"¿Eliminar responsable #{id}?");
         if (!confirmar) return;
 
         try
         {
             var cliente = HttpClientFactory.CreateClient("ApiBack");
-
             var parametros = new Dictionary<string, object?>
             {
                 ["nombreSP"] = "eliminar_responsable",
@@ -508,6 +402,7 @@ else
                 mensaje = "Responsable eliminado correctamente.";
                 claseAviso = "alert alert-success";
                 await CargarResponsables();
+                LimpiarFormulario();
             }
             else
             {
@@ -517,11 +412,9 @@ else
         }
         catch (Exception ex)
         {
-            mensaje = $"Error al eliminar: {ex.Message}";
+            mensaje = $"Error: {ex.Message}";
             claseAviso = "alert alert-danger";
         }
-        
-        StateHasChanged();
     }
 
     private void CargarEnFormulario(Responsables r)
@@ -535,37 +428,37 @@ else
         };
         textoBotonGuardar = "Actualizar";
         existeResponsable = true;
-        StateHasChanged();
     }
 
     private void LimpiarFormulario()
     {
-        responsableActual = new Responsables
-        {
-            Id = 0,
-            IdTipoResponsable = 0,  // Asegurar que empiece en 0
-            IdUsuario = 0,          // Asegurar que empiece en 0  
-            Nombre = string.Empty
-        };
+        responsableActual = new Responsables();
         textoBotonGuardar = "Crear";
         existeResponsable = false;
         mensaje = "";
-        mostrarErrorTipo = false;
-        mostrarErrorUsuario = false;
-        
-        Console.WriteLine("DEBUG - Formulario limpiado");
-        StateHasChanged();
+        claseAviso = "alert alert-info";
     }
 
-    private int ObtenerInt(Dictionary<string, object> d, string k) =>
-        d.TryGetValue(k, out var v) && v is JsonElement e && e.ValueKind == JsonValueKind.Number ? e.GetInt32() : Convert.ToInt32(v ?? 0);
+    private int ObtenerInt(Dictionary<string, object> d, string k)
+    {
+        if (!d.TryGetValue(k, out var v)) return 0;
+        if (v is JsonElement e && e.ValueKind == JsonValueKind.Number) return e.GetInt32();
+        return Convert.ToInt32(v ?? 0);
+    }
 
-    private string ObtenerString(Dictionary<string, object> d, string k) =>
-        d.TryGetValue(k, out var v) ? (v is JsonElement e && e.ValueKind == JsonValueKind.String ? e.GetString() ?? "" : v.ToString() ?? "") : "";
+    private string ObtenerString(Dictionary<string, object> d, string k)
+    {
+        if (!d.TryGetValue(k, out var v)) return "";
+        if (v is JsonElement e && e.ValueKind == JsonValueKind.String) return e.GetString() ?? "";
+        return v?.ToString() ?? "";
+    }
 
     private class RespuestaConsulta
     {
         [JsonPropertyName("Resultados")]
         public List<Dictionary<string, object>>? Resultados { get; set; }
     }
+
+    public class TipoResponsable { public int Id { get; set; } public string Titulo { get; set; } = ""; }
+    public class Usuario { public int Id { get; set; } public string Email { get; set; } = ""; }
 }
