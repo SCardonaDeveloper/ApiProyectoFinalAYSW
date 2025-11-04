@@ -6,6 +6,8 @@ using FrontendBlazorApi.Components;          // Importa el espacio de nombres do
 using Microsoft.AspNetCore.Components;       // Librerías base de Blazor
 using Microsoft.AspNetCore.Components.Web;   // Funcionalidades adicionales de renderizado
 
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 // -------------------------------
@@ -18,7 +20,9 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 
- builder.Services.AddHttpClient("ApiBack", cliente =>
+
+
+builder.Services.AddHttpClient("ApiBack", cliente =>
  {
      // URL base de la API que expone /api/producto
      cliente.BaseAddress = new Uri("http://localhost:5031/");
