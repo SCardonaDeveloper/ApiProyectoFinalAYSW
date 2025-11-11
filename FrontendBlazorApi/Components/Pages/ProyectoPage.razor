@@ -113,7 +113,7 @@
                     <option value="0">-- Seleccione --</option>
                     @foreach (var est in listaEstado)
                     {
-                        <option value="@est.Id">@est.Nombre</option>
+                        <option value="@est.Id">@est.Id</option>
                     }
                 </InputSelect>
             </div>
@@ -284,7 +284,7 @@ else
     private const string urlBaseApi = "api/Proyecto";
     private const string urlTiposProyecto = "api/TipoProyecto";
     private const string urlResponsables = "api/Responsable";
-    private const string urlEstadosProyecto = "api/EstadoProyecto";
+    private const string urlEstadosProyecto = "api/Estado_Proyecto";
 
     protected override async Task OnInitializedAsync() =>
         await CargarDatosIniciales();
