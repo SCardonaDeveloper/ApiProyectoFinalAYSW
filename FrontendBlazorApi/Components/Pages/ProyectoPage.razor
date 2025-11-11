@@ -110,12 +110,12 @@
             <div class="d-flex align-items-center mb-2">
                 <label class="form-label fw-bold"><i class="bi bi-file-earmark-text text-primary"> ID DEL ESTADO </i></label>
                 <InputSelect class="form-select mx-2" @bind-Value="estado.IdEstado">
-                    <option value="0">-- Seleccione --</option>
-                    @foreach (var est in listaEstado)
-                    {
-                        <option value="@est.Id">@est.Id</option>
-                    }
-                </InputSelect>
+                <option value="0">-- Seleccione --</option>
+                  @foreach (var est in listaEstado)
+                           {
+                <option value="@est.Id">@est.Nombre</option>
+                        }
+               </InputSelect>
             </div>
             <div class="col-md-1"><button type="button" class="btn btn-danger btn-sm w-100 shadow-sm" @onclick="() => EliminarEstadoProyecto(estado)" title="Quitar este estado"> <i class="bi bi-trash"></i></button></div>
         }
@@ -285,6 +285,7 @@ else
     private const string urlTiposProyecto = "api/TipoProyecto";
     private const string urlResponsables = "api/Responsable";
     private const string urlEstadosProyecto = "api/Estado_Proyecto";
+    private const string urlEstados = "api/Estado";
 
     protected override async Task OnInitializedAsync() =>
         await CargarDatosIniciales();
@@ -628,30 +629,22 @@ else
 
     }
 
-    private async Task AgregarEstado(){
-        try
-        {
-            var cliente = FabricaHttp.CreateClient("ApiBack");
-            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Dictionary<string, object>>>>(urlEstadosProyecto);
-            listaEstadosProyecto = respuesta?.Datos?.Select(d => new EstadoProyecto
-            {
-                IdProyecto = ObtenerInt(d, "IdProyecto"),
-                IdEstado = ObtenerInt(d, "IdEstado")
-            }).ToList() ?? new();
-        }
-        catch (Exception ex)
-        {
-            mensaje = $"Error al agregar estado: {ex.Message}";
-            claseAviso = "alert alert-danger";
-        }
-    }
+   private void AgregarEstado()
+{
+    // Solo agrega un nuevo estado vacío para que el usuario lo seleccione
+    listaEstadosProyecto.Add(new EstadoProyecto
+    {
+        IdProyecto = proyectoActual.Id,
+        IdEstado = 0
+    });
+}
 
     private async Task CargarEstados()
     {
         try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
-            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Dictionary<string, object>>>>(urlEstadosProyecto);
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Dictionary<string, object>>>>(urlEstados);
             listaEstado = respuesta?.Datos?.Select(d => new Estado
             {
                 Id = ObtenerInt(d, "Id"),
