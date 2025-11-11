@@ -99,6 +99,33 @@
         </div>
     </div>
 
+    <div>
+    <hr class="my-4" />
+    <h5 class="mb-3"> <i class= "bi bi-list-task text-primary me-2"></i> ESTADOS DEL PROYECTO </h5>
+
+    @if (listaEstadosProyecto is not null && listaEstadosProyecto.Count > 0)
+    {
+        foreach (var estado in listaEstadosProyecto)
+        {
+            <div class="d-flex align-items-center mb-2">
+                <label class="form-label fw-bold"><i class="bi bi-file-earmark-text text-primary"> ID DEL ESTADO </i></label>
+                <InputSelect class="form-select mx-2" @bind-Value="estado.IdEstado">
+                    <option value="0">-- Seleccione --</option>
+                    @foreach (var est in listaEstado)
+                    {
+                        <option value="@est.Id">@est.Nombre</option>
+                    }
+                </InputSelect>
+            </div>
+            <div class="col-md-1"><button type="button" class="btn btn-danger btn-sm w-100 shadow-sm" @onclick="() => EliminarEstadoProyecto(estado)" title="Quitar este estado"> <i class="bi bi-trash"></i></button></div>
+        }
+    }
+    else
+    {
+        <button type="button" class="btn btn-sm btn-outline-success mb-3" @onclick="AgregarEstado">Agregar Estado</button>
+    }
+    </div>
+
     <div class="mt-4 d-flex gap-2">
         <button type="submit" class="btn btn-primary">@textoBotonGuardar</button>
         <button type="button" class="btn btn-warning shadow-sm" @onclick="LimpiarFormulario">Limpiar</button>
@@ -203,6 +230,36 @@ else
                 </tbody>
             </table>
         }
+        <h6 class= "mt-4">ESTADOS</h6>
+        @if (listaEstadosProyecto is null)
+        {
+            <p><em>Cargando estados...</em></p>
+        }
+        else if (!listaEstadosProyecto.Any())
+        {
+            <p>No hay estados asociados.</p>
+        }
+        else
+        {
+            <table class="table table-sm table-bordered">
+                <thead>
+                    <tr>
+                        <th>ID Proyecto</th>
+                        <th>ID Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var estado in listaEstadosProyecto)
+                    {
+                        <tr>
+                            <td>@estado.IdProyecto</td>
+                            <td>@estado.IdEstado</td>
+                            <td><button class="btn btn-sm btn-outline-danger" @onclick="@(() => EliminarEstadoProyecto(estado))"></button></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
     </div>
 }
 
@@ -215,6 +272,8 @@ else
     private string textoBotonGuardar = "Crear";
     private List<TipoProyectoDTO> listaTiposProyecto = new();
     private List<ResponsableDTO> listaResponsables = new();
+    private List<EstadoProyecto> listaEstadosProyecto = new();
+    private List<Estado> listaEstado = new();
 
     private bool existeProyecto = false;
     private string mensaje = "";
@@ -225,12 +284,13 @@ else
     private const string urlBaseApi = "api/Proyecto";
     private const string urlTiposProyecto = "api/TipoProyecto";
     private const string urlResponsables = "api/Responsable";
+    private const string urlEstadosProyecto = "api/EstadoProyecto";
 
     protected override async Task OnInitializedAsync() =>
         await CargarDatosIniciales();
 
     private async Task CargarDatosIniciales() =>
-        await Task.WhenAll(CargarProyectos(), CargarTiposProyecto(), CargarResponsables());
+        await Task.WhenAll(CargarProyectos(), CargarTiposProyecto(), CargarResponsables(), CargarEstados());
 
     private async Task CargarProyectos()
     {
@@ -562,6 +622,49 @@ else
         }
     }
 
+    private async Task EliminarEstadoProyecto(EstadoProyecto estado){
+
+        listaEstadosProyecto.Remove(estado);
+
+    }
+
+    private async Task AgregarEstado(){
+        try
+        {
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Dictionary<string, object>>>>(urlEstadosProyecto);
+            listaEstadosProyecto = respuesta?.Datos?.Select(d => new EstadoProyecto
+            {
+                IdProyecto = ObtenerInt(d, "IdProyecto"),
+                IdEstado = ObtenerInt(d, "IdEstado")
+            }).ToList() ?? new();
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error al agregar estado: {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
+    private async Task CargarEstados()
+    {
+        try
+        {
+            var cliente = FabricaHttp.CreateClient("ApiBack");
+            var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Dictionary<string, object>>>>(urlEstadosProyecto);
+            listaEstado = respuesta?.Datos?.Select(d => new Estado
+            {
+                Id = ObtenerInt(d, "Id"),
+                Nombre = ObtenerString(d, "Nombre")
+            }).ToList() ?? new();
+        }
+        catch (Exception ex)
+        {
+            mensaje = $"Error al cargar estados: {ex.Message}";
+            claseAviso = "alert alert-danger";
+        }
+    }
+
     // ======= Métodos auxiliares =======
     private int ObtenerInt(Dictionary<string, object> d, string k) =>
         d.TryGetValue(k, out var v) && v is JsonElement e && e.ValueKind == JsonValueKind.Number ? e.GetInt32() : Convert.ToInt32(v ?? 0);
@@ -579,5 +682,16 @@ else
     {
         [JsonPropertyName("Resultados")]
         public List<Dictionary<string, object>>? Resultados { get; set; }
+    }
+
+    // Modelo de la tabla EstadoProyecto
+
+    private class EstadoProyecto {
+        public int IdProyecto { get; set; }
+        public int IdEstado { get; set; } 
+    }
+    private class Estado {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = "";
     }
 }
