@@ -510,12 +510,27 @@ else
                 mensaje = $"Error al crear proyecto: {respuesta.StatusCode} - {detalle}";
                 claseAviso = "alert alert-danger";
             }
+            if (respuesta.IsSuccessStatusCode)
+            {
+          // Supongamos que el SP devuelve el ID nuevo
+          var resultado = await respuesta.Content.ReadFromJsonAsync<Dictionary<string, object>>();
+          int nuevoIdProyecto = Convert.ToInt32(resultado?["IdProyecto"] ?? 0);
+ 
+         await GuardarEstadosProyecto(nuevoIdProyecto);
+ 
+         mensaje = "Proyecto y estados guardados correctamente.";
+         claseAviso = "alert alert-success";
+         await CargarProyectos();
+         LimpiarFormulario();
+        }
         }
         catch (Exception ex)
         {
             mensaje = $"Error al crear proyecto: {ex.Message}";
             claseAviso = "alert alert-danger";
         }
+        
+
     }
 
     private async Task ActualizarProyecto()
@@ -537,6 +552,7 @@ else
             mensaje = $"Error al actualizar: {ex.Message}";
             claseAviso = "alert alert-danger";
         }
+        await GuardarEstadosProyecto(proyectoActual.Id);
     }
     private async Task EliminarProyecto(int id)
     {
@@ -638,6 +654,36 @@ else
         IdEstado = 0
     });
 }
+private async Task GuardarEstadosProyecto(int idProyecto)
+{
+    if (listaEstadosProyecto == null || listaEstadosProyecto.Count == 0)
+        return;
+ 
+    try
+    {
+        var cliente = FabricaHttp.CreateClient("ApiBack");
+ 
+        foreach (var estado in listaEstadosProyecto)
+        {
+            if (estado.IdEstado <= 0) continue; // Evita registros vacíos
+ 
+            var parametros = new Dictionary<string, object?>
+            {
+                ["nombreSP"] = "insertar_estado_proyecto",
+                ["IdProyecto"] = idProyecto,
+                ["IdEstado"] = estado.IdEstado
+            };
+ 
+            await cliente.PostAsJsonAsync(urlProcedimientos, parametros);
+        }
+    }
+    catch (Exception ex)
+    {
+        mensaje = $"Error al guardar los estados: {ex.Message}";
+        claseAviso = "alert alert-danger";
+    }
+}
+
 
     private async Task CargarEstados()
     {
