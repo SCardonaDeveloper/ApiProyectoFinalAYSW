@@ -8,9 +8,9 @@
 
 using Microsoft.Extensions.Configuration;     // Permite leer appsettings.*.json
 using System;                                  // Para InvalidOperationException
-using ApiBack.Servicios.Abstracciones;   // Para IProveedorConexion
+using webapicsharp.Servicios.Abstracciones;   // Para IProveedorConexion
 
-namespace ApiBack.Servicios.Conexion
+namespace webapicsharp.Servicios.Conexion
 {
    /// <summary>
    /// Implementación concreta que lee "DatabaseProvider" y "ConnectionStrings" desde IConfiguration.
@@ -210,8 +210,8 @@ namespace ApiBack.Servicios.Conexion
 //
 // 6. PRÓXIMO PASO EN EL TUTORIAL:
 //    Después de crear este archivo, se puede descomentar en Program.cs:
-//    builder.Services.AddSingleton<ApiBack.Servicios.Abstracciones.IProveedorConexion,
-//                                  ApiBack.Servicios.Conexion.ProveedorConexion>();
+//    builder.Services.AddSingleton<webapicsharp.Servicios.Abstracciones.IProveedorConexion,
+//                                  webapicsharp.Servicios.Conexion.ProveedorConexion>();
 //
 // 7. ¿POR QUÉ AddSingleton Y NO AddScoped?
 //    - Singleton: Una instancia para toda la aplicación (se comparte entre requests)

@@ -9,7 +9,7 @@
 
 using System; // Para InvalidOperationException en documentación
 
-namespace ApiBack.Servicios.Abstracciones
+namespace webapicsharp.Servicios.Abstracciones
 {
     /// <summary>
     /// Contrato que define cómo obtener información de conexión a base de datos.
@@ -121,5 +121,5 @@ namespace ApiBack.Servicios.Abstracciones
 //
 // 5. RELACIÓN CON PROGRAM.CS:
 //    Después de crear esta interface y su implementación, se podrá descomentar:
-//    builder.Services.AddSingleton<ApiBack.Servicios.Abstracciones.IProveedorConexion,
-//                                  ApiBack.Servicios.Conexion.ProveedorConexion>();
+//    builder.Services.AddSingleton<webapicsharp.Servicios.Abstracciones.IProveedorConexion,
+//                                  webapicsharp.Servicios.Conexion.ProveedorConexion>();
