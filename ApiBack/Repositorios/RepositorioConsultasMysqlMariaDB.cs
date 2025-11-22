@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 // Archivo   : RepositorioConsultasMysqlMariaDB.cs
-// Ruta      : ApiBack/Repositorios/RepositorioConsultasMysqlMariaDB.cs
+// Ruta      : webapicsharp/Repositorios/RepositorioConsultasMysqlMariaDB.cs
 // Propósito : Implementar IRepositorioConsultas para MySQL/MariaDB.
 //             Expone consultas parametrizadas, validación de consulta, ejecución
 //             de procedimientos/funciones y obtención de metadatos (esquemas y
@@ -30,10 +30,10 @@ using MySqlConnector;
 // Requiere paquete: MySql.Data
 // using MySql.Data.MySqlClient;
 
-using ApiBack.Repositorios.Abstracciones;      // IRepositorioConsultas
-using ApiBack.Servicios.Abstracciones;         // IProveedorConexion
+using webapicsharp.Repositorios.Abstracciones;      // IRepositorioConsultas
+using webapicsharp.Servicios.Abstracciones;         // IProveedorConexion
 
-namespace ApiBack.Repositorios
+namespace webapicsharp.Repositorios
 {
     /// <summary>
     /// Implementación de IRepositorioConsultas para MySQL/MariaDB.

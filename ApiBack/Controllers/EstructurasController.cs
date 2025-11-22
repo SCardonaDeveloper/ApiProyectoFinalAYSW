@@ -5,9 +5,9 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using Microsoft.Extensions.Logging;
-using ApiBack.Repositorios.Abstracciones;
+using webapicsharp.Repositorios.Abstracciones;
 
-namespace ApiBack.Controllers
+namespace webapicsharp.Controllers
 {
     [Route("api/estructuras")]
     [ApiController]

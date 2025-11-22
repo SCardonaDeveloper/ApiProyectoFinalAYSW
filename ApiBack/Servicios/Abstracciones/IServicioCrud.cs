@@ -10,7 +10,7 @@
 using System.Collections.Generic;   // Para usar List<> y Dictionary<> genéricos
 using System.Threading.Tasks;       // Para programación asíncrona con async/await
 
-namespace ApiBack.Servicios.Abstracciones
+namespace webapicsharp.Servicios.Abstracciones
 {
     /// <summary>
     /// Interface que define el contrato para un servicio CRUD genérico.

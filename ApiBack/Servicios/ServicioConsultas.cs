@@ -24,10 +24,10 @@ using System.Data;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
-using ApiBack.Servicios.Abstracciones;
-using ApiBack.Repositorios.Abstracciones;
+using webapicsharp.Servicios.Abstracciones;
+using webapicsharp.Repositorios.Abstracciones;
 
-namespace ApiBack.Servicios
+namespace webapicsharp.Servicios
 {
     public sealed class ServicioConsultas : IServicioConsultas
     {
@@ -215,18 +215,27 @@ namespace ApiBack.Servicios
         {
             var parametrosGenericos = ConvertirParametrosDesdeJson(parametros);
 
-            if (camposAEncriptar != null)
+            if (camposAEncriptar != null && camposAEncriptar.Count > 0)
             {
                 foreach (var campo in camposAEncriptar)
                 {
                     var claveParametro = campo.StartsWith("@") ? campo : "@" + campo;
 
-                    if (parametrosGenericos.ContainsKey(claveParametro) &&
-                        parametrosGenericos[claveParametro] is string valorTexto &&
-                        !string.IsNullOrWhiteSpace(valorTexto) &&
-                        !valorTexto.StartsWith("$2"))
+                    if (parametrosGenericos.ContainsKey(claveParametro))
                     {
-                        parametrosGenericos[claveParametro] = BCrypt.Net.BCrypt.HashPassword(valorTexto);
+                        var valor = parametrosGenericos[claveParametro];
+
+                        // IMPORTANTE: Convertir cualquier valor a string para encriptar
+                        string? valorTexto = null;
+                        if (valor != null && valor != DBNull.Value)
+                        {
+                            valorTexto = valor.ToString();
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(valorTexto) && !valorTexto.StartsWith("$2"))
+                        {
+                            parametrosGenericos[claveParametro] = BCrypt.Net.BCrypt.HashPassword(valorTexto);
+                        }
                     }
                 }
             }
