@@ -4,13 +4,12 @@ using Microsoft.AspNetCore.Mvc;                          // Para ControllerBase,
 using System.Threading.Tasks;                            // Para async/await
 using Microsoft.Extensions.Logging;                      // Para ILogger y logging estructurado
 using Microsoft.Extensions.Configuration;                // Para IConfiguration y acceso a appsettings.json
-using ApiBack.Servicios.Abstracciones;              // Para IServicioCrud
+using webapicsharp.Servicios.Abstracciones;              // Para IServicioCrud
 using Microsoft.Data.SqlClient;                     // Para SqlException en manejo de errores específicos
 using System.Text.Json;
 
-namespace ApiBack.Controllers
+namespace webapicsharp.Controllers
 {
-
     [Route("api/{tabla}")]                                // Ruta dinámica: /api/usuarios, /api/productos, etc.
     [ApiController]                                       // Activa validación automática, binding, y comportamientos de API REST
     public class EntidadesController : ControllerBase
@@ -18,8 +17,6 @@ namespace ApiBack.Controllers
         private readonly IServicioCrud _servicioCrud;           // Para lógica de negocio CRUD y reglas del dominio
         private readonly ILogger<EntidadesController> _logger;  // Para logging estructurado, auditoría y debugging
         private readonly IConfiguration _configuration;         // Para acceso a configuraciones desde appsettings.json
-
-
         public EntidadesController(
             IServicioCrud servicioCrud,           // Lógica de negocio y coordinación de operaciones CRUD
             ILogger<EntidadesController> logger,  // Logging estructurado, auditoría y monitoreo de operaciones
@@ -40,9 +37,8 @@ namespace ApiBack.Controllers
                 nameof(configuration),
                 "IConfiguration no fue inyectado correctamente. Problema en configuración base de ASP.NET Core"
             );
-        }
-
-        [AllowAnonymous]                                  // Permite acceso sin autenticación (apropiado para desarrollo)
+        }                              // Permite acceso sin autenticación (apropiado para desarrollo)
+        [Authorize]
         [HttpGet]                                        // Responde exclusivamente a peticiones HTTP GET
         public async Task<IActionResult> ListarAsync(
             string tabla,                                 // Del path de la URL: /api/{tabla}
@@ -58,37 +54,32 @@ namespace ApiBack.Controllers
                     esquema ?? "por defecto",            // Esquema especificado o indicador de valor por defecto
                     limite?.ToString() ?? "por defecto"  // Límite especificado o indicador de valor por defecto
                 );
-
-
                 var filas = await _servicioCrud.ListarAsync(tabla, esquema, limite);
                 _logger.LogInformation(
                     "RESULTADO exitoso - Registros obtenidos: {Cantidad} de tabla {Tabla}",
                     filas.Count,    // Cantidad exacta de registros devueltos
                     tabla          // Tabla que fue consultada exitosamente
                 );
-
                 if (filas.Count == 0)
                 {
-
                     _logger.LogInformation(
                         "SIN DATOS - Tabla {Tabla} consultada exitosamente pero no contiene registros",
                         tabla
                     );
-
                     return NoContent();
                 }
                 return Ok(new
                 {
+                    // METADATOS DE LA CONSULTA (información contextual útil para el cliente)
                     tabla = tabla,                              // Tabla que fue consultada (confirmación)
                     esquema = esquema ?? "por defecto",         // Esquema usado, con indicador legible para null
                     limite = limite,                            // Límite aplicado (puede ser null si no se especificó)
                     total = filas.Count,                        // Cantidad exacta de registros devueltos
 
+                    // DATOS REALES DE LA CONSULTA
                     datos = filas                               // Lista de registros obtenidos de la base de datos
-
                 });
             }
-
             catch (ArgumentException excepcionArgumento)
             {
                 _logger.LogWarning(
@@ -96,6 +87,9 @@ namespace ApiBack.Controllers
                     tabla,                          // Tabla que se intentó consultar
                     excepcionArgumento.Message      // Mensaje específico de la validación que falló
                 );
+
+                // Respuesta 400 Bad Request con información estructurada para corregir el problema
+                // Incluye detalles específicos para que el cliente pueda ajustar su petición
                 return BadRequest(new
                 {
                     estado = 400,                                    // Código de estado HTTP explícito
@@ -106,13 +100,11 @@ namespace ApiBack.Controllers
             }
             catch (InvalidOperationException excepcionOperacion)
             {
-
                 _logger.LogError(excepcionOperacion,
                     "ERROR DE OPERACIÓN - Fallo en consulta - Tabla: {Tabla}, Error: {Mensaje}",
                     tabla,                              // Tabla que se intentó consultar
                     excepcionOperacion.Message          // Mensaje específico del error operacional
                 );
-
                 return NotFound(new
                 {
                     estado = 404,                                      // Código de estado HTTP explícito
@@ -144,18 +136,37 @@ namespace ApiBack.Controllers
                     "ERROR CRÍTICO - Falla inesperada en consulta - Tabla: {Tabla}",
                     tabla              // Tabla donde ocurrió el error crítico
                 );
+                var detalleError = new System.Text.StringBuilder();
+                detalleError.AppendLine($"Tipo de error: {excepcionGeneral.GetType().Name}");
+                detalleError.AppendLine($"Mensaje: {excepcionGeneral.Message}");
 
+                if (excepcionGeneral.InnerException != null)
+                {
+                    detalleError.AppendLine($"Error interno: {excepcionGeneral.InnerException.Message}");
+                }
+                if (!string.IsNullOrEmpty(excepcionGeneral.StackTrace))
+                {
+                    var stackLines = excepcionGeneral.StackTrace.Split('\n').Take(3);
+                    detalleError.AppendLine("Stack trace:");
+                    foreach (var line in stackLines)
+                    {
+                        detalleError.AppendLine($"  {line.Trim()}");
+                    }
+                }
                 return StatusCode(500, new
                 {
                     estado = 500,                                        // Código de estado HTTP explícito
-                    mensaje = "Error interno del servidor.",             // Mensaje genérico y seguro para el usuario
-                    tabla = tabla,                                       // Solo contexto básico necesario
-                    detalle = "Contacte al administrador del sistema.", // Instrucción clara para el usuario
-                    timestamp = DateTime.UtcNow                          // Timestamp para correlación con logs del servidor
+                    mensaje = "Error interno del servidor al consultar tabla.",
+                    tabla = tabla,                                       // Contexto de la operación
+                    tipoError = excepcionGeneral.GetType().Name,        // Tipo de excepción
+                    detalle = excepcionGeneral.Message,                 // Mensaje principal
+                    detalleCompleto = detalleError.ToString(),          // Desglose completo
+                    errorInterno = excepcionGeneral.InnerException?.Message,
+                    timestamp = DateTime.UtcNow,                        // Timestamp para correlación
+                    sugerencia = "Revise los logs del servidor para más detalles o contacte al administrador."
                 });
             }
         }
-        [AllowAnonymous]
         [HttpGet("{nombreClave}/{valor}")]
         public async Task<IActionResult> ObtenerPorClaveAsync(
         string tabla,           // Del path: /api/{tabla}
@@ -171,8 +182,6 @@ namespace ApiBack.Controllers
                     tabla, esquema ?? "por defecto", nombreClave, valor
                 );
                 var filas = await _servicioCrud.ObtenerPorClaveAsync(tabla, esquema, nombreClave, valor);
-
-                // LOGGING DE RESULTADOS
                 _logger.LogInformation(
                     "RESULTADO filtrado - {Cantidad} registros encontrados para {Clave}={Valor} en {Tabla}",
                     filas.Count, nombreClave, valor, tabla
@@ -235,12 +244,24 @@ namespace ApiBack.Controllers
                     tabla, nombreClave, valor
                 );
 
+                var detalleError = new System.Text.StringBuilder();
+                detalleError.AppendLine($"Tipo: {excepcionGeneral.GetType().Name}");
+                detalleError.AppendLine($"Mensaje: {excepcionGeneral.Message}");
+                if (excepcionGeneral.InnerException != null)
+                    detalleError.AppendLine($"Error interno: {excepcionGeneral.InnerException.Message}");
+
                 return StatusCode(500, new
                 {
                     estado = 500,
-                    mensaje = "Error interno del servidor.",
+                    mensaje = "Error interno del servidor al filtrar registros.",
                     tabla = tabla,
-                    timestamp = DateTime.UtcNow
+                    filtro = $"{nombreClave} = {valor}",
+                    tipoError = excepcionGeneral.GetType().Name,
+                    detalle = excepcionGeneral.Message,
+                    detalleCompleto = detalleError.ToString(),
+                    errorInterno = excepcionGeneral.InnerException?.Message,
+                    timestamp = DateTime.UtcNow,
+                    sugerencia = "Revise los logs para más detalles."
                 });
             }
         }
@@ -344,12 +365,23 @@ namespace ApiBack.Controllers
                     tabla
                 );
 
+                var detalleError = new System.Text.StringBuilder();
+                detalleError.AppendLine($"Tipo: {excepcionGeneral.GetType().Name}");
+                detalleError.AppendLine($"Mensaje: {excepcionGeneral.Message}");
+                if (excepcionGeneral.InnerException != null)
+                    detalleError.AppendLine($"Error interno: {excepcionGeneral.InnerException.Message}");
+
                 return StatusCode(500, new
                 {
                     estado = 500,
-                    mensaje = "Error interno del servidor.",
+                    mensaje = "Error interno del servidor al crear registro.",
                     tabla = tabla,
-                    timestamp = DateTime.UtcNow
+                    tipoError = excepcionGeneral.GetType().Name,
+                    detalle = excepcionGeneral.Message,
+                    detalleCompleto = detalleError.ToString(),
+                    errorInterno = excepcionGeneral.InnerException?.Message,
+                    timestamp = DateTime.UtcNow,
+                    sugerencia = "Revise los logs para más detalles."
                 });
             }
         }
@@ -464,13 +496,24 @@ namespace ApiBack.Controllers
                     tabla, nombreClave, valorClave
                 );
 
+                var detalleError = new System.Text.StringBuilder();
+                detalleError.AppendLine($"Tipo: {excepcionGeneral.GetType().Name}");
+                detalleError.AppendLine($"Mensaje: {excepcionGeneral.Message}");
+                if (excepcionGeneral.InnerException != null)
+                    detalleError.AppendLine($"Error interno: {excepcionGeneral.InnerException.Message}");
+
                 return StatusCode(500, new
                 {
                     estado = 500,
-                    mensaje = "Error interno del servidor.",
+                    mensaje = "Error interno del servidor al actualizar registro.",
                     tabla = tabla,
                     filtro = $"{nombreClave} = {valorClave}",
-                    timestamp = DateTime.UtcNow
+                    tipoError = excepcionGeneral.GetType().Name,
+                    detalle = excepcionGeneral.Message,
+                    detalleCompleto = detalleError.ToString(),
+                    errorInterno = excepcionGeneral.InnerException?.Message,
+                    timestamp = DateTime.UtcNow,
+                    sugerencia = "Revise los logs para más detalles."
                 });
             }
         }
@@ -573,13 +616,24 @@ namespace ApiBack.Controllers
                     tabla, nombreClave, valorClave
                 );
 
+                var detalleError = new System.Text.StringBuilder();
+                detalleError.AppendLine($"Tipo: {excepcionGeneral.GetType().Name}");
+                detalleError.AppendLine($"Mensaje: {excepcionGeneral.Message}");
+                if (excepcionGeneral.InnerException != null)
+                    detalleError.AppendLine($"Error interno: {excepcionGeneral.InnerException.Message}");
+
                 return StatusCode(500, new
                 {
                     estado = 500,
-                    mensaje = "Error interno del servidor.",
+                    mensaje = "Error interno del servidor al eliminar registro.",
                     tabla = tabla,
                     filtro = $"{nombreClave} = {valorClave}",
-                    timestamp = DateTime.UtcNow
+                    tipoError = excepcionGeneral.GetType().Name,
+                    detalle = excepcionGeneral.Message,
+                    detalleCompleto = detalleError.ToString(),
+                    errorInterno = excepcionGeneral.InnerException?.Message,
+                    timestamp = DateTime.UtcNow,
+                    sugerencia = "Revise los logs para más detalles."
                 });
             }
         }
@@ -615,12 +669,14 @@ namespace ApiBack.Controllers
         {
             return Ok(new
             {
+                // INFORMACIÓN DE BIENVENIDA
                 Mensaje = "Bienvenido a la API Genérica en C#",
                 Version = "1.0",
                 Descripcion = "API genérica para operaciones CRUD sobre cualquier tabla de base de datos",
                 Documentacion = "Para más detalles, visita /swagger",
                 FechaServidor = DateTime.UtcNow,          // UTC para consistencia global y evitar problemas de zona horaria
 
+                // ENLACES ÚTILES PARA NAVEGACIÓN
                 Enlaces = new
                 {
                     Swagger = "/swagger",                 // Documentación interactiva completa
@@ -634,30 +690,21 @@ namespace ApiBack.Controllers
                    "GET /api/{tabla}?esquema=dbo - Lista con esquema específico"
                }
             });
-        }
-        private object? ConvertirJsonElement(JsonElement elemento)
+        }        private object? ConvertirJsonElement(JsonElement elemento)
         {
-
             return elemento.ValueKind switch
             {
                 JsonValueKind.String => elemento.GetString(),
-
                 JsonValueKind.Number => elemento.TryGetInt32(out int intValue)
                     ? intValue           // Número entero válido para int
                     : elemento.GetDouble(),  // Número decimal o muy grande
-
                 JsonValueKind.True => true,
                 JsonValueKind.False => false,
-
                 JsonValueKind.Null => null,
-
                 JsonValueKind.Object => elemento.GetRawText(),
-                JsonValueKind.Array => elemento.GetRawText(),
-
                 _ => elemento.ToString()
             };
         }
-
         [AllowAnonymous]
         [HttpPost("verificar-contrasena")]
         public async Task<IActionResult> VerificarContrasenaAsync(
@@ -803,14 +850,28 @@ namespace ApiBack.Controllers
                     tabla
                 );
 
+                var detalleError = new System.Text.StringBuilder();
+                detalleError.AppendLine($"Tipo: {excepcionGeneral.GetType().Name}");
+                detalleError.AppendLine($"Mensaje: {excepcionGeneral.Message}");
+                if (excepcionGeneral.InnerException != null)
+                    detalleError.AppendLine($"Error interno: {excepcionGeneral.InnerException.Message}");
+
                 return StatusCode(500, new
                 {
                     estado = 500,
-                    mensaje = "Error interno del servidor.",
+                    mensaje = "Error interno del servidor al verificar credenciales.",
                     tabla = tabla,
-                    timestamp = DateTime.UtcNow
+                    tipoError = excepcionGeneral.GetType().Name,
+                    detalle = excepcionGeneral.Message,
+                    detalleCompleto = detalleError.ToString(),
+                    errorInterno = excepcionGeneral.InnerException?.Message,
+                    timestamp = DateTime.UtcNow,
+                    sugerencia = "Revise los logs para más detalles."
                 });
             }
         }
+
+        // aquí se puede agregar más endpoints en el futuro (DELETE, PATCH, etc.)
+
     }
 }

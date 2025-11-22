@@ -10,10 +10,10 @@
 using System;                                             // Para ArgumentException y ArgumentNullException
 using System.Collections.Generic;                        // Para List<> y Dictionary<>
 using System.Threading.Tasks;                            // Para async/await
-using ApiBack.Servicios.Abstracciones;             // Para IServicioCrud
-using ApiBack.Repositorios.Abstracciones;          // Para IRepositorioLecturaTabla
+using webapicsharp.Servicios.Abstracciones;             // Para IServicioCrud e IPoliticaTablasProhibidas
+using webapicsharp.Repositorios.Abstracciones;          // Para IRepositorioLecturaTabla
 
-namespace ApiBack.Servicios
+namespace webapicsharp.Servicios
 {
     /// <summary>
     /// Implementación concreta del servicio CRUD que aplica reglas de negocio.
@@ -36,46 +36,134 @@ namespace ApiBack.Servicios
     /// </summary>
     public class ServicioCrud : IServicioCrud
     {
+        // ====================================================================================
+        // DEPENDENCIAS INYECTADAS (aplicando DIP - Dependency Inversion Principle)
+        // ====================================================================================
+
         // Campo privado que mantiene la referencia al repositorio inyectado
         // Aplica DIP: depende de abstracción, no de implementación concreta
         private readonly IRepositorioLecturaTabla _repositorioLectura;
 
+        // Campo privado que mantiene la referencia a la política de tablas prohibidas
+        // MEJORA ARQUITECTÓNICA: Antes dependía de IConfiguration directamente (violaba DIP)
+        // Ahora depende de IPoliticaTablasProhibidas (abstracción específica del dominio)
+        // Beneficios:
+        // - Separación de responsabilidades: ServicioCrud no conoce de dónde vienen las reglas
+        // - Más testeable: fácil crear mocks de IPoliticaTablasProhibidas
+        // - Más mantenible: cambios en cómo se leen las reglas no afectan ServicioCrud
+        // - Cumple DIP: módulo de alto nivel no depende de módulo de bajo nivel (IConfiguration)
+        private readonly IPoliticaTablasProhibidas _politicaTablasProhibidas;
+
         /// <summary>
-        /// Constructor que recibe el repositorio mediante inyección de dependencias.
-        /// 
-        /// El flujo de inyección completo es:
+        /// Constructor que recibe las dependencias mediante inyección de dependencias (DI).
+        ///
+        /// MEJORA ARQUITECTÓNICA - COMPARACIÓN ANTES vs DESPUÉS:
+        ///
+        /// ANTES (VIOLABA DIP):
+        /// public ServicioCrud(IRepositorioLecturaTabla repo, IConfiguration config)
+        /// Problema: ServicioCrud dependía de IConfiguration (infraestructura de bajo nivel)
+        /// - Mezclaba lógica de negocio con lectura de configuración
+        /// - Difícil de testear (necesitas configurar IConfiguration mock)
+        /// - Poco expresivo (¿para qué necesita IConfiguration? no es claro)
+        ///
+        /// DESPUÉS (CUMPLE DIP):
+        /// public ServicioCrud(IRepositorioLecturaTabla repo, IPoliticaTablasProhibidas politica)
+        /// Beneficio: ServicioCrud depende de abstracción del dominio específica
+        /// - Separación clara de responsabilidades
+        /// - Fácil de testear (mock simple con una línea)
+        /// - Expresivo (está claro que valida tablas prohibidas)
+        /// - Cumple DIP: no depende de detalles de implementación
+        ///
+        /// FLUJO COMPLETO DE INYECCIÓN DE DEPENDENCIAS:
         /// 1. Program.cs registra: AddScoped<IServicioCrud, ServicioCrud>
         /// 2. Program.cs registra: AddScoped<IRepositorioLecturaTabla, RepositorioLecturaSqlServer>
-        /// 3. Cuando se solicita IServicioCrud, el contenedor:
-        ///    - Crea ServicioCrud
-        ///    - Ve que necesita IRepositorioLecturaTabla
-        ///    - Inyecta automáticamente RepositorioLecturaSqlServer
-        ///    - RepositorioLecturaSqlServer necesita IProveedorConexion
-        ///    - Se inyecta toda la cadena automáticamente
-        /// 
-        /// Aplica DIP: este servicio no sabe qué repositorio específico recibe
-        /// (SQL Server, PostgreSQL, MariaDB, etc.), solo sabe que implementa
-        /// IRepositorioLecturaTabla y puede pedirle que lea datos.
+        /// 3. Program.cs registra: AddSingleton<IPoliticaTablasProhibidas, PoliticaTablasProhibidasDesdeJson>
+        /// 4. Cuando se solicita IServicioCrud (por ejemplo, desde EntidadesController):
+        ///    - El contenedor DI crea ServicioCrud
+        ///    - Ve que necesita IRepositorioLecturaTabla → inyecta RepositorioLecturaSqlServer
+        ///    - Ve que necesita IPoliticaTablasProhibidas → inyecta PoliticaTablasProhibidasDesdeJson
+        ///    - RepositorioLecturaSqlServer necesita IProveedorConexion → se inyecta automáticamente
+        ///    - PoliticaTablasProhibidasDesdeJson necesita IConfiguration → se inyecta automáticamente
+        ///    - Toda la cadena de dependencias se resuelve automáticamente
+        ///    - ServicioCrud queda completamente inicializado y listo para usar
+        ///
+        /// VENTAJAS DE ESTA ARQUITECTURA:
+        /// - ServicioCrud NO conoce IConfiguration (separación de capas)
+        /// - ServicioCrud NO sabe de dónde vienen las reglas de tablas prohibidas
+        /// - Fácil cambiar la implementación (JSON → BD → API) sin tocar ServicioCrud
+        /// - Testing simplificado con mocks
+        /// - Código más expresivo y mantenible
         /// </summary>
         /// <param name="repositorioLectura">
         /// Repositorio que implementa las operaciones de acceso a datos.
         /// Se inyecta automáticamente según la configuración en Program.cs.
-        /// 
+        ///
         /// El servicio no necesita saber:
-        /// - Qué proveedor de base de datos se usa
+        /// - Qué proveedor de base de datos se usa (SQL Server, PostgreSQL, MariaDB, etc.)
         /// - Cómo se obtienen las cadenas de conexión
         /// - Qué sintaxis SQL específica se ejecuta
         /// - Cómo se mapean los tipos de datos
+        ///
+        /// Solo sabe que implementa IRepositorioLecturaTabla y puede pedirle que:
+        /// - Lea filas de una tabla
+        /// - Filtre por clave
+        /// - Inserte, actualice o elimine registros
+        /// </param>
+        /// <param name="politicaTablasProhibidas">
+        /// Política que determina qué tablas están permitidas o prohibidas.
+        /// Se inyecta automáticamente según la configuración en Program.cs.
+        ///
+        /// NUEVA DEPENDENCIA - MEJORA ARQUITECTÓNICA:
+        /// Esta es la abstracción que reemplaza la dependencia directa de IConfiguration.
+        ///
+        /// El servicio no necesita saber:
+        /// - De dónde viene la lista de tablas prohibidas (JSON, BD, API, hardcoded, etc.)
+        /// - Cómo se almacenan las reglas
+        /// - Si usa lista negra (blacklist) o lista blanca (whitelist)
+        ///
+        /// Solo sabe que puede preguntar: ¿Esta tabla está permitida?
+        /// Y recibe una respuesta clara: true o false
+        ///
+        /// Esto cumple perfectamente con:
+        /// - SRP: Cada clase tiene una responsabilidad
+        /// - DIP: Dependemos de abstracciones, no de implementaciones
+        /// - OCP: Abierto a extensión, cerrado a modificación
         /// </param>
         /// <exception cref="ArgumentNullException">
-        /// Se lanza si repositorioLectura es null, lo cual indicaría un problema
-        /// en la configuración de inyección de dependencias en Program.cs
+        /// Se lanza si alguna dependencia es null, indicando problema en la configuración
+        /// de inyección de dependencias en Program.cs.
+        ///
+        /// Este tipo de excepción solo debería ocurrir:
+        /// - Durante desarrollo si olvidaste registrar un servicio
+        /// - Durante configuración si hay un error en Program.cs
+        ///
+        /// En producción con configuración correcta, nunca debería lanzarse.
         /// </exception>
-        private readonly IConfiguration _configuration;
-        public ServicioCrud(IRepositorioLecturaTabla repositorioLectura, IConfiguration configuration)
+        public ServicioCrud(
+            IRepositorioLecturaTabla repositorioLectura,
+            IPoliticaTablasProhibidas politicaTablasProhibidas)
         {
-            _repositorioLectura = repositorioLectura ?? throw new ArgumentNullException(nameof(repositorioLectura));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            // Validación defensiva: asegurar que las dependencias fueron inyectadas correctamente
+            // Si alguna es null, hay un problema en Program.cs que debe corregirse
+
+            _repositorioLectura = repositorioLectura ?? throw new ArgumentNullException(
+                nameof(repositorioLectura),
+                "IRepositorioLecturaTabla no puede ser null. " +
+                "Verificar que esté registrado en Program.cs con AddScoped<IRepositorioLecturaTabla, ...>()"
+            );
+
+            _politicaTablasProhibidas = politicaTablasProhibidas ?? throw new ArgumentNullException(
+                nameof(politicaTablasProhibidas),
+                "IPoliticaTablasProhibidas no puede ser null. " +
+                "Verificar que esté registrado en Program.cs con AddSingleton<IPoliticaTablasProhibidas, PoliticaTablasProhibidasDesdeJson>()"
+            );
+
+            // NOTA PARA ESTUDIANTES:
+            // Observa cómo el constructor es limpio y expresivo:
+            // - Solo recibe abstracciones (interfaces), no implementaciones concretas
+            // - Los nombres de los parámetros expresan claramente qué hace cada dependencia
+            // - Las validaciones proporcionan mensajes de error útiles
+            // - No hay lógica de negocio aquí, solo asignación de dependencias
         }
 
         /// <summary>
@@ -137,20 +225,61 @@ namespace ApiBack.Servicios
             int? limite
         )
         {
+            // ====================================================================================
             // FASE 1: VALIDACIONES DE REGLAS DE NEGOCIO
-            // Verificar que el nombre de tabla cumpla las reglas básicas de negocio
-            // Esta validación es responsabilidad del servicio, no del repositorio
+            // ====================================================================================
+
+            // VALIDACIÓN 1: Nombre de tabla no puede estar vacío
+            // Esta es una validación básica de entrada que previene errores en capas inferiores
             if (string.IsNullOrWhiteSpace(nombreTabla))
-                throw new ArgumentException("El nombre de la tabla no puede estar vacío.", nameof(nombreTabla));
+                throw new ArgumentException(
+                    "El nombre de la tabla no puede estar vacío.",
+                    nameof(nombreTabla)
+                );
+
+            // VALIDACIÓN 2: Verificar que la tabla esté permitida según política de seguridad
+            // MEJORA ARQUITECTÓNICA - COMPARACIÓN ANTES vs DESPUÉS:
+            //
+            // ANTES (acoplado a IConfiguration):
+            // var tablasProhibidas = _configuration.GetSection("TablasProhibidas").Get<string[]>();
+            // if (tablasProhibidas.Contains(nombreTabla, StringComparer.OrdinalIgnoreCase))
+            //     throw new UnauthorizedAccessException(...);
+            //
+            // Problemas:
+            // - ServicioCrud conocía detalles de implementación (JSON, sección "TablasProhibidas")
+            // - Difícil de testear (necesitas configurar IConfiguration completo)
+            // - Violaba DIP (dependía de infraestructura)
+            // - Poco expresivo (mucha lógica para algo simple)
+            //
+            // DESPUÉS (desacoplado usando abstracción):
+            if (!_politicaTablasProhibidas.EsTablaPermitida(nombreTabla))
+            {
+                throw new UnauthorizedAccessException(
+                    $"Acceso denegado: La tabla '{nombreTabla}' está restringida y no puede ser consultada. " +
+                    $"Verifique los permisos de acceso o contacte al administrador del sistema."
+                );
+            }
+            //
+            // Ventajas:
+            // - Una sola línea clara y expresiva
+            // - ServicioCrud no sabe de dónde vienen las reglas
+            // - Fácil de testear con mock simple
+            // - Cumple DIP perfectamente
+            // - Si cambia cómo se leen las reglas, ServicioCrud NO cambia
+            //
+            // NOTA PEDAGÓGICA PARA ESTUDIANTES:
+            // Este es un ejemplo perfecto de refactoring que mejora el diseño:
+            // - El código hace exactamente lo mismo funcionalmente
+            // - Pero la arquitectura es mucho mejor
+            // - Más fácil de entender, testear y mantener
+            // - Demuestra los beneficios reales de aplicar SOLID
 
             // VALIDACIONES FUTURAS QUE SE PODRÍAN AGREGAR:
-            // - Validar que la tabla esté en lista de tablas permitidas
-            // - Verificar permisos del usuario para acceder a esa tabla
-            // - Validar caracteres permitidos en el nombre de tabla
-            // - Aplicar reglas específicas del dominio de negocio
-            var tablasProhibidas = _configuration.GetSection("TablasProhibidas").Get<string[]>() ?? Array.Empty<string>();
-            if (tablasProhibidas.Contains(nombreTabla, StringComparer.OrdinalIgnoreCase))
-                throw new UnauthorizedAccessException($"La tabla '{nombreTabla}' está restringida y no puede ser consultada.");
+            // - Verificar permisos del usuario autenticado para acceder a esa tabla específica
+            // - Validar caracteres permitidos en el nombre de tabla (prevenir SQL injection)
+            // - Aplicar reglas de negocio específicas por tipo de tabla
+            // - Auditar accesos a tablas sensibles
+            // - Aplicar límites de consulta según perfil del usuario
 
             // FASE 2: NORMALIZACIÓN DE PARÁMETROS
             // Limpiar y estandarizar parámetros opcionales según reglas de negocio
@@ -221,10 +350,11 @@ namespace ApiBack.Servicios
             if (string.IsNullOrWhiteSpace(valor))
                 throw new ArgumentException("El valor no puede estar vacío.", nameof(valor));
 
-            // VALIDACIÓN DE TABLAS PROHIBIDAS (igual que en ListarAsync)
-            var tablasProhibidas = _configuration.GetSection("TablasProhibidas").Get<string[]>() ?? Array.Empty<string>();
-            if (tablasProhibidas.Contains(nombreTabla, StringComparer.OrdinalIgnoreCase))
-                throw new UnauthorizedAccessException($"La tabla '{nombreTabla}' está restringida y no puede ser consultada.");
+            // VALIDACIÓN DE TABLAS PROHIBIDAS (usando la política inyectada)
+            if (!_politicaTablasProhibidas.EsTablaPermitida(nombreTabla))
+                throw new UnauthorizedAccessException(
+                    $"Acceso denegado: La tabla '{nombreTabla}' está restringida y no puede ser consultada."
+                );
 
             // FASE 2: NORMALIZACIÓN DE PARÁMETROS
             string? esquemaNormalizado = string.IsNullOrWhiteSpace(esquema) ? null : esquema.Trim();
@@ -265,10 +395,11 @@ namespace ApiBack.Servicios
             if (datos == null || !datos.Any())
                 throw new ArgumentException("Los datos no pueden estar vacíos.", nameof(datos));
 
-            // VALIDACIÓN DE TABLAS PROHIBIDAS (misma lógica que en consultas)
-            var tablasProhibidas = _configuration.GetSection("TablasProhibidas").Get<string[]>() ?? Array.Empty<string>();
-            if (tablasProhibidas.Contains(nombreTabla, StringComparer.OrdinalIgnoreCase))
-                throw new UnauthorizedAccessException($"La tabla '{nombreTabla}' está restringida y no puede ser modificada.");
+            // VALIDACIÓN DE TABLAS PROHIBIDAS (usando la política inyectada)
+            if (!_politicaTablasProhibidas.EsTablaPermitida(nombreTabla))
+                throw new UnauthorizedAccessException(
+                    $"Acceso denegado: La tabla '{nombreTabla}' está restringida y no puede ser modificada."
+                );
 
             // FASE 2: NORMALIZACIÓN DE PARÁMETROS
             string? esquemaNormalizado = string.IsNullOrWhiteSpace(esquema) ? null : esquema.Trim();
@@ -318,10 +449,11 @@ namespace ApiBack.Servicios
             if (datos == null || !datos.Any())
                 throw new ArgumentException("Los datos a actualizar no pueden estar vacíos.", nameof(datos));
 
-            // VALIDACIÓN DE TABLAS PROHIBIDAS (misma lógica que en otros métodos)
-            var tablasProhibidas = _configuration.GetSection("TablasProhibidas").Get<string[]>() ?? Array.Empty<string>();
-            if (tablasProhibidas.Contains(nombreTabla, StringComparer.OrdinalIgnoreCase))
-                throw new UnauthorizedAccessException($"La tabla '{nombreTabla}' está restringida y no puede ser modificada.");
+            // VALIDACIÓN DE TABLAS PROHIBIDAS (usando la política inyectada)
+            if (!_politicaTablasProhibidas.EsTablaPermitida(nombreTabla))
+                throw new UnauthorizedAccessException(
+                    $"Acceso denegado: La tabla '{nombreTabla}' está restringida y no puede ser modificada."
+                );
 
             // FASE 2: NORMALIZACIÓN DE PARÁMETROS
             string? esquemaNormalizado = string.IsNullOrWhiteSpace(esquema) ? null : esquema.Trim();
@@ -370,10 +502,11 @@ namespace ApiBack.Servicios
             if (string.IsNullOrWhiteSpace(valorClave))
                 throw new ArgumentException("El valor de la clave no puede estar vacío.", nameof(valorClave));
 
-            // VALIDACIÓN DE TABLAS PROHIBIDAS (misma lógica que en otros métodos)
-            var tablasProhibidas = _configuration.GetSection("TablasProhibidas").Get<string[]>() ?? Array.Empty<string>();
-            if (tablasProhibidas.Contains(nombreTabla, StringComparer.OrdinalIgnoreCase))
-                throw new UnauthorizedAccessException($"La tabla '{nombreTabla}' está restringida y no puede ser modificada.");
+            // VALIDACIÓN DE TABLAS PROHIBIDAS (usando la política inyectada)
+            if (!_politicaTablasProhibidas.EsTablaPermitida(nombreTabla))
+                throw new UnauthorizedAccessException(
+                    $"Acceso denegado: La tabla '{nombreTabla}' está restringida y no puede ser modificada."
+                );
 
             // FASE 2: NORMALIZACIÓN DE PARÁMETROS
             string? esquemaNormalizado = string.IsNullOrWhiteSpace(esquema) ? null : esquema.Trim();
@@ -427,10 +560,11 @@ namespace ApiBack.Servicios
             if (string.IsNullOrWhiteSpace(valorContrasena))
                 throw new ArgumentException("La contraseña no puede estar vacía.", nameof(valorContrasena));
 
-            // VALIDACIÓN DE TABLAS PROHIBIDAS (misma lógica que otros métodos)
-            var tablasProhibidas = _configuration.GetSection("TablasProhibidas").Get<string[]>() ?? Array.Empty<string>();
-            if (tablasProhibidas.Contains(nombreTabla, StringComparer.OrdinalIgnoreCase))
-                throw new UnauthorizedAccessException($"La tabla '{nombreTabla}' está restringida y no puede ser consultada.");
+            // VALIDACIÓN DE TABLAS PROHIBIDAS (usando la política inyectada)
+            if (!_politicaTablasProhibidas.EsTablaPermitida(nombreTabla))
+                throw new UnauthorizedAccessException(
+                    $"Acceso denegado: La tabla '{nombreTabla}' está restringida y no puede ser consultada."
+                );
 
             // FASE 2: NORMALIZACIÓN DE PARÁMETROS
             string? esquemaNormalizado = string.IsNullOrWhiteSpace(esquema) ? null : esquema.Trim();
@@ -458,7 +592,7 @@ namespace ApiBack.Servicios
 
                 // FASE 5: VERIFICACIÓN DE CONTRASEÑA CON BCRYPT
                 // Usar nuestra clase de utilidad para verificación segura
-                bool contrasenaCorrecta = ApiBack.Servicios.Utilidades.EncriptacionBCrypt.Verificar(
+                bool contrasenaCorrecta = webapicsharp.Servicios.Utilidades.EncriptacionBCrypt.Verificar(
                     valorContrasena,  // Contraseña en texto plano proporcionada
                     hashAlmacenado    // Hash BCrypt almacenado en base de datos
                 );

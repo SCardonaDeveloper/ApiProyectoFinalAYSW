@@ -1,15 +1,31 @@
+// --------------------------------------------------------------
+// Archivo: RepositorioLecturaSqlServer.cs (VERSIÓN MEJORADA CON DETECCIÓN DE TIPOS)
+// Ruta: webapicsharp/Repositorios/RepositorioLecturaSqlServer.cs
+// Mejoras: Detección automática de tipos, conversión inteligente, manejo DATE vs DATETIME
+// --------------------------------------------------------------
+
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
-using ApiBack.Repositorios.Abstracciones;
-using ApiBack.Servicios.Abstracciones;
-using ApiBack.Servicios.Utilidades;
+using webapicsharp.Repositorios.Abstracciones;
+using webapicsharp.Servicios.Abstracciones;
+using webapicsharp.Servicios.Utilidades;
 
-namespace ApiBack.Repositorios
+namespace webapicsharp.Repositorios
 {
+    /// <summary>
+    /// Implementación mejorada para SQL Server con detección automática de tipos.
+    /// 
+    /// MEJORAS IMPLEMENTADAS (paridad con PostgreSQL):
+    /// 1. DetectarTipoColumnaAsync() - Consulta information_schema
+    /// 2. MapearTipoSqlServer() - Mapeo tipos SQL Server a SqlDbType
+    /// 3. ConvertirValor() - Conversión inteligente de strings a tipos apropiados
+    /// 4. ExtraerSoloFecha() - Manejo especial DATE vs DATETIME
+    /// 5. Búsquedas inteligentes en DATETIME con solo fecha
+    /// </summary>
     public class RepositorioLecturaSqlServer : IRepositorioLecturaTabla
     {
         private readonly IProveedorConexion _proveedorConexion;
@@ -21,6 +37,11 @@ namespace ApiBack.Repositorios
                 "IProveedorConexion no puede ser null."
             );
         }
+
+        /// <summary>
+        /// Detecta el tipo de una columna consultando information_schema.
+        /// Similar a PostgreSQL pero usando tipos SQL Server.
+        /// </summary>
         private async Task<SqlDbType?> DetectarTipoColumnaAsync(string nombreTabla, string esquema, string nombreColumna)
         {
             string sql = @"
@@ -55,34 +76,49 @@ namespace ApiBack.Repositorios
 
             return null;
         }
+
+        /// <summary>
+        /// Mapea tipos de SQL Server a SqlDbType.
+        /// </summary>
         private SqlDbType? MapearTipoSqlServer(string dataType)
         {
             return dataType.ToLower() switch
             {
+                // TIPOS ENTEROS
                 "int" => SqlDbType.Int,
                 "bigint" => SqlDbType.BigInt,
                 "smallint" => SqlDbType.SmallInt,
                 "tinyint" => SqlDbType.TinyInt,
+
+                // TIPOS DECIMALES
                 "decimal" => SqlDbType.Decimal,
                 "numeric" => SqlDbType.Decimal,
                 "money" => SqlDbType.Money,
                 "smallmoney" => SqlDbType.SmallMoney,
                 "float" => SqlDbType.Float,
                 "real" => SqlDbType.Real,
+
+                // TIPOS DE TEXTO
                 "varchar" => SqlDbType.VarChar,
                 "char" => SqlDbType.Char,
                 "text" => SqlDbType.Text,
                 "nvarchar" => SqlDbType.NVarChar,
                 "nchar" => SqlDbType.NChar,
                 "ntext" => SqlDbType.NText,
+
+                // TIPOS ESPECIALES
                 "bit" => SqlDbType.Bit,
                 "uniqueidentifier" => SqlDbType.UniqueIdentifier,
+
+                // TIPOS DE FECHA Y HORA
                 "datetime" => SqlDbType.DateTime,
                 "datetime2" => SqlDbType.DateTime2,
                 "date" => SqlDbType.Date,
                 "time" => SqlDbType.Time,
                 "datetimeoffset" => SqlDbType.DateTimeOffset,
                 "smalldatetime" => SqlDbType.SmallDateTime,
+
+                // TIPOS BINARIOS
                 "binary" => SqlDbType.Binary,
                 "varbinary" => SqlDbType.VarBinary,
                 "image" => SqlDbType.Image,
@@ -90,6 +126,10 @@ namespace ApiBack.Repositorios
                 _ => null
             };
         }
+
+        /// <summary>
+        /// Convierte un valor string al tipo apropiado según SqlDbType detectado.
+        /// </summary>
         private object ConvertirValor(string valor, SqlDbType? tipoDestino)
         {
             if (tipoDestino == null) return valor;
@@ -98,6 +138,7 @@ namespace ApiBack.Repositorios
             {
                 return tipoDestino switch
                 {
+                    // CONVERSIONES NUMÉRICAS
                     SqlDbType.Int => int.Parse(valor),
                     SqlDbType.BigInt => long.Parse(valor),
                     SqlDbType.SmallInt => short.Parse(valor),
@@ -107,14 +148,22 @@ namespace ApiBack.Repositorios
                     SqlDbType.SmallMoney => decimal.Parse(valor),
                     SqlDbType.Float => double.Parse(valor),
                     SqlDbType.Real => float.Parse(valor),
+
+                    // CONVERSIONES LÓGICAS
                     SqlDbType.Bit => bool.Parse(valor),
+
+                    // CONVERSIONES ESPECIALES
                     SqlDbType.UniqueIdentifier => Guid.Parse(valor),
+
+                    // CONVERSIONES DE FECHA/HORA
                     SqlDbType.DateTime => DateTime.Parse(valor),
                     SqlDbType.DateTime2 => DateTime.Parse(valor),
                     SqlDbType.Date => ExtraerSoloFecha(valor),
                     SqlDbType.Time => TimeOnly.Parse(valor),
                     SqlDbType.DateTimeOffset => DateTimeOffset.Parse(valor),
                     SqlDbType.SmallDateTime => DateTime.Parse(valor),
+
+                    // TIPOS DE TEXTO (sin conversión)
                     SqlDbType.VarChar => valor,
                     SqlDbType.Char => valor,
                     SqlDbType.Text => valor,
@@ -130,6 +179,10 @@ namespace ApiBack.Repositorios
                 return valor;
             }
         }
+
+        /// <summary>
+        /// Extrae solo la fecha de un string, similar a PostgreSQL.
+        /// </summary>
         private DateOnly ExtraerSoloFecha(string valor)
         {
             if (DateTime.TryParse(valor, out DateTime fechaCompleta))
@@ -142,6 +195,10 @@ namespace ApiBack.Repositorios
                 $"No se pudo convertir '{valor}' a fecha. " +
                 $"Formatos válidos: '2025-09-25', '2025-09-25T00:00:00'");
         }
+
+        /// <summary>
+        /// Detecta si un valor parece ser una fecha sin hora.
+        /// </summary>
         private bool EsFechaSinHora(string valor)
         {
             return valor.Length == 10 && 
@@ -189,6 +246,7 @@ namespace ApiBack.Repositorios
             }
             catch (SqlException excepcionSql)
             {
+                // Fallback a dbo si esquema no existe
                 if (excepcionSql.Number == 208 && !string.IsNullOrWhiteSpace(esquema) && 
                     !esquema.Equals("dbo", StringComparison.OrdinalIgnoreCase))
                 {
@@ -215,6 +273,10 @@ namespace ApiBack.Repositorios
 
             return resultados;
         }
+
+        /// <summary>
+        /// MÉTODO MEJORADO: Con detección de tipos y búsqueda inteligente en DATETIME.
+        /// </summary>
         public async Task<IReadOnlyList<Dictionary<string, object?>>> ObtenerPorClaveAsync(
             string nombreTabla,
             string? esquema,
@@ -235,6 +297,8 @@ namespace ApiBack.Repositorios
             try
             {
                 var tipoColumna = await DetectarTipoColumnaAsync(nombreTabla, esquemaFinal, nombreClave);
+                
+                // Búsqueda inteligente en DATETIME con solo fecha
                 bool esBusquedaFechaSoloEnDatetime = 
                     (tipoColumna == SqlDbType.DateTime || tipoColumna == SqlDbType.DateTime2) && 
                     EsFechaSinHora(valor);
@@ -584,3 +648,31 @@ namespace ApiBack.Repositorios
         }
     }
 }
+
+// ============================================================================================
+// RESUMEN DE MEJORAS PARA SQL SERVER
+// ============================================================================================
+//
+// PARIDAD COMPLETA CON POSTGRESQL:
+// ✅ Detección automática de tipos vía information_schema
+// ✅ Mapeo SqlDbType completo (INT, DECIMAL, DATE, DATETIME, BIT, etc.)
+// ✅ Conversión inteligente de strings a tipos apropiados
+// ✅ Manejo especial DATE vs DATETIME (igual que PostgreSQL DATE vs TIMESTAMP)
+// ✅ Búsquedas inteligentes en DATETIME con solo fecha usando CAST
+// ✅ ExtraerSoloFecha() para conversión timestamp → DateOnly
+//
+// DIFERENCIAS SQL SERVER vs POSTGRESQL:
+// - SqlDbType vs NpgsqlDbType
+// - DATE, DATETIME, DATETIME2 vs DATE, TIMESTAMP
+// - Esquema "dbo" vs "public"
+// - Corchetes [] vs comillas ""
+// - SqlException vs NpgsqlException
+//
+// FUNCIONA CON:
+// - INT, BIGINT, SMALLINT, TINYINT
+// - DECIMAL, NUMERIC, MONEY, FLOAT, REAL
+// - VARCHAR, NVARCHAR, CHAR, NCHAR, TEXT
+// - BIT (boolean)
+// - DATE, DATETIME, DATETIME2, TIME
+// - UNIQUEIDENTIFIER (Guid)
+// - BINARY, VARBINARY

@@ -1,13 +1,27 @@
+// --------------------------------------------------------------
+// Archivo: RepositorioConsultasSqlServer.cs 
+// Ruta: webapicsharp/Repositorios/RepositorioConsultasSqlServer.cs
+// Mejora: Manejo inteligente de DateTime con hora 00:00:00 como DATE
+//         EN CONSULTAS Y PROCEDIMIENTOS ALMACENADOS
+// --------------------------------------------------------------
+
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
-using ApiBack.Repositorios.Abstracciones;
-using ApiBack.Servicios.Abstracciones;
+using webapicsharp.Repositorios.Abstracciones;
+using webapicsharp.Servicios.Abstracciones;
 
-namespace ApiBack.Repositorios
+namespace webapicsharp.Repositorios
 {
+    /// <summary>
+    /// Implementación de repositorio para ejecutar consultas y procedimientos almacenados en SQL Server.
+    /// 
+    /// MEJORA IMPLEMENTADA:
+    /// Detecta DateTime con hora 00:00:00 y los convierte a DateOnly automáticamente
+    /// tanto en consultas como en procedimientos almacenados.
+    /// </summary>
     public sealed class RepositorioConsultasSqlServer : IRepositorioConsultas
     {
         private readonly IProveedorConexion _proveedorConexion;
@@ -16,6 +30,10 @@ namespace ApiBack.Repositorios
         {
             _proveedorConexion = proveedorConexion ?? throw new ArgumentNullException(nameof(proveedorConexion));
         }
+
+        // ================================================================
+        // MÉTODO AUXILIAR: Mapea tipos de datos de SQL Server a SqlDbType
+        // ================================================================
         private SqlDbType MapearTipo(string tipo)
         {
             return tipo.ToLower() switch
@@ -50,7 +68,12 @@ namespace ApiBack.Repositorios
                 "xml" => SqlDbType.Xml,
                 _ => SqlDbType.NVarChar
             };
-        }        private async Task<List<(string Nombre, bool EsOutput, string Tipo, int? MaxLength)>> ObtenerMetadatosParametrosAsync(
+        }
+
+        // ================================================================
+        // MÉTODO AUXILIAR: Obtiene metadatos de parámetros de un SP en SQL Server
+        // ================================================================
+        private async Task<List<(string Nombre, bool EsOutput, string Tipo, int? MaxLength)>> ObtenerMetadatosParametrosAsync(
             SqlConnection conexion,
             string nombreSP)
         {
@@ -82,6 +105,17 @@ namespace ApiBack.Repositorios
 
             return lista;
         }
+
+        // ================================================================
+        // MÉTODO PRINCIPAL MEJORADO: Ejecuta un procedimiento almacenado genérico
+        // MEJORA CRÍTICA: Ahora convierte DateTime con hora 00:00:00 a Date
+        // ================================================================
+
+// ================================================================
+// MÉTODO PRINCIPAL MEJORADO: Ejecuta un procedimiento almacenado genérico
+// MEJORA CRÍTICA: Ahora convierte DateTime con hora 00:00:00 a Date
+// DETECTA SI ES FUNCTION O PROCEDURE
+// ================================================================
 public async Task<DataTable> EjecutarProcedimientoAlmacenadoConDictionaryAsync(
     string nombreSP,
     Dictionary<string, object?> parametros)
@@ -92,6 +126,8 @@ public async Task<DataTable> EjecutarProcedimientoAlmacenadoConDictionaryAsync(
     string cadenaConexion = _proveedorConexion.ObtenerCadenaConexion();
     await using var conexion = new SqlConnection(cadenaConexion);
     await conexion.OpenAsync();
+
+    // Detectar si es FUNCTION o PROCEDURE
     string sqlTipo = "SELECT ROUTINE_TYPE FROM INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_NAME = @spName";
     string tipoRutina = "PROCEDURE";
     await using (var cmdTipo = new SqlCommand(sqlTipo, conexion))
@@ -111,8 +147,13 @@ public async Task<DataTable> EjecutarProcedimientoAlmacenadoConDictionaryAsync(
     }
 
     var tabla = new DataTable();
+
+    // Procesar según el tipo de rutina
     if (tipoRutina == "FUNCTION")
     {
+        // ============================================================
+        // MANEJO DE FUNCIONES
+        // ============================================================
         var parametrosEntrada = metadatos.Where(m => !m.EsOutput).ToList();
         var parametrosQuery = string.Join(", ", parametrosEntrada.Select((_, i) => $"@p{i}"));
         var sqlLlamada = $"SELECT dbo.{nombreSP}({parametrosQuery}) AS Resultado";
@@ -120,13 +161,57 @@ public async Task<DataTable> EjecutarProcedimientoAlmacenadoConDictionaryAsync(
         await using var comando = new SqlCommand(sqlLlamada, conexion);
         comando.CommandType = CommandType.Text;
         comando.CommandTimeout = 300;
+
+        // Agregar parámetros con nombres @p0, @p1, etc.
         for (int i = 0; i < parametrosEntrada.Count; i++)
         {
             var meta = parametrosEntrada[i];
             string clave = meta.Nombre.StartsWith("@") ? meta.Nombre.Substring(1) : meta.Nombre;
             object valor = parametrosNormalizados.TryGetValue(clave, out var v) && v != null ? v : DBNull.Value;
 
-            if (valor is DateTime dt && dt.TimeOfDay == TimeSpan.Zero && meta.Tipo.ToLower() == "date")
+            // ============================================================
+            // MEJORA: Detección de JSON de 3 formas (como PostgreSQL)
+            // ============================================================
+            bool esJSON = meta.Tipo.ToLower() == "nvarchar" && meta.MaxLength == -1;
+
+            if (!esJSON && valor is string sValor && !string.IsNullOrWhiteSpace(sValor))
+            {
+                var nombreParam = meta.Nombre?.ToLower() ?? "";
+                var sValorTrim = sValor.TrimStart();
+
+                if (sValorTrim.StartsWith("{") || sValorTrim.StartsWith("["))
+                {
+                    esJSON = true;
+                }
+                else if (nombreParam.Contains("roles") || nombreParam.Contains("detalles") ||
+                         nombreParam.Contains("json") || nombreParam.Contains("data"))
+                {
+                    if (sValorTrim.StartsWith("{") || sValorTrim.StartsWith("["))
+                    {
+                        esJSON = true;
+                    }
+                }
+            }
+
+            if (esJSON)
+            {
+                var param = new SqlParameter($"@p{i}", SqlDbType.NVarChar) { Value = valor == DBNull.Value ? DBNull.Value : valor.ToString() };
+                param.Size = -1;
+                comando.Parameters.Add(param);
+            }
+            // ============================================================
+            // MEJORA: VARCHAR/NVARCHAR - Convertir a string (como PostgreSQL)
+            // ============================================================
+            else if ((meta.Tipo.ToLower() == "varchar" || meta.Tipo.ToLower() == "nvarchar" || meta.Tipo.ToLower() == "char" || meta.Tipo.ToLower() == "nchar")
+                     && valor != DBNull.Value)
+            {
+                string valorStr = valor.ToString() ?? string.Empty;
+                var param = new SqlParameter($"@p{i}", MapearTipo(meta.Tipo)) { Value = valorStr };
+                if (meta.MaxLength.HasValue && meta.MaxLength.Value > 0)
+                    param.Size = meta.MaxLength.Value;
+                comando.Parameters.Add(param);
+            }
+            else if (valor is DateTime dt && dt.TimeOfDay == TimeSpan.Zero && meta.Tipo.ToLower() == "date")
             {
                 comando.Parameters.Add(new SqlParameter($"@p{i}", SqlDbType.Date) { Value = DateOnly.FromDateTime(dt) });
             }
@@ -160,6 +245,9 @@ public async Task<DataTable> EjecutarProcedimientoAlmacenadoConDictionaryAsync(
     }
     else
     {
+        // ============================================================
+        // MANEJO DE PROCEDIMIENTOS
+        // ============================================================
         await using var comando = new SqlCommand(nombreSP, conexion);
         comando.CommandType = CommandType.StoredProcedure;
         comando.CommandTimeout = 300;
@@ -175,7 +263,64 @@ public async Task<DataTable> EjecutarProcedimientoAlmacenadoConDictionaryAsync(
                     ? v
                     : DBNull.Value;
 
-                if (valor is DateTime dt && dt.TimeOfDay == TimeSpan.Zero && meta.Tipo.ToLower() == "date")
+                // ============================================================
+                // MEJORA: Detección de JSON de 3 formas (como PostgreSQL)
+                // 1. Por tipo (nvarchar(max) es el tipo JSON en SQL Server)
+                // 2. Por contenido (empieza con { o [)
+                // 3. Por nombre común de parámetro JSON
+                // ============================================================
+                bool esJSON = meta.Tipo.ToLower() == "nvarchar" && meta.MaxLength == -1; // nvarchar(max)
+
+                if (!esJSON && valor is string sValor && !string.IsNullOrWhiteSpace(sValor))
+                {
+                    var nombreParam = meta.Nombre?.ToLower() ?? "";
+                    var sValorTrim = sValor.TrimStart();
+
+                    // Detectar por contenido
+                    if (sValorTrim.StartsWith("{") || sValorTrim.StartsWith("["))
+                    {
+                        esJSON = true;
+                    }
+                    // Detectar por nombre común de parámetros JSON
+                    else if (nombreParam.Contains("roles") || nombreParam.Contains("detalles") ||
+                             nombreParam.Contains("json") || nombreParam.Contains("data"))
+                    {
+                        if (sValorTrim.StartsWith("{") || sValorTrim.StartsWith("["))
+                        {
+                            esJSON = true;
+                        }
+                    }
+                }
+
+                if (esJSON)
+                {
+                    // Tratar como JSON (NVARCHAR(MAX))
+                    var param = new SqlParameter($"@{clave}", SqlDbType.NVarChar)
+                    {
+                        Direction = ParameterDirection.Input,
+                        Value = valor == DBNull.Value ? DBNull.Value : valor.ToString()
+                    };
+                    param.Size = -1; // -1 indica MAX
+                    comando.Parameters.Add(param);
+                }
+                // ============================================================
+                // MEJORA: VARCHAR/NVARCHAR - Convertir a string si no lo es
+                // Resuelve el caso de Int32 enviado como contraseña (como PostgreSQL)
+                // ============================================================
+                else if ((meta.Tipo.ToLower() == "varchar" || meta.Tipo.ToLower() == "nvarchar" || meta.Tipo.ToLower() == "char" || meta.Tipo.ToLower() == "nchar")
+                         && valor != DBNull.Value)
+                {
+                    string valorStr = valor.ToString() ?? string.Empty;
+                    var param = new SqlParameter($"@{clave}", MapearTipo(meta.Tipo))
+                    {
+                        Direction = ParameterDirection.Input,
+                        Value = valorStr
+                    };
+                    if (meta.MaxLength.HasValue && meta.MaxLength.Value > 0)
+                        param.Size = meta.MaxLength.Value;
+                    comando.Parameters.Add(param);
+                }
+                else if (valor is DateTime dt && dt.TimeOfDay == TimeSpan.Zero && meta.Tipo.ToLower() == "date")
                 {
                     var param = new SqlParameter($"@{clave}", SqlDbType.Date)
                     {
@@ -279,6 +424,12 @@ public async Task<DataTable> EjecutarProcedimientoAlmacenadoConDictionaryAsync(
 
     return tabla;
 }
+
+
+        // ================================================================
+        // MÉTODO MEJORADO: Ejecuta una consulta SQL parametrizada
+        // MEJORA: Convierte DateTime con hora 00:00:00 a Date
+        // ================================================================
         public async Task<DataTable> EjecutarConsultaParametrizadaConDictionaryAsync(
             string consultaSQL,
             Dictionary<string, object?> parametros,
@@ -295,8 +446,13 @@ public async Task<DataTable> EjecutarProcedimientoAlmacenadoConDictionaryAsync(
             {
                 string nombreParam = p.Key.StartsWith("@") ? p.Key : $"@{p.Key}";
                 object? valor = p.Value ?? DBNull.Value;
+
+                // MEJORA CRÍTICA: Detectar DateTime con hora 00:00:00
                 if (valor is DateTime dt && dt.TimeOfDay == TimeSpan.Zero)
                 {
+                    // Si la hora es 00:00:00, probablemente es una fecha sin hora
+                    // Convertir a Date para que SQL Server lo trate como DATE
+                    // Esto evita problemas de comparación con columnas tipo DATE
                     comando.Parameters.Add(new SqlParameter(nombreParam, SqlDbType.Date)
                     {
                         Value = DateOnly.FromDateTime(dt)
@@ -304,6 +460,7 @@ public async Task<DataTable> EjecutarProcedimientoAlmacenadoConDictionaryAsync(
                 }
                 else
                 {
+                    // Caso normal: dejar que AddWithValue infiera el tipo
                     comando.Parameters.AddWithValue(nombreParam, valor);
                 }
             }
@@ -312,6 +469,10 @@ public async Task<DataTable> EjecutarProcedimientoAlmacenadoConDictionaryAsync(
             tabla.Load(reader);
             return tabla;
         }
+
+        // ================================================================
+        // MÉTODO: Valida si una consulta SQL con parámetros es sintácticamente correcta
+        // ================================================================
         public async Task<(bool esValida, string? mensajeError)> ValidarConsultaConDictionaryAsync(
             string consultaSQL, 
             Dictionary<string, object?> parametros)
@@ -362,6 +523,10 @@ public async Task<DataTable> EjecutarProcedimientoAlmacenadoConDictionaryAsync(
                 return (false, ex.Message);
             }
         }
+
+        // ================================================================
+        // MÉTODOS: Consultas de metadatos de base de datos/tablas
+        // ================================================================
         public async Task<string?> ObtenerEsquemaTablaAsync(string nombreTabla, string esquemaPredeterminado)
         {
             string cadenaConexion = _proveedorConexion.ObtenerCadenaConexion();
