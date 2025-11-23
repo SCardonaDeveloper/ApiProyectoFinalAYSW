@@ -5,7 +5,8 @@
 using FrontendBlazorApi.Components;          // Importa el espacio de nombres donde está App.razor
 using Microsoft.AspNetCore.Components;       // Librerías base de Blazor
 using Microsoft.AspNetCore.Components.Web;   // Funcionalidades adicionales de renderizado
-
+using Microsoft.AspNetCore.Authentication.Cookies; // Para autenticación con cookies
+using Microsoft.AspNetCore.Components.Authorization; // Para AuthenticationStateProvider
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,7 +20,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Configurar opciones del circuito de Blazor Server
+builder.Services.AddServerSideBlazor(options =>
+{
+    // Desconectar el circuito después de 30 segundos de inactividad
+    options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromSeconds(30);
+    // Intentos de reconexión del cliente
+    options.DisconnectedCircuitMaxRetained = 100;
+    // Tamaño máximo del buffer de JavaScript interop
+    options.JSInteropDefaultCallTimeout = TimeSpan.FromMinutes(1);
+});
 
+// -----------------------------------------------------------------------------
+// REGISTRO: Autenticación SIMPLIFICADA
+// -----------------------------------------------------------------------------
+// SOLO un servicio: ServicioAutenticacion
+builder.Services.AddScoped<FrontendBlazorApi.Servicios.ServicioAutenticacion>();
 
 
 builder.Services.AddHttpClient("ApiBack", cliente =>
@@ -28,6 +44,9 @@ builder.Services.AddHttpClient("ApiBack", cliente =>
      cliente.BaseAddress = new Uri("http://localhost:5031/");
      // Aquí se pueden agregar encabezados por defecto si se requiere.
  });
+
+ // Registrar ServicioApiGenerico (CRUD)
+builder.Services.AddScoped<FrontendBlazorApi.Servicios.ServicioApiGenerico>();
 
 
 /*
@@ -65,6 +84,18 @@ app.UseHttpsRedirection();
 
 // Servir archivos estáticos desde wwwroot (CSS, JS, imágenes, etc.).
 app.UseStaticFiles();
+
+// -----------------------------------------------------------------------------
+// MIDDLEWARE: Deshabilitar caché del navegador (IMPORTANTE PARA SEGURIDAD)
+// -----------------------------------------------------------------------------
+app.Use(async (context, next) =>
+{
+    // Agregar headers para evitar caché en TODAS las respuestas
+    context.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+    context.Response.Headers["Pragma"] = "no-cache";
+    context.Response.Headers["Expires"] = "0";
+    await next();
+});
 
 // Middleware antifalsificación (protección contra CSRF).
 app.UseAntiforgery();
