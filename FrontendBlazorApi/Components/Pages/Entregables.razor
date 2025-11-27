@@ -3,9 +3,11 @@
 @using FrontendBlazorApi.Models
 @using System.Text.Json
 @using System.Text.Json.Serialization
-@inject IJSRuntime JSRuntime
+@using System.Net.Http.Headers
+@inject IJSRuntime JS
 @inject IHttpClientFactory fabricaHttp
 @rendermode InteractiveServer
+@inherits PaginaAutenticada
 
 <PageTitle>Entregables</PageTitle>
 <link href="css/PersonalizacionMD.css" rel="stylesheet" />
@@ -342,6 +344,12 @@ else
     private async Task CargarActividades(){
         try{
             var cliente = fabricaHttp.CreateClient("ApiBack");
+            var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
             var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Dictionary<string, object>>>>(urlActividades);
             listaActividades = respuesta?.Datos?.Select(a => new ActividadDTO{
                 Id = ObtenerInt(a, "Id"),
@@ -354,6 +362,12 @@ else
     public async Task CargarArchivos(){
         try{
             var cliente = fabricaHttp.CreateClient("ApiBack");
+            var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
             var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Dictionary<string, object>>>>(urlArchivos);
             listaArchivos = respuesta?.Datos?.Select(a => new ArchivoDTO{
                 Id = ObtenerInt(a, "Id"),
@@ -370,6 +384,12 @@ else
         { 
             cargando = true;
             var cliente = fabricaHttp.CreateClient("ApiBack"); 
+            var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
             var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Entregable>>>(urlBaseApi); 
             listaEntregables = respuesta?.Datos ?? new List<Entregable>(); 
             mensaje = $"Se cargaron {listaEntregables.Count} entregable(s)."; 
@@ -768,7 +788,7 @@ private async Task VerDetalleEntregable(Entregable e)
                 claseAviso = "alert alert-warning";
                 return;
             }
-            var confirmar = await JSRuntime.InvokeAsync<bool>("confirm", 
+            var confirmar = await JS.InvokeAsync<bool>("confirm", 
                 $"¿Está seguro de actualizar el entregable #{entregableActual.Codigo}?\n\nSe modificarán las actividades");
             if (!confirmar)
             {
@@ -853,7 +873,7 @@ private async Task VerDetalleEntregable(Entregable e)
                 claseAviso = "alert alert-warning";
                 return;
             }
-            var confirmar = await JSRuntime.InvokeAsync<bool>("confirm", $"¿Está seguro de eliminar el entregable #{entregableActual.Codigo}?\n\nEsta acción no se puede deshacer y quitará la utilización de las actividades");
+            var confirmar = await JS.InvokeAsync<bool>("confirm", $"¿Está seguro de eliminar el entregable #{entregableActual.Codigo}?\n\nEsta acción no se puede deshacer y quitará la utilización de las actividades");
             if(!confirmar){
                 mensaje = "eliminación cancelada";
                 claseAviso = "alert alert-info";
@@ -908,7 +928,7 @@ private async Task VerDetalleEntregable(Entregable e)
 
     private async Task EliminarActividad(Actividad a)
     {
-        bool confirmar = await JSRuntime.InvokeAsync<bool>("confirm", $"¿Eliminar la actividad '{a.Titulo}'?");
+        bool confirmar = await JS.InvokeAsync<bool>("confirm", $"¿Eliminar la actividad '{a.Titulo}'?");
         if (!confirmar) return;
 
         entregableActual.Actividades?.Remove(a);

@@ -3,7 +3,8 @@
 @using FrontendBlazorApi.Models
 @using System.Text.Json
 @using System.Text.Json.Serialization
-@inject IJSRuntime jsRuntime
+@using System.Net.Http.Headers
+@inject IJSRuntime JS
 @inject IHttpClientFactory FabricaHttp
 @rendermode InteractiveServer
 @inherits PaginaAutenticada
@@ -128,6 +129,12 @@ else
         try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
+            var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
             var parametros = new Dictionary<string, object?>
             {
                 ["consulta"] = "SELECT Id, Titulo FROM Proyecto ORDER BY Id",
@@ -152,6 +159,12 @@ else
         try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
+            var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
             var parametros = new Dictionary<string, object?>
             {
                 ["consulta"] = "SELECT Id, Titulo FROM Producto ORDER BY Id",
@@ -176,6 +189,12 @@ else
         try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
+            var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
             var parametros = new Dictionary<string, object?>
             {
                 ["consulta"] = "SELECT * FROM Proyecto_Producto ORDER BY IdProyecto",
@@ -242,7 +261,7 @@ else
 
     private async Task EliminarAsociacion(int idProyecto, int idProducto)
     {
-        bool confirmar = await jsRuntime.InvokeAsync<bool>("confirm", $"¿Eliminar asociación del Proyecto {idProyecto} con Producto {idProducto}?");
+        bool confirmar = await JS.InvokeAsync<bool>("confirm", $"¿Eliminar asociación del Proyecto {idProyecto} con Producto {idProducto}?");
         if (!confirmar) return;
 
         try

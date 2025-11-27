@@ -3,7 +3,9 @@
 @using FrontendBlazorApi.Models
 @using System.Text.Json
 @using System.Text.Json.Serialization
+@using System.Net.Http.Headers
 @inject IHttpClientFactory FabricaHttp
+@inject IJSRuntime JS
 @rendermode InteractiveServer
 @inherits PaginaAutenticada
 
@@ -144,6 +146,12 @@ else
 
             // Crea un cliente HTTP configurado (ver Program.cs)
             var cliente = FabricaHttp.CreateClient("ApiBack");
+            var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
 
             // GetFromJsonAsync: Hace GET y deserializa automáticamente el JSON
             // RespuestaApi<List<entregable>>: Tipo genérico que mapea la estructura de respuesta
@@ -168,6 +176,12 @@ else
         try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
+            var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
             var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Dictionary<string, object>>>>(urlProducto);
             listaproducto = respuesta?.Datos?.Select(d => new ProductoSelect
             {
@@ -183,6 +197,12 @@ else
         try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
+            var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
             var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Dictionary<string, object>>>>(urlEntregable);
             listaentregable = respuesta?.Datos?.Select(d => new EntregableSelect
             {

@@ -3,7 +3,8 @@
 @using FrontendBlazorApi.Models
 @using System.Text.Json
 @using System.Text.Json.Serialization
-@inject IJSRuntime jsRuntime
+@using System.Net.Http.Headers
+@inject IJSRuntime JS
 
 @inject IHttpClientFactory FabricaHttp
 @rendermode InteractiveServer
@@ -238,6 +239,12 @@ else
         try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
+             var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
             var parametrosConsulta = new Dictionary<string, object?>
             {
                 ["consulta"] = "SELECT * FROM Proyecto ORDER BY Id",
@@ -278,6 +285,12 @@ else
         try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
+            var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
             var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Dictionary<string, object>>>>(urlTiposProyecto);
             listaTiposProyecto = respuesta?.Datos?.Select(d => new TipoProyectoDTO
             {
@@ -292,6 +305,12 @@ else
         try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
+             var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
             var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Dictionary<string, object>>>>(urlResponsables);
             listaResponsables = respuesta?.Datos?.Select(d => new ResponsableDTO
             {
@@ -480,7 +499,7 @@ else
     }
     private async Task EliminarProyecto(int id)
     {
-        bool confirmar = await jsRuntime.InvokeAsync<bool>("confirm", $"¿Seguro que deseas eliminar el proyecto con ID {id}?");
+        bool confirmar = await JS.InvokeAsync<bool>("confirm", $"¿Seguro que deseas eliminar el proyecto con ID {id}?");
         if (!confirmar)
         {
             mensaje = "Operación cancelada por el usuario.";
