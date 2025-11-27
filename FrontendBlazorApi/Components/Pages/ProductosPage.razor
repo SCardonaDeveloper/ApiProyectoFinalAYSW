@@ -3,7 +3,9 @@
 @using FrontendBlazorApi.Models
 @using System.Text.Json
 @using System.Text.Json.Serialization
+@using System.Net.Http.Headers
 @inject IHttpClientFactory FabricaHttp
+@inject IJSRuntime JS
 @rendermode InteractiveServer
 @inherits PaginaAutenticada
 
@@ -178,7 +180,12 @@ else
     {
         cargando = true;
         var cliente = FabricaHttp.CreateClient("ApiBack");
-
+        var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
         var parametros = new Dictionary<string, object?>
             {
                 ["nombreSP"] = "Buscar_Datos_Catalogo",
@@ -229,6 +236,12 @@ else
         try
         {
             var cliente = FabricaHttp.CreateClient("ApiBack");
+            var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
             var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Dictionary<string, object>>>>(urlTipoPro);
             listaTipoProducto = respuesta?.Datos?.Select(d => new TipoProductoDTO
             {

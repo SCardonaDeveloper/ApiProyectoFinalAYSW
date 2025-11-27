@@ -3,8 +3,9 @@
 @using FrontendBlazorApi.Models
 @using System.Text.Json
 @using System.Text.Json.Serialization
+@using System.Net.Http.Headers
 @inject IHttpClientFactory HttpClientFactory
-@inject IJSRuntime jsRuntime
+@inject IJSRuntime JS
 @rendermode InteractiveServer
 @inherits PaginaAutenticada
 
@@ -201,6 +202,12 @@
         try
         {
             var cliente = HttpClientFactory.CreateClient("ApiBack");
+            var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
             var parametros = new Dictionary<string, object?>
             {
                 ["consulta"] = "SELECT * FROM TipoResponsable ORDER BY Id",
@@ -223,6 +230,12 @@
         try
         {
             var cliente = HttpClientFactory.CreateClient("ApiBack");
+            var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
             var parametros = new Dictionary<string, object?>
             {
                 ["consulta"] = "SELECT * FROM Usuario ORDER BY Id",
@@ -246,6 +259,12 @@
         try
         {
             var cliente = HttpClientFactory.CreateClient("ApiBack");
+            var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
             var parametros = new Dictionary<string, object?>
             {
                 ["consulta"] = "SELECT * FROM Responsable ORDER BY Id",
@@ -385,7 +404,7 @@
 
     private async Task EliminarResponsable(int id)
     {
-        bool confirmar = await jsRuntime.InvokeAsync<bool>("confirm", $"¿Eliminar responsable #{id}?");
+        bool confirmar = await JS.InvokeAsync<bool>("confirm", $"¿Eliminar responsable #{id}?");
         if (!confirmar) return;
 
         try

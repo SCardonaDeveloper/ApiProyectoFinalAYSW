@@ -4,6 +4,7 @@
 @inject NavigationManager navegador
 @inject ServicioAutenticacion servicioAuth
 @inject ServicioApiGenerico servicioApi
+@inject IJSRuntime JS
 
 <PageTitle>Inicio de Sesión</PageTitle>
 
@@ -306,6 +307,7 @@
     private string iconoMensaje = "bi-info-circle";
     private bool cargando = false;
 
+
     private async Task IniciarSesion()
     {
         try
@@ -316,63 +318,21 @@
             // 1. Obtener token usando ServicioApiGenerico
             var datosToken = new
             {
-                tabla = "usuario",
-                campoUsuario = "email",
-                campoContrasena = "contrasena",
+                tabla = "Usuario",
+                campoUsuario = "Email",
+                campoContrasena = "Contrasena",
                 usuario = credenciales.Usuario,
                 contrasena = credenciales.Contrasena
             };
 
-            var resultado = await servicioApi.PostAsync<RespuestaToken>("api/Autenticacion/token", datosToken);
+            var resultado = await servicioApi.PostAsync<RespuestaToken>("http://localhost:5031/api/Autenticacion/token", datosToken);
 
             if (resultado == null || string.IsNullOrEmpty(resultado.Token))
             {
                 MostrarMensaje("No se recibió un token válido del servidor", "warning");
                 return;
             }
-
-            // 2. Guardar token en ServicioAutenticacion
             await servicioAuth.IniciarSesionAsync(resultado.Token, credenciales.Usuario);
-
-            // 3. Cargar TODAS las rutas de TODOS los roles del usuario que hizo login
-            try
-            {
-                // Obtener todos los rol_usuario y filtrar por email
-                var todosRolUsuario = await servicioApi.ObtenerTodosAsync<RolUsuario>("rol_usuario");
-                var rolesDelUsuario = todosRolUsuario?.Where(ru => ru.FkEmail == credenciales.Usuario).ToList();
-
-                if (rolesDelUsuario != null && rolesDelUsuario.Count > 0)
-                {
-                    // Obtener todos los roles
-                    var todosRoles = await servicioApi.ObtenerTodosAsync<Rol>("rol");
-
-                    // Obtener nombres de los roles del usuario
-                    var nombresRolesUsuario = rolesDelUsuario
-                        .Select(ru => todosRoles?.FirstOrDefault(r => r.IdRol == ru.FkIdRol)?.Nombre)
-                        .Where(nombre => !string.IsNullOrEmpty(nombre))
-                        .ToList();
-
-                    if (nombresRolesUsuario.Count > 0)
-                    {
-                        // Obtener TODAS las rutasrol y filtrar por TODOS los roles del usuario
-                        var todasRutasRol = await servicioApi.ObtenerTodosAsync<RutaRol>("rutarol");
-                        var rutasDelUsuario = todasRutasRol?
-                            .Where(rr => nombresRolesUsuario.Contains(rr.NombreRol))
-                            .Distinct()
-                            .ToList();
-
-                        if (rutasDelUsuario != null && rutasDelUsuario.Count > 0)
-                        {
-                            await servicioAuth.GuardarRutasRolAsync(rutasDelUsuario);
-                        }
-                    }
-                }
-            }
-            catch
-            {
-                // Si falla cargar permisos, continuar igual
-            }
-
             MostrarMensaje("¡Inicio de sesión exitoso! Redirigiendo...", "success");
             await Task.Delay(1500);
             navegador.NavigateTo("/home", forceLoad: true);

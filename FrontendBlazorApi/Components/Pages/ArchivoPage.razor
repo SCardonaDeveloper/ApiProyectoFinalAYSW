@@ -4,8 +4,9 @@
 @using System.Text.Json.Serialization
 @using System.Linq
 @using FrontendBlazorApi.Models
+@using System.Net.Http.Headers
 @inject IHttpClientFactory fabricaHttp
-@inject IJSRuntime JSRuntime
+@inject IJSRuntime JS
 @rendermode InteractiveServer
 @inherits PaginaAutenticada
 
@@ -150,6 +151,12 @@ else
         { 
             cargando = true;
             var cliente = fabricaHttp.CreateClient("ApiBack"); 
+            var token = await JS.InvokeAsync<string>("sessionStorage.getItem", "token");
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                cliente.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+            }
             var respuesta = await cliente.GetFromJsonAsync<RespuestaApi<List<Archivo>>>(urlBaseApi); 
             listaArchivos = respuesta?.Datos ?? new List<Archivo>(); 
             mensaje = $"Se cargaron {listaArchivos.Count} archivo(s)."; 
@@ -291,7 +298,7 @@ else
                 claseAviso = "alert alert-warning";
                 return;
             }
-             var confirmar = await JSRuntime.InvokeAsync<bool>("confirm", 
+             var confirmar = await JS.InvokeAsync<bool>("confirm", 
                 $"¿Está seguro de actualizar el archivo #{archivoActual.Id}?\n\n");
             if(!confirmar){
                 mensaje = "Actualización canceladaa!. ";
@@ -332,7 +339,7 @@ else
                 claseAviso = "alert alert-warning";
                 return;
             }
-            var confirmar = await JSRuntime.InvokeAsync<bool>("confirm", 
+            var confirmar = await JS.InvokeAsync<bool>("confirm", 
                 $"¿Está seguro de eliminar el archivo #{archivoActual.Id}?\n\nEsta acción no se puede deshacer. ");
             if(!confirmar){
                 mensaje = "Eliminación canceladaa!. ";
